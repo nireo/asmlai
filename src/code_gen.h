@@ -7,4 +7,8 @@ int mul_registers(int reg1, int reg2);
 int sub_registers(int reg1, int reg2);
 int div_registers(int reg1, int reg2);
 
+void init_out_file();
+void return_zero_code_gen();
+void add_code_gen_start();
+
 #endif
