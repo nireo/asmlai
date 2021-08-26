@@ -6,7 +6,7 @@ typedef enum {
   AST_SUBTRACT,
   AST_MULTIPLY,
   AST_DIV,
-  AST_INT,
+  AST_INTLITERAL,
 } AST_TYPE;
 
 typedef struct Node {
