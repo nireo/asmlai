@@ -16,6 +16,7 @@ typedef struct Node {
   // this needs to be able to hold some different values, but for the beginning it's fine
   int value;
   int type;
+  char *str;
 } Node;
 
 Node *new_node(Node *left, Node *right, int value, int type);

@@ -3,6 +3,6 @@
 
 #include "ast.h"
 
-int compile_node(Node *node);
+void compile_source(const char *source);
 
 #endif

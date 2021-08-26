@@ -92,4 +92,7 @@ typedef struct Token {
   const char *start;
 } Token;
 
+Token get_token();
+void init_lexer(const char *source);
+
 #endif
