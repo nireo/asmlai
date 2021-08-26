@@ -93,11 +93,8 @@ static int match(TokenType type) {
   return 1;
 }
 
-
 static Node *number() {
-  int value = (int)strtod(parser.previous.start, NULL);
-  load_into_register(value);
-
+  int value = atoi(parser.previous.start);
   return new_node(NULL, NULL, value, AST_INTLITERAL);
 }
 
@@ -147,6 +144,8 @@ static AST_TYPE tokentype_to_ast(TokenType type) {
     return AST_DIV;
   case TOKEN_STAR:
     return AST_MULTIPLY;
+  case TOKEN_NUMBER:
+    return AST_INTLITERAL;
   default:
     fprintf(stderr, "cannot find ast type for token");
     exit(1);
@@ -156,8 +155,6 @@ static AST_TYPE tokentype_to_ast(TokenType type) {
 static ParseRule *get_rule(TokenType type) { return &rules[type]; };
 
 static Node *parse_precedence(Precedence prec) {
-  Node *right;
-
   advance();
   ParseFn prefix_rule = get_rule(parser.previous.type)->prefix;
   if (prefix_rule == NULL) {
@@ -167,10 +164,10 @@ static Node *parse_precedence(Precedence prec) {
 
   int can_assign = prec <= PREC_ASSIGNMENT;
   Node *left = prefix_rule(can_assign);
-  TokenType type = parser.current.type;
 
   while (prec <= get_rule(parser.current.type)->prec) {
     advance();
+    TokenType type = parser.current.type;
     ParseFn infix_rule = get_rule(parser.previous.type)->infix;
     Node *right = infix_rule(can_assign);
 
@@ -185,6 +182,30 @@ static Node *parse_precedence(Precedence prec) {
   return left;
 }
 
+// TODO: replace with parse precedence. I made this little hack since I didn't
+// get the parse_precedence function correctly working :(
+Node *binary_expression(Precedence prec) {
+  advance();
+  Node *left = number();
+
+  int type = parser.current.type;
+  if (type == TOKEN_EOF)
+    return left;
+
+  while (prec <= get_rule(parser.current.type)->prec) {
+    advance();
+
+    Node *right = binary_expression(get_rule(type)->prec);
+
+    left = new_node(left, right, tokentype_to_ast(type), 0);
+
+    type = parser.current.type;
+    if (type == TOKEN_EOF)
+      return left;
+  }
+
+  return left;
+}
 
 static int code_gen_node(Node *node) {
   int left;
@@ -200,8 +221,10 @@ static int code_gen_node(Node *node) {
     return add_registers(left, right);
   case AST_SUBTRACT:
     return sub_registers(left, right);
+  case AST_INTLITERAL:
+    return load_into_register(node->value);
   default:
-    fprintf(stderr, "unknown node type\n");
+    fprintf(stderr, "unknown node type %d\n", node->type);
     exit(1);
   }
 }
@@ -216,11 +239,11 @@ static void expression_statement() {
 static void statement() {
   if (match(TOKEN_PRINT)) {
     // variable declaration
-    Node *tree = expression();
+    Node *tree = binary_expression(PREC_ASSIGNMENT);
     // generate code for a given tree
     code_gen_node(tree);
 
-    consume(TOKEN_SEMICOLON, "print needs to be followed by print");
+    consume(TOKEN_SEMICOLON, "you need to provide a semicolon after print");
   } else {
     expression_statement();
   }

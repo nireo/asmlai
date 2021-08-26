@@ -1,2 +1,2 @@
 all:
-	gcc -O3 src/main.c src/code_gen.c -o lai
+	gcc -O2 src/main.c src/code_gen.c src/compiler.c src/lexer.c src/ast.c -o lai -g

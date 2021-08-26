@@ -14,6 +14,12 @@ static int match(char exp) {
   return 1;
 }
 
+void init_lexer(const char *source) {
+  lex.start = source;
+  lex.current = source;
+  lex.line = 1;
+}
+
 static char next() {
   // take last character and return it
   ++lex.current;
@@ -178,6 +184,8 @@ static TokenType get_identifier_type() {
       return is_keyword(1, 5, "eturn", TOKEN_RETURN);
     case 'e':
       return is_keyword(1, 3, "num", TOKEN_ENUM);
+    case 'p':
+      return is_keyword(1, 4, "rint", TOKEN_PRINT);
     case 'i': {
       if (lex.current - lex.start > 1) {
         switch (lex.start[1]) {

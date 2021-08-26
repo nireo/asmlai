@@ -40,6 +40,7 @@ int main(int argc, char **argv) {
   }
 
   char *source = read_file(argv[1]);
+  printf("src: %s\n\n\n", source);
 
   init_out_file();
   add_code_gen_start();
