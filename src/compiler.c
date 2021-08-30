@@ -135,6 +135,7 @@ ParseRule rules[] = {
 };
 
 static AST_TYPE tokentype_to_ast(TokenType type) {
+  printf("%d\n", type);
   switch (type) {
   case TOKEN_PLUS:
     return AST_ADD;
@@ -221,6 +222,10 @@ static int code_gen_node(Node *node) {
     return add_registers(left, right);
   case AST_SUBTRACT:
     return sub_registers(left, right);
+  case AST_MULTIPLY:
+    return mul_registers(left, right);
+  case AST_DIV:
+    return div_registers(left, right);
   case AST_INTLITERAL:
     return load_into_register(node->value);
   default:
@@ -241,7 +246,8 @@ static void statement() {
     // variable declaration
     Node *tree = binary_expression(PREC_ASSIGNMENT);
     // generate code for a given tree
-    code_gen_node(tree);
+    int last_register = code_gen_node(tree);
+    print_register(last_register);
 
     consume(TOKEN_SEMICOLON, "you need to provide a semicolon after print");
   } else {

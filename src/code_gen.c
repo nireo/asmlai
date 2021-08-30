@@ -29,6 +29,22 @@ void add_code_gen_start() {
 
   fputs("\t.file \"main.c\"\n"
         "\t.text\n"
+        ".LC0:\n"
+        "\t.string\t\"%d\\n\"\n"
+        "printint:\n"
+        "\tpushq\t%rbp\n"
+        "\tmovq\t%rsp, %rbp\n"
+        "\tsubq\t$16, %rsp\n"
+        "\tmovl\t%edi, -4(%rbp)\n"
+        "\tmovl\t-4(%rbp), %eax\n"
+        "\tmovl\t%eax, %esi\n"
+        "\tleaq	.LC0(%rip), %rdi\n"
+        "\tmovl	$0, %eax\n"
+        "\tcall	printf@PLT\n"
+        "\tnop\n"
+        "\tleave\n"
+        "\tret\n"
+        "\n"
         "\t.globl\tmain\n"
         "\t.type\tmain, @function\n"
         "main:\n"
@@ -78,4 +94,27 @@ int load_into_register(int val) {
   fprintf(out, "\tmovq\t$%d, %s\n", val, registers[reg]);
 
   return reg;
+}
+
+
+int mul_registers(int r1, int r2) {
+  fprintf(out, "\timulq\t%s, %s\n", registers[r1], registers[r2]);
+  free_register(r1);
+  return r2;
+}
+
+int div_registers(int r1, int r2) {
+  fprintf(out, "\tmovq\t%s,%%rax\n\tcqo\n", registers[r1]);
+  fprintf(out, "\tidivq\t%s\n", registers[r2]);
+  fprintf(out, "\tmovq\t%%rax,%s\n", registers[r1]);
+  free_register(r2);
+
+  return r1;
+}
+
+
+void print_register(int r) {
+  fprintf(out, "\tmovq\t%s, %%rdi\n"
+               "\tcall\tprint_integer\n", registers[r]);
+  free_register(r);
 }

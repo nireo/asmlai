@@ -10,5 +10,6 @@ int div_registers(int reg1, int reg2);
 void init_out_file();
 void return_zero_code_gen();
 void add_code_gen_start();
+void print_register(int r);
 
 #endif

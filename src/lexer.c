@@ -266,34 +266,34 @@ Token get_token() {
   case '*':
     if (match('=')) {
       return take_token(TOKEN_STAR_EQUAL);
-      return take_token(TOKEN_STAR);
-    case '!':
-      return take_token(match('=') ? TOKEN_BANG_EQUAL : TOKEN_BANG);
-    case '=':
-      return take_token(match('=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL);
-    case '<':
-      if (match('=')) {
-        return take_token(TOKEN_LESS_EQUAL);
-      } else if (match('<')) {
-        return take_token(TOKEN_BITLEFT);
-      }
-      return take_token(TOKEN_LESS);
-    case '>':
-      if (match('=')) {
-        return take_token(TOKEN_GREATER_EQUAL);
-      } else if (match('>')) {
-        return take_token(TOKEN_BITRIGHT);
-      }
-      return take_token(TOKEN_GREATER);
-    case '~':
-      return take_token(TOKEN_COMPLEMENT);
-    case '&':
-      return take_token(match('&') ? TOKEN_AND : TOKEN_BITAND);
-    case '|':
-      return take_token(match('|') ? TOKEN_OR : TOKEN_BITOR);
-    case '"':
-      return string();
     }
+    return take_token(TOKEN_STAR);
+  case '!':
+    return take_token(match('=') ? TOKEN_BANG_EQUAL : TOKEN_BANG);
+  case '=':
+    return take_token(match('=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL);
+  case '<':
+    if (match('=')) {
+      return take_token(TOKEN_LESS_EQUAL);
+    } else if (match('<')) {
+      return take_token(TOKEN_BITLEFT);
+    }
+    return take_token(TOKEN_LESS);
+  case '>':
+    if (match('=')) {
+      return take_token(TOKEN_GREATER_EQUAL);
+    } else if (match('>')) {
+      return take_token(TOKEN_BITRIGHT);
+    }
+    return take_token(TOKEN_GREATER);
+  case '~':
+    return take_token(TOKEN_COMPLEMENT);
+  case '&':
+    return take_token(match('&') ? TOKEN_AND : TOKEN_BITAND);
+  case '|':
+    return take_token(match('|') ? TOKEN_OR : TOKEN_BITOR);
+  case '"':
+    return string();
   }
 
   return err_token("unexpected token");
