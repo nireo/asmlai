@@ -13,7 +13,8 @@ typedef struct Node {
   struct Node *left;
   struct Node *right;
 
-  // this needs to be able to hold some different values, but for the beginning it's fine
+  // this needs to be able to hold some different values, but for the beginning
+  // it's fine
   int value;
   int type;
   char *str;

@@ -1,11 +1,13 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include "code_gen.h"
 #include "compiler.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-static char *read_file(const char *path) {
+static char *
+read_file(const char *path)
+{
   FILE *file = fopen(path, "rb");
-  if (file == NULL) {
+  if(file == NULL) {
     fprintf(stderr, "Could not open file \"%s\".\n", path);
     exit(1);
   }
@@ -15,13 +17,13 @@ static char *read_file(const char *path) {
   rewind(file);
 
   char *buffer = (char *)malloc(file_size + 1);
-  if (buffer == NULL) {
+  if(buffer == NULL) {
     fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
     exit(1);
   }
 
   size_t bytesRead = fread(buffer, sizeof(char), file_size, file);
-  if (bytesRead < file_size) {
+  if(bytesRead < file_size) {
     fprintf(stderr, "Could not read file \"%s\".\n", path);
     exit(1);
   }
@@ -32,9 +34,10 @@ static char *read_file(const char *path) {
   return buffer;
 }
 
-
-int main(int argc, char **argv) {
-  if (argc != 2) {
+int
+main(int argc, char **argv)
+{
+  if(argc != 2) {
     fprintf(stderr, "usage: lai <filepath>\n");
     exit(1);
   }

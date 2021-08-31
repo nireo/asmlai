@@ -1,10 +1,12 @@
 #include "ast.h"
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-Node *new_node(Node *left, Node *right, int value, int type) {
-  Node *node = (Node*)malloc(sizeof(Node));
-  if (node == NULL) {
+Node *
+new_node(Node *left, Node *right, int value, int type)
+{
+  Node *node = (Node *)malloc(sizeof(Node));
+  if(node == NULL) {
     fprintf(stderr, "not enough memory.");
     exit(1);
   }
