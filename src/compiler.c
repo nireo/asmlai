@@ -284,6 +284,12 @@ expression_statement()
 }
 
 static void
+variable_decl()
+{
+  consume(TOKEN_IDENTIFIER, "identifier expexted after declaration.");
+}
+
+static void
 statement()
 {
   if(match(TOKEN_PRINT)) {
