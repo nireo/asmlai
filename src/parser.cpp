@@ -1,6 +1,3 @@
-#include "parser.h"
-#include "ast.h"
-#include "lexer.h"
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
@@ -8,6 +5,10 @@
 #include <sstream>
 #include <string>
 #include <unordered_map>
+
+#include "ast.h"
+#include "lexer.h"
+#include "parser.h"
 
 static std::unordered_map<TokenType, Precedence> precedences = {
   { TOKEN_EQUAL, EQUALS },     { TOKEN_BANG_EQUAL, EQUALS },
@@ -130,17 +131,21 @@ get_curr_prec()
 static std::unique_ptr<Expression>
 parse_expression(Precedence prec)
 {
+  printf("start: %s", parser.previous.start);
   advance();
-  if(prefix_fns.find(parser.current.type) == prefix_fns.end()) {
+  if(prefix_fns.find(parser.previous.type) == prefix_fns.end()) {
+    error("no prefix function found");
     return nullptr;
   }
+
+  printf("start: %s", parser.previous.start);
 
   auto fn = prefix_fns[parser.current.type];
   auto left = fn();
 
   while(!match(TOKEN_SEMICOLON) && prec <= get_curr_prec()) {
     advance();
-    auto infix = infix_fns[parser.current.type];
+    auto infix = infix_fns[parser.previous.type];
     if(infix == nullptr) {
       return left;
     }
@@ -172,32 +177,30 @@ parse_infix_expression(std::unique_ptr<Expression> left)
 static std::unique_ptr<Statement>
 parse_variable_declaration()
 {
+  auto type = parser.previous.type;
   std::unique_ptr<Expression> expr;
   if(match(TOKEN_EQUAL))
     expr = parse_expression(LOWEST);
 
   consume(TOKEN_SEMICOLON, "expected ';' after declaration");
 
-  auto var_decl = std::make_unique<VariableDecl>();
-  var_decl->expr_ = std::move(expr);
+  auto var_decl = std::make_unique<VarDecl>();
+  var_decl->value = std::move(expr);
+  var_decl->type = type;
 
-  auto stmt = std::make_unique<Statement>(StmtType::VarDecl);
-  stmt->var_decl_ = std::move(var_decl);
-
-  return stmt;
+  return var_decl;
 }
 
 static std::unique_ptr<Statement>
 parse_print_statement()
 {
+  printf("prev: %s", parser.previous.start);
+  printf("curr: %s", parser.current.start);
   std::unique_ptr<Expression> expr = parse_expression(LOWEST);
   consume(TOKEN_SEMICOLON, "expected ';' after print statement");
 
-  auto print_stmt = std::make_unique<PrintStmt>();
-  print_stmt->expr_ = std::move(expr);
-
-  auto stmt = std::make_unique<Statement>(StmtType::Print);
-  stmt->print_stmt_ = std::move(print_stmt);
+  auto stmt = std::make_unique<PrintStmt>();
+  stmt->value = std::move(expr);
 
   return stmt;
 }
@@ -234,6 +237,7 @@ parse(const char *source)
   std::vector<std::unique_ptr<Statement> > result;
   init_lexer(source);
   parser = Parser();
+  prefix_fns[TOKEN_NUMBER] = parse_integer_literal;
 
   advance();
 

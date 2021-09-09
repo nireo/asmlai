@@ -240,4 +240,6 @@ CMakeFiles/lai_test.dir/src/tests.cpp.o: \
  /home/eemil/dev/asmlai/build/_deps/googletest-src/googletest/include/gtest/gtest-test-part.h \
  /home/eemil/dev/asmlai/build/_deps/googletest-src/googletest/include/gtest/gtest_prod.h \
  /home/eemil/dev/asmlai/build/_deps/googletest-src/googletest/include/gtest/gtest-typed-test.h \
- /home/eemil/dev/asmlai/build/_deps/googletest-src/googletest/include/gtest/gtest_pred_impl.h
+ /home/eemil/dev/asmlai/build/_deps/googletest-src/googletest/include/gtest/gtest_pred_impl.h \
+ /home/eemil/dev/asmlai/src/parser.h /home/eemil/dev/asmlai/src/ast.h \
+ /home/eemil/dev/asmlai/src/lexer.h

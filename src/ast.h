@@ -5,82 +5,104 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
-enum class StmtType {
-  Empty,
-  VarDecl,
-  Return,
-  Expression,
-  Block,
-  Print,
-};
-
-enum class ExprType {
-  Empty,
+enum class AstType {
+  Program,
   Identifier,
-  Call,
+  LetStatement,
+  ReturnStatement,
+  ExpressionStatement,
+  HashLiteral,
+  ArrayLiteral,
+  CallExpression,
   StringLiteral,
-  Prefix,
-  Infix,
-  If,
+  IndexExpression,
+  PrefixExpression,
+  InfixExpression,
+  BlockStatement,
+  IfExpression,
   IntegerLiteral,
-  Boolean,
+  BooleanExpression,
   FunctionLiteral,
 };
 
-struct Expression;
-struct Statement;
-
-struct IdentifierExpr {
-  std::string name_;
+class Node {
+public:
+  virtual AstType Type() const = 0;
 };
 
-struct InfixExpr {
+class Statement : public Node {
+public:
+  virtual void statementNode() = 0;
+  virtual AstType Type() const = 0;
+};
+
+class Expression : public Node {
+public:
+  virtual AstType Type() const = 0;
+};
+
+class Program : public Node {
+public:
+  AstType Type() const { return AstType::Program; }
+
+  std::vector<std::unique_ptr<Statement>> statements;
+};
+
+class Identifier : public Expression {
+public:
+  AstType Type() const { return AstType::Identifier; }
+  std::string value;
+};
+
+class VarDecl : public Statement {
+public:
+  void statementNode() {}
+  AstType Type() const { return AstType::LetStatement; }
+
+  TokenType type;
+  std::unique_ptr<Identifier> name;
+  std::unique_ptr<Expression> value;
+};
+
+class PrintStmt : public Statement {
+public:
+  void statementNode() {}
+  AstType Type() const { return AstType::LetStatement; }
+
+  TokenType type;
+  std::unique_ptr<Expression> value;
+};
+
+class ExpressionStatement : public Statement {
+public:
+  void statementNode() {}
+  AstType Type() const { return AstType::ExpressionStatement; }
+  std::unique_ptr<Expression> expression;
+};
+
+class IntegerLiteral : public Expression {
+public:
+  AstType Type() const { return AstType::IntegerLiteral; }
+  std::int64_t value;
+};
+
+class PrefixExpression : public Expression {
+public:
+  AstType Type() const { return AstType::PrefixExpression; }
   TokenType opr;
-
-  std::unique_ptr<Expression> expr_left_;
-  std::unique_ptr<Expression> expr_right_;
+  std::unique_ptr<Expression> right;
 };
 
-struct VariableDecl {
-  std::unique_ptr<IdentifierExpr> ident_;
-  std::unique_ptr<Expression> expr_;
-  VariableDecl() : expr_(nullptr){};
+class InfixExpression : public Expression {
+public:
+  AstType Type() const { return AstType::InfixExpression; }
+
+  TokenType opr;
+  std::unique_ptr<Expression> right;
+  std::unique_ptr<Expression> left;
 };
 
-struct ExprStmt {
-  std::unique_ptr<Expression> expr_;
-};
-
-struct PrintStmt {
-  std::unique_ptr<Expression> expr_;
-};
-
-struct Statement {
-  StmtType type_;
-  union {
-    std::uintptr_t is_null_;
-    std::unique_ptr<VariableDecl> var_decl_;
-    std::unique_ptr<ExprStmt> expr_stmt_;
-    std::unique_ptr<PrintStmt> print_stmt_;
-  };
-
-  Statement() : type_(StmtType::Empty) {}
-  Statement(StmtType type) : type_(type) {}
-  ~Statement() {}
-};
-
-struct Expression {
-  ExprType type_;
-  union {
-    std::uintptr_t is_null_;
-    std::int64_t int_lit_;
-    std::unique_ptr<InfixExpr> infix;
-  };
-
-  Expression() : type_(ExprType::Empty) {}
-  Expression(ExprType type) : type_(type) {}
-  ~Expression() {};
-};
 
 #endif

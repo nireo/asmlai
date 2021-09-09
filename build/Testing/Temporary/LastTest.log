@@ -1,3 +1,24 @@
-Start testing: Sep 09 22:14 EEST
+Start testing: Sep 09 22:49 EEST
 ----------------------------------------------------------
-End testing: Sep 09 22:14 EEST
+1/1 Testing: ParserTest.ExpressionStatement
+1/1 Test: ParserTest.ExpressionStatement
+Command: "/home/eemil/dev/asmlai/build/lai_test" "--gtest_filter=ParserTest.ExpressionStatement" "--gtest_also_run_disabled_tests"
+Directory: /home/eemil/dev/asmlai/build
+"ParserTest.ExpressionStatement" start time: Sep 09 22:49 EEST
+Output:
+----------------------------------------------------------
+Running main() from /home/eemil/dev/asmlai/build/_deps/googletest-src/googletest/src/gtest_main.cc
+Note: Google Test filter = ParserTest.ExpressionStatement
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from ParserTest
+[ RUN      ] ParserTest.ExpressionStatement
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Failed.
+"ParserTest.ExpressionStatement" end time: Sep 09 22:49 EEST
+"ParserTest.ExpressionStatement" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Sep 09 22:49 EEST

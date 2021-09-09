@@ -34,21 +34,19 @@ read_file(const char *path)
 }
 
 int
-main(int argc, char **argv)
+main(void)
 {
-  if(argc != 2) {
-    fprintf(stderr, "usage: lai <filepath>\n");
-    exit(1);
-  }
+  // if(argc != 2) {
+  //   fprintf(stderr, "usage: lai <filepath>\n");
+  //   exit(1);
+  // }
 
-  char *source = read_file(argv[1]);
-  printf("src: %s\n\n\n", source);
+  // char *source = read_file(argv[1]);
+  // printf("src: %s\n\n\n", source);
 
-  auto statements = parse(source);
+  auto statements = parse("print 1;");
 
   // TODO: codegen for the statements.
-
-  free(source);
 
 
   return 0;
