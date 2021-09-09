@@ -1,25 +1,86 @@
 #ifndef LAI_AST_H
 #define LAI_AST_H
 
-typedef enum {
-  AST_ADD,
-  AST_SUBTRACT,
-  AST_MULTIPLY,
-  AST_DIV,
-  AST_INTLITERAL,
-} AST_TYPE;
+#include "lexer.h"
+#include <cstdint>
+#include <memory>
+#include <string>
 
-typedef struct Node {
-  struct Node *left;
-  struct Node *right;
+enum class StmtType {
+  Empty,
+  VarDecl,
+  Return,
+  Expression,
+  Block,
+  Print,
+};
 
-  // this needs to be able to hold some different values, but for the beginning
-  // it's fine
-  int value;
-  int type;
-  char *str;
-} Node;
+enum class ExprType {
+  Empty,
+  Identifier,
+  Call,
+  StringLiteral,
+  Prefix,
+  Infix,
+  If,
+  IntegerLiteral,
+  Boolean,
+  FunctionLiteral,
+};
 
-Node *new_node(Node *left, Node *right, int value, int type);
+struct Expression;
+struct Statement;
+
+struct IdentifierExpr {
+  std::string name_;
+};
+
+struct InfixExpr {
+  TokenType opr;
+
+  std::unique_ptr<Expression> expr_left_;
+  std::unique_ptr<Expression> expr_right_;
+};
+
+struct VariableDecl {
+  std::unique_ptr<IdentifierExpr> ident_;
+  std::unique_ptr<Expression> expr_;
+  VariableDecl() : expr_(nullptr){};
+};
+
+struct ExprStmt {
+  std::unique_ptr<Expression> expr_;
+};
+
+struct PrintStmt {
+  std::unique_ptr<Expression> expr_;
+};
+
+struct Statement {
+  StmtType type_;
+  union {
+    std::uintptr_t is_null_;
+    std::unique_ptr<VariableDecl> var_decl_;
+    std::unique_ptr<ExprStmt> expr_stmt_;
+    std::unique_ptr<PrintStmt> print_stmt_;
+  };
+
+  Statement() : type_(StmtType::Empty) {}
+  Statement(StmtType type) : type_(type) {}
+  ~Statement() {}
+};
+
+struct Expression {
+  ExprType type_;
+  union {
+    std::uintptr_t is_null_;
+    std::int64_t int_lit_;
+    std::unique_ptr<InfixExpr> infix;
+  };
+
+  Expression() : type_(ExprType::Empty) {}
+  Expression(ExprType type) : type_(type) {}
+  ~Expression() {};
+};
 
 #endif
