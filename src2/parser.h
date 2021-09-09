@@ -8,8 +8,8 @@
 #include <vector>
 
 class Parser;
-typedef std::unique_ptr<Expression> (Parser::*PrefixParseFn)();
-typedef std::unique_ptr<Expression> (Parser::*InfixParseFn)(
+typedef std::unique_ptr<Expression> (*PrefixParseFn)();
+typedef std::unique_ptr<Expression> (*InfixParseFn)(
     std::unique_ptr<Expression>);
 
 enum Precedence {

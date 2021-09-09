@@ -12,6 +12,7 @@ enum class StmtType {
   Return,
   Expression,
   Block,
+  Print,
 };
 
 enum class ExprType {
@@ -34,6 +35,13 @@ struct IdentifierExpr {
   std::string name_;
 };
 
+struct InfixExpr {
+  TokenType opr;
+
+  std::unique_ptr<Expression> expr_left_;
+  std::unique_ptr<Expression> expr_right_;
+};
+
 struct VariableDecl {
   std::unique_ptr<IdentifierExpr> ident_;
   std::unique_ptr<Expression> expr_;
@@ -44,12 +52,17 @@ struct ExprStmt {
   std::unique_ptr<Expression> expr_;
 };
 
+struct PrintStmt {
+  std::unique_ptr<Expression> expr_;
+};
+
 struct Statement {
   StmtType type_;
   union {
     std::uintptr_t is_null_;
     std::unique_ptr<VariableDecl> var_decl_;
     std::unique_ptr<ExprStmt> expr_stmt_;
+    std::unique_ptr<PrintStmt> print_stmt_;
   };
 
   Statement() : type_(StmtType::Empty) {}
@@ -62,6 +75,7 @@ struct Expression {
   union {
     std::uintptr_t is_null_;
     std::int64_t int_lit_;
+    std::unique_ptr<InfixExpr> infix;
   };
 
   Expression() : type_(ExprType::Empty) {}

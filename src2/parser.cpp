@@ -2,19 +2,23 @@
 #include "ast.h"
 #include "lexer.h"
 #include <algorithm>
+#include <cstdint>
 #include <cstdlib>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <unordered_map>
 
-static const Precedence precedences[] = {
-  [TOKEN_EQUAL] = EQUALS,     [TOKEN_BANG_EQUAL] = EQUALS,
-  [TOKEN_LESS] = LESSGREATER, [TOKEN_GREATER] = LESSGREATER,
-  [TOKEN_PLUS] = SUM,         [TOKEN_MINUS] = SUM,
-  [TOKEN_SLASH] = PRODUCT,    [TOKEN_STAR] = PRODUCT,
-  [TOKEN_LEFT_PAREN] = CALL,  [TOKEN_LEFT_BRACKET] = INDEX,
+static std::unordered_map<TokenType, Precedence> precedences = {
+  { TOKEN_EQUAL, EQUALS },     { TOKEN_BANG_EQUAL, EQUALS },
+  { TOKEN_LESS, LESSGREATER }, { TOKEN_GREATER, LESSGREATER },
+  { TOKEN_PLUS, SUM },         { TOKEN_MINUS, SUM },
+  { TOKEN_SLASH, PRODUCT },    { TOKEN_STAR, PRODUCT },
+  { TOKEN_LEFT_PAREN, CALL },  { TOKEN_LEFT_BRACKET, INDEX },
 };
+
+static std::unordered_map<TokenType, InfixParseFn> infix_fns = { {} };
+static std::unordered_map<TokenType, PrefixParseFn> prefix_fns = { {} };
 
 // std::unordered_map<TokenType, PrefixarseFn> m_prefix_parse_fns;
 // std::unordered_map<TokenType, InfixParseFn> m_infix_parse_fns;
@@ -147,17 +151,75 @@ match(TokenType type)
   return true;
 }
 
-static std::unique_ptr<Expression>
-parse_expression()
+std::unique_ptr<Expression>
+parse_integer_literal()
 {
+  auto lit = std::make_unique<Expression>(ExprType::IntegerLiteral);
+  std::int64_t value
+      = (std::int64_t)std::strtod(parser.previous.start, nullptr);
+  lit->int_lit_ = value;
+
+  return lit;
+}
+
+static Precedence
+get_curr_prec()
+{
+  if(precedences.find(parser.current.type) != precedences.end()) {
+    return precedences[parser.current.type];
+  }
+
+  return LOWEST;
+}
+
+static std::unique_ptr<Expression>
+parse_expression(Precedence prec)
+{
+  advance();
+  if(prefix_fns.find(parser.current.type) == prefix_fns.end()) {
+    return nullptr;
+  }
+
+  auto fn = prefix_fns[parser.current.type];
+  auto left = fn();
+
+  while(!match(TOKEN_SEMICOLON) && prec <= get_curr_prec()) {
+    advance();
+    auto infix = infix_fns[parser.current.type];
+    if(infix == nullptr) {
+      return left;
+    }
+
+    left = infix(std::move(left));
+  }
+
+  return left;
+}
+
+static std::unique_ptr<Expression>
+parse_infix_expression(std::unique_ptr<Expression> left)
+{
+  auto infix = std::make_unique<InfixExpr>();
+  infix->opr = parser.current.type;
+  infix->expr_left_ = std::move(left);
+
+  Precedence prec = get_curr_prec();
+  advance();
+
+  infix->expr_right_ = std::move(parse_expression(prec));
+
+  auto exp = std::make_unique<Expression>(ExprType::Infix);
+  exp->infix = std::move(infix);
+
+  return exp;
 }
 
 static std::unique_ptr<Statement>
 parse_variable_declaration()
 {
   std::unique_ptr<Expression> expr;
-  if (match(TOKEN_EQUAL))
-    expr = parse_expression();
+  if(match(TOKEN_EQUAL))
+    expr = parse_expression(LOWEST);
 
   consume(TOKEN_SEMICOLON, "expected ';' after declaration");
 
@@ -171,10 +233,30 @@ parse_variable_declaration()
 }
 
 static std::unique_ptr<Statement>
+parse_print_statement()
+{
+  std::unique_ptr<Expression> expr = parse_expression(LOWEST);
+  consume(TOKEN_SEMICOLON, "expected ';' after print statement");
+
+  auto print_stmt = std::make_unique<PrintStmt>();
+  print_stmt->expr_ = std::move(expr);
+
+  auto stmt = std::make_unique<Statement>(StmtType::Print);
+  stmt->print_stmt_ = std::move(print_stmt);
+
+  return stmt;
+}
+
+static std::unique_ptr<Statement>
 parse_statement()
 {
-  if(match(TOKEN_INT)) {
+  if(match(TOKEN_INT) || match(TOKEN_CHAR)) {
+    return parse_variable_declaration();
+  } else if(match(TOKEN_PRINT)) {
+    return parse_print_statement();
   }
+
+  return nullptr;
 }
 
 std::vector<std::unique_ptr<Statement> >
@@ -187,6 +269,12 @@ parse(const char *source)
   advance();
 
   while(!match(TOKEN_EOF)) {
+    auto stmt = parse_statement();
+    if(stmt == nullptr) {
+      break;
+    }
+
+    result.push_back(std::move(stmt));
   }
 
   return std::move(statements);
