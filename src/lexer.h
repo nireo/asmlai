@@ -1,99 +1,28 @@
-#ifndef LAI_LEXER_H
-#define LAI_LEXER_H
+#ifndef LUPS_LEXER_H
+#define LUPS_LEXER_H
 
-typedef enum {
-  // keywords
-  TOKEN_IF,
-  TOKEN_CONST,
-  TOKEN_DOUBLE,
-  TOKEN_FLOAT,
-  TOKEN_INT,
-  TOKEN_SHORT,
-  TOKEN_STRUCT,
-  TOKEN_UNSIGNED,
-  TOKEN_BREAK,
-  TOKEN_CONTINUE,
-  TOKEN_ELSE,
-  TOKEN_FOR,
-  TOKEN_LONG,
-  TOKEN_SIGNED,
-  TOKEN_SWITCH,
-  TOKEN_VOID,
-  TOKEN_CASE,
-  TOKEN_DEFAULT,
-  TOKEN_ENUM,
-  TOKEN_GOTO,
-  TOKEN_SIZEOF,
-  TOKEN_TYPEDEF,
-  TOKEN_CHAR,
-  TOKEN_DO,
-  TOKEN_EXTERN,
-  TOKEN_RETURN,
-  TOKEN_UNION,
-  TOKEN_WHILE,
-  TOKEN_IDENTIFIER,
-  TOKEN_NUMBER,
-  TOKEN_STRING,
-  TOKEN_STATIC,
-  TOKEN_PRINT,
+#include <string>
+#include "token.h"
 
-  TOKEN_PLUS_EQUAL,
-  TOKEN_SLASH_EQUAL,
-  TOKEN_MINUS_EQUAL,
-  TOKEN_STAR_EQUAL,
+class Lexer {
+public:
+	Lexer(const std::string &input);
+	Token next_token();
 
-  TOKEN_EOF,
-  TOKEN_ERROR,
+private:
+	std::string input_;
+	int pos_;
+	char ch_;
+	int read_pos_;
 
-  // other tokens
-  TOKEN_AND,
-  TOKEN_OR,
-  TOKEN_LEFT_PAREN,
-  TOKEN_RIGHT_PAREN,
-  TOKEN_LEFT_BRACE,
-  TOKEN_RIGHT_BRACE,
-  TOKEN_COMMA,
-  TOKEN_DOT,
-  TOKEN_MINUS,
-  TOKEN_PLUS,
-  TOKEN_SEMICOLON,
-  TOKEN_SLASH,
-  TOKEN_STAR,
-  TOKEN_COLON,
-  TOKEN_LEFT_BRACKET,
-  TOKEN_RIGHT_BRACKET,
-  TOKEN_MODULO,
-  TOKEN_BITOR,
-  TOKEN_BITAND,
-  TOKEN_BITLEFT,
-  TOKEN_BITRIGHT,
-  TOKEN_COMPLEMENT,
-  TOKEN_BANG,
-  TOKEN_BANG_EQUAL,
-  TOKEN_EQUAL,
-  TOKEN_EQUAL_EQUAL,
-  TOKEN_GREATER,
-  TOKEN_GREATER_EQUAL,
-  TOKEN_LESS,
-  TOKEN_LESS_EQUAL,
-} TokenType;
+	std::string read_ident();
+	std::string read_number();
+	std::string read_string();
 
-typedef struct {
-  const char *start;
-  const char *current;
+	void read_char();
+	void skip_whitespace();
 
-  int line;
-} Lexer;
-
-typedef struct Token {
-  TokenType type;
-  int len;
-  int line;
-
-  const char *start;
-} Token;
-
-Token get_token();
-void init_lexer(const char *source);
+	char peek_char();
+};
 
 #endif

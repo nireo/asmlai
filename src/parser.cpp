@@ -1,254 +1,496 @@
+#include "parser.h"
+#include "ast.h"
+#include "token.h"
 #include <algorithm>
-#include <cstdint>
 #include <cstdlib>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <unordered_map>
 
-#include "ast.h"
-#include "lexer.h"
-#include "parser.h"
-
-static std::unordered_map<TokenType, Precedence> precedences = {
-  { TOKEN_EQUAL, EQUALS },     { TOKEN_BANG_EQUAL, EQUALS },
-  { TOKEN_LESS, LESSGREATER }, { TOKEN_GREATER, LESSGREATER },
-  { TOKEN_PLUS, SUM },         { TOKEN_MINUS, SUM },
-  { TOKEN_SLASH, PRODUCT },    { TOKEN_STAR, PRODUCT },
-  { TOKEN_LEFT_PAREN, CALL },  { TOKEN_LEFT_BRACKET, INDEX },
-};
-
-static std::unordered_map<TokenType, InfixParseFn> infix_fns = { {} };
-static std::unordered_map<TokenType, PrefixParseFn> prefix_fns = { {} };
-
-struct Parser {
-  bool panic_mode;
-  bool had_error;
-  Token current;
-  Token previous;
-  Parser() : panic_mode(false), had_error(false) {}
-};
-
-Parser parser;
-
-static std::vector<std::unique_ptr<Statement> > statements;
-
-static void
-error_at(Token *token, const char *message)
+template <typename T>
+T
+FromString(const std::string &str)
 {
-  if(parser.panic_mode)
-    return;
-  parser.panic_mode = true;
+  std::istringstream ss(str);
+  T ret;
+  ss >> ret;
+  return ret;
+}
 
-  fprintf(stderr, "[line %d] Error", token->line);
+using std::unique_ptr;
 
-  if(token->type == TOKEN_EOF) {
-    fprintf(stderr, " at end");
-  } else if(token->type == TOKEN_ERROR) {
+unique_ptr<Program>
+Parser::parse_program()
+{
+  auto program = std::make_unique<Program>();
+  program->statements_ = std::vector<unique_ptr<Statement> >();
+
+  while(current_.type != tokentypes::EOFF) {
+    auto stmt = parse_statement();
+    if(stmt != nullptr) {
+      program->statements_.push_back(std::move(stmt));
+    }
+    next_token();
+  }
+
+  return program;
+}
+
+Parser::Parser(std::unique_ptr<Lexer> lx)
+{
+  lx_ = std::move(lx);
+
+  m_prefix_parse_fns = std::unordered_map<TokenType, PrefixParseFn>();
+
+  add_prefix_parse(tokentypes::IDENT, &Parser::parse_identifier);
+  add_prefix_parse(tokentypes::INT, &Parser::parse_integer_literal);
+  add_prefix_parse(tokentypes::BANG, &Parser::parse_prefix_expression);
+  add_prefix_parse(tokentypes::MINUS, &Parser::parse_prefix_expression);
+  add_prefix_parse(tokentypes::TRUE, &Parser::parse_boolean);
+  add_prefix_parse(tokentypes::FALSE, &Parser::parse_boolean);
+  add_prefix_parse(tokentypes::LPAREN, &Parser::parse_grouped_expression);
+  add_prefix_parse(tokentypes::IF, &Parser::parse_if_expression);
+  add_prefix_parse(tokentypes::FUNCTION, &Parser::parse_function_literal);
+  add_prefix_parse(tokentypes::STRING, &Parser::parse_string_literal);
+  add_prefix_parse(tokentypes::LBRACKET, &Parser::parse_array_literal);
+
+  m_infix_parse_fns = std::unordered_map<TokenType, InfixParseFn>();
+  add_infix_parse(tokentypes::PLUS, &Parser::parse_infix_expression);
+  add_infix_parse(tokentypes::MINUS, &Parser::parse_infix_expression);
+  add_infix_parse(tokentypes::SLASH, &Parser::parse_infix_expression);
+  add_infix_parse(tokentypes::ASTERISK, &Parser::parse_infix_expression);
+  add_infix_parse(tokentypes::EQ, &Parser::parse_infix_expression);
+  add_infix_parse(tokentypes::NEQ, &Parser::parse_infix_expression);
+  add_infix_parse(tokentypes::LT, &Parser::parse_infix_expression);
+  add_infix_parse(tokentypes::GT, &Parser::parse_infix_expression);
+  add_infix_parse(tokentypes::LPAREN, &Parser::parse_call_expression);
+  add_infix_parse(tokentypes::LBRACKET, &Parser::parse_index_expression);
+
+  next_token();
+  next_token();
+}
+
+void
+Parser::next_token()
+{
+  current_ = peek_;
+  peek_ = lx_->next_token();
+}
+
+std::unique_ptr<Statement>
+Parser::parse_statement()
+{
+  if(current_.type == tokentypes::LET) {
+    return parse_let_statement();
+  } else if(current_.type == tokentypes::RETURN) {
+    return parse_return_statement();
   } else {
-    fprintf(stderr, " at '%.*s'", token->len, token->start);
-  }
-
-  fprintf(stderr, ": %s\n", message);
-  parser.had_error = true;
-}
-
-static void
-error(const char *message)
-{
-  error_at(&parser.previous, message);
-}
-
-static void
-error_at_current(const char *message)
-{
-  error_at(&parser.current, message);
-}
-
-static void
-advance(void)
-{
-  parser.previous = parser.current;
-
-  for(;;) {
-    parser.current = get_token();
-    if(parser.current.type != TOKEN_ERROR)
-      break;
-
-    error_at_current(parser.current.start);
+    return parse_expression_statement();
   }
 }
 
-static void
-consume(TokenType type, const char *message)
+bool
+Parser::current_token_is(TokenType tt)
 {
-  if(parser.current.type == type) {
-    advance();
-    return;
+  return current_.type == tt;
+}
+
+bool
+Parser::peek_token_is(TokenType tt)
+{
+  return peek_.type == tt;
+}
+
+bool
+Parser::expect_peek(TokenType tt)
+{
+  if(peek_token_is(tt)) {
+    next_token();
+    return true;
   }
 
-  error_at_current(message);
+  peek_error(tt);
+  return false;
 }
 
-static bool
-check(TokenType type)
+std::unique_ptr<Statement>
+Parser::parse_let_statement()
 {
-  return parser.current.type == type;
-}
+  auto letstmt = std::make_unique<LetStatement>();
 
-static bool
-match(TokenType type)
-{
-  if(!check(type))
-    return false;
-
-  advance();
-
-  return true;
-}
-
-std::unique_ptr<Expression>
-parse_integer_literal()
-{
-  auto lit = std::make_unique<Expression>(ExprType::IntegerLiteral);
-  std::int64_t value
-      = (std::int64_t)std::strtod(parser.previous.start, nullptr);
-  lit->int_lit_ = value;
-
-  return lit;
-}
-
-static Precedence
-get_curr_prec()
-{
-  if(precedences.find(parser.current.type) != precedences.end()) {
-    return precedences[parser.current.type];
-  }
-
-  return LOWEST;
-}
-
-static std::unique_ptr<Expression>
-parse_expression(Precedence prec)
-{
-  printf("start: %s", parser.previous.start);
-  advance();
-  if(prefix_fns.find(parser.previous.type) == prefix_fns.end()) {
-    error("no prefix function found");
+  if(!expect_peek(tokentypes::IDENT)) {
     return nullptr;
   }
 
-  printf("start: %s", parser.previous.start);
+  auto ident = std::make_unique<Identifier>();
+  ident->value_ = current_.literal;
+  letstmt->name_ = std::move(ident);
 
-  auto fn = prefix_fns[parser.current.type];
-  auto left = fn();
+  if(!expect_peek(tokentypes::ASSIGN)) {
+    return nullptr;
+  }
 
-  while(!match(TOKEN_SEMICOLON) && prec <= get_curr_prec()) {
-    advance();
-    auto infix = infix_fns[parser.previous.type];
-    if(infix == nullptr) {
+  next_token();
+
+  letstmt->value_ = parse_expression(LOWEST);
+
+  if(peek_token_is(tokentypes::SEMICOLON))
+    next_token();
+
+  return letstmt;
+}
+
+std::unique_ptr<Statement>
+Parser::parse_return_statement()
+{
+  auto returnstmt = std::make_unique<ReturnStatement>();
+
+  next_token();
+  returnstmt->return_value_ = parse_expression(LOWEST);
+
+  if(peek_token_is(tokentypes::SEMICOLON))
+    next_token();
+
+  return returnstmt;
+}
+
+std::unique_ptr<Statement>
+Parser::parse_expression_statement()
+{
+  auto stmt = std::make_unique<ExpressionStatement>();
+
+  stmt->expression_ = parse_expression(LOWEST);
+  if(peek_token_is(tokentypes::SEMICOLON)) {
+    next_token();
+  }
+
+  return stmt;
+}
+
+std::unique_ptr<Expression>
+Parser::parse_expression(Precedence prec)
+{
+  if(m_prefix_parse_fns.find(current_.type) == m_prefix_parse_fns.end()) {
+    return nullptr;
+  }
+
+  auto fn = m_prefix_parse_fns[current_.type];
+  auto left = (this->*fn)();
+
+  while(!peek_token_is(tokentypes::SEMICOLON) && prec < peek_precedence()) {
+    auto infix = m_infix_parse_fns[peek_.type];
+    if(infix == nullptr)
       return left;
-    }
-
-    left = infix(std::move(left));
+    next_token();
+    left = (this->*infix)(std::move(left));
   }
 
   return left;
 }
 
-static std::unique_ptr<Expression>
-parse_infix_expression(std::unique_ptr<Expression> left)
+std::unique_ptr<Expression>
+Parser::parse_identifier()
 {
-  auto infix = std::make_unique<InfixExpr>();
-  infix->opr = parser.current.type;
-  infix->expr_left_ = std::move(left);
+  auto identifier = std::make_unique<Identifier>();
+  identifier->value_ = current_.literal;
 
-  Precedence prec = get_curr_prec();
-  advance();
+  return identifier;
+}
 
-  infix->expr_right_ = std::move(parse_expression(prec));
+std::unique_ptr<Expression>
+Parser::parse_integer_literal()
+{
+  auto lit = std::make_unique<IntegerLiteral>();
 
-  auto exp = std::make_unique<Expression>(ExprType::Infix);
-  exp->infix = std::move(infix);
+  try {
+    int res = std::stoi(current_.literal);
+    lit->value_ = res;
+  } catch(std::invalid_argument e) {
+    errors_.push_back("could not parse integer");
+    return nullptr;
+  }
+
+  return lit;
+}
+
+std::unique_ptr<Expression>
+Parser::parse_prefix_expression()
+{
+  auto exp = std::make_unique<PrefixExpression>();
+  exp->opr = current_.literal;
+
+  next_token();
+  exp->right_ = parse_expression(PREFIX);
 
   return exp;
 }
 
-static std::unique_ptr<Statement>
-parse_variable_declaration()
+Precedence
+Parser::peek_precedence()
 {
-  auto type = parser.previous.type;
-  std::unique_ptr<Expression> expr;
-  if(match(TOKEN_EQUAL))
-    expr = parse_expression(LOWEST);
-
-  consume(TOKEN_SEMICOLON, "expected ';' after declaration");
-
-  auto var_decl = std::make_unique<VarDecl>();
-  var_decl->value = std::move(expr);
-  var_decl->type = type;
-
-  return var_decl;
+  if(precedences.find(peek_.type) != precedences.end())
+    return precedences.at(peek_.type);
+  return LOWEST;
 }
 
-static std::unique_ptr<Statement>
-parse_print_statement()
+Precedence
+Parser::current_precedence()
 {
-  printf("prev: %s", parser.previous.start);
-  printf("curr: %s", parser.current.start);
-  std::unique_ptr<Expression> expr = parse_expression(LOWEST);
-  consume(TOKEN_SEMICOLON, "expected ';' after print statement");
-
-  auto stmt = std::make_unique<PrintStmt>();
-  stmt->value = std::move(expr);
-
-  return stmt;
+  if(precedences.find(current_.type) != precedences.end())
+    return precedences.at(current_.type);
+  return LOWEST;
 }
 
-static std::unique_ptr<Statement>
-parse_expression_statement()
+std::unique_ptr<Expression>
+Parser::parse_infix_expression(std::unique_ptr<Expression> left)
 {
-  auto expr_stmt = std::make_unique<ExprStmt>();
+  auto exp = std::make_unique<InfixExpression>();
+  exp->opr = current_.literal;
+  exp->left_ = std::move(left);
 
-  auto expr = parse_expression(LOWEST);
-  consume(TOKEN_SEMICOLON, "expect ';' after expression");
+  auto prec = current_precedence();
+  next_token();
+  exp->right_ = std::move(parse_expression(prec));
 
-  auto stmt = std::make_unique<Statement>(StmtType::Expression);
-  stmt->expr_stmt_ = std::move(expr_stmt);
-
-  return stmt;
+  return exp;
 }
 
-static std::unique_ptr<Statement>
-parse_statement()
+std::unique_ptr<Expression>
+Parser::parse_grouped_expression()
 {
-  if(match(TOKEN_INT) || match(TOKEN_CHAR)) {
-    return parse_variable_declaration();
-  } else if(match(TOKEN_PRINT)) {
-    return parse_print_statement();
-  }
+  next_token();
+  auto exp = parse_expression(LOWEST);
+  if(!expect_peek(tokentypes::RPAREN))
+    return nullptr;
 
-  return parse_expression_statement();
+  return exp;
 }
 
-std::vector<std::unique_ptr<Statement> >
-parse(const char *source)
+std::unique_ptr<Expression>
+Parser::parse_boolean()
 {
-  std::vector<std::unique_ptr<Statement> > result;
-  init_lexer(source);
-  parser = Parser();
-  prefix_fns[TOKEN_NUMBER] = parse_integer_literal;
+  auto exp = std::make_unique<BooleanExpression>();
+  exp->value_ = current_token_is(tokentypes::TRUE);
 
-  advance();
+  return exp;
+}
 
-  while(!match(TOKEN_EOF)) {
-    auto stmt = parse_statement();
-    if(stmt == nullptr) {
-      break;
+std::unique_ptr<Expression>
+Parser::parse_if_expression()
+{
+  auto exp = std::make_unique<IfExpression>();
+
+  if(!expect_peek(tokentypes::LPAREN))
+    return nullptr;
+
+  next_token();
+  exp->cond_ = parse_expression(LOWEST);
+
+  if(!expect_peek(tokentypes::RPAREN))
+    return nullptr;
+
+  if(!expect_peek(tokentypes::LBRACE))
+    return nullptr;
+
+  exp->after_ = parse_block_statement();
+
+  if(peek_token_is(tokentypes::ELSE)) {
+    next_token();
+
+    if(!expect_peek(tokentypes::LBRACE)) {
+      return nullptr;
     }
 
-    result.push_back(std::move(stmt));
+    exp->other_ = parse_block_statement();
   }
 
-  return std::move(statements);
+  return exp;
+}
+
+std::unique_ptr<BlockStatement>
+Parser::parse_block_statement()
+{
+  auto block = std::make_unique<BlockStatement>();
+  block->token = current_;
+  block->statements_ = std::vector<std::unique_ptr<Statement> >();
+
+  next_token();
+
+  while(!current_token_is(tokentypes::RBRACE)
+        && !current_token_is(tokentypes::EOFF)) {
+    auto stmt = parse_statement();
+    if(stmt != nullptr) {
+      block->statements_.push_back(std::move(stmt));
+    }
+    next_token();
+  }
+
+  return block;
+}
+
+std::unique_ptr<Expression>
+Parser::parse_function_literal()
+{
+  auto lit = std::make_unique<FunctionLiteral>();
+
+  if(!expect_peek(tokentypes::LPAREN))
+    return nullptr;
+
+  lit->params_ = parse_function_params();
+
+  if(!expect_peek(tokentypes::LBRACE))
+    return nullptr;
+
+  lit->body_ = std::move(parse_block_statement());
+
+  return lit;
+}
+
+std::vector<std::unique_ptr<Identifier> >
+Parser::parse_function_params()
+{
+  std::vector<std::unique_ptr<Identifier> > params;
+  if(peek_token_is(tokentypes::LPAREN)) {
+    next_token();
+    return params;
+  }
+
+  next_token();
+
+  auto ident = std::make_unique<Identifier>();
+  ident->value_ = current_.literal;
+  params.push_back(std::move(ident));
+
+  while(peek_token_is(tokentypes::COMMA)) {
+    next_token();
+    next_token();
+
+    auto ident = std::make_unique<Identifier>();
+    ident->value_ = current_.literal;
+    params.push_back(std::move(ident));
+  }
+
+  if(!expect_peek(tokentypes::RPAREN))
+    return std::vector<std::unique_ptr<Identifier> >();
+
+  return params;
+}
+
+std::unique_ptr<Expression>
+Parser::parse_call_expression(std::unique_ptr<Expression> func)
+{
+  auto exp = std::make_unique<CallExpression>();
+  exp->func_ = std::move(func);
+  exp->arguments_ = parse_expression_list(tokentypes::RPAREN);
+
+  return exp;
+}
+
+std::unique_ptr<Expression>
+Parser::parse_string_literal()
+{
+  auto strlit = std::make_unique<StringLiteral>();
+  strlit->value_ = current_.literal;
+
+  return strlit;
+}
+
+std::unique_ptr<Expression>
+Parser::parse_array_literal()
+{
+  auto arr = std::make_unique<ArrayLiteral>();
+  arr->elements_ = std::move(parse_expression_list(tokentypes::RBRACKET));
+
+  return arr;
+}
+
+std::vector<std::unique_ptr<Expression> >
+Parser::parse_expression_list(TokenType end)
+{
+  std::vector<std::unique_ptr<Expression> > expressions;
+  if(peek_token_is(end)) {
+    next_token();
+    return expressions;
+  }
+
+  next_token();
+  expressions.push_back(std::move(parse_expression(LOWEST)));
+  while(peek_token_is(tokentypes::COMMA)) {
+    next_token();
+    next_token();
+
+    expressions.push_back(std::move(parse_expression(LOWEST)));
+  }
+
+  if(!expect_peek(end))
+    return std::vector<std::unique_ptr<Expression> >();
+
+  return expressions;
+}
+
+std::vector<std::unique_ptr<Expression> >
+Parser::parse_call_arguments()
+{
+  std::vector<std::unique_ptr<Expression> > args;
+
+  if(peek_token_is(tokentypes::RPAREN)) {
+    next_token();
+    return args;
+  }
+
+  next_token();
+  args.push_back(std::move(parse_expression(LOWEST)));
+
+  while(peek_token_is(tokentypes::COMMA)) {
+    next_token();
+    next_token();
+
+    args.push_back(std::move(parse_expression(LOWEST)));
+  }
+
+  if(!expect_peek(tokentypes::RPAREN))
+    return std::vector<std::unique_ptr<Expression> >();
+
+  return args;
+}
+
+std::unique_ptr<Expression>
+Parser::parse_index_expression(std::unique_ptr<Expression> left)
+{
+  auto exp = std::make_unique<IndexExpression>();
+  exp->left_ = std::move(left);
+
+  next_token();
+  exp->index_ = parse_expression(LOWEST);
+  if(!expect_peek(tokentypes::RBRACKET))
+    return nullptr;
+
+  return exp;
+}
+
+std::vector<std::string>
+Parser::errors() const
+{
+  return errors_;
+}
+
+void
+Parser::peek_error(TokenType tt)
+{
+  std::string err
+      = "expected next token to be " + tt + " got " + peek_.type + " instead";
+  errors_.push_back(err);
+}
+
+void
+Parser::add_prefix_parse(TokenType tt, PrefixParseFn fn)
+{
+  m_prefix_parse_fns[tt] = fn;
+}
+
+void
+Parser::add_infix_parse(TokenType tt, InfixParseFn fn)
+{
+  m_infix_parse_fns[tt] = fn;
 }
