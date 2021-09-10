@@ -1,5 +1,5 @@
-#ifndef LUPS_PARSER_H
-#define LUPS_PARSER_H
+#ifndef LAI_PARSER_H
+#define LAI_PARSER_H
 
 #include "ast.h"
 #include "lexer.h"
@@ -8,10 +8,12 @@
 #include <unordered_map>
 
 class Parser;
-typedef std::unique_ptr<Expression> (*PrefixParseFn)();
-typedef std::unique_ptr<Expression> (*InfixParseFn)(
+typedef std::unique_ptr<Expression> (Parser::*PrefixParseFn)();
+typedef std::unique_ptr<Expression> (Parser::*InfixParseFn)(
     std::unique_ptr<Expression>);
 
+
+// TODO: make scoped enum
 enum Precedence {
   LOWEST,
   EQUALS,
@@ -23,14 +25,21 @@ enum Precedence {
   INDEX,
 };
 
-class Parser
-{
+const std::unordered_map<tokentypes, Precedence> precedences = {
+  { tokentypes::Eq, EQUALS },      { tokentypes::Neq, EQUALS },
+  { tokentypes::LT, LESSGREATER }, { tokentypes::GT, LESSGREATER },
+  { tokentypes::Plus, SUM },       { tokentypes::Minus, SUM },
+  { tokentypes::Slash, PRODUCT },  { tokentypes::Asterisk, PRODUCT },
+  { tokentypes::LParen, CALL },    { tokentypes::LBracket, INDEX },
+};
+
+
+class Parser {
 public:
   Parser(std::unique_ptr<Lexer> lx);
-  Parser() : lx_(nullptr) {}
   std::unique_ptr<Program> parse_program();
   std::vector<std::string> errors() const;
-
+private:
   std::unique_ptr<Lexer> lx_;
   Token current_;
   Token peek_;
@@ -42,6 +51,29 @@ public:
 
   void next_token();
 
+  std::unique_ptr<Statement> parse_statement();
+  std::unique_ptr<Statement> parse_let_statement();
+  std::unique_ptr<Statement> parse_return_statement();
+  std::unique_ptr<Statement> parse_expression_statement();
+  std::unique_ptr<Expression> parse_expression(Precedence prec);
+  std::unique_ptr<Expression> parse_identifier();
+  std::unique_ptr<Expression> parse_integer_literal();
+  std::unique_ptr<Expression> parse_prefix_expression();
+  std::unique_ptr<Expression> parse_infix_expression(std::unique_ptr<Expression> left);
+  std::unique_ptr<Expression> parse_boolean();
+  std::unique_ptr<Expression> parse_grouped_expression();
+  std::unique_ptr<Expression> parse_if_expression();
+  std::unique_ptr<BlockStatement> parse_block_statement();
+  std::unique_ptr<Expression> parse_function_literal();
+  std::unique_ptr<Expression> parse_string_literal();
+  std::unique_ptr<Expression> parse_call_expression(std::unique_ptr<Expression> func);
+  std::unique_ptr<Expression> parse_array_literal();
+  std::unique_ptr<Expression> parse_index_expression(std::unique_ptr<Expression> left);
+  std::vector<std::unique_ptr<Expression>> parse_expression_list(tokentypes end);
+
+  std::vector<std::unique_ptr<Identifier>> parse_function_params();
+  std::vector<std::unique_ptr<Expression>> parse_call_arguments();
+
   Precedence peek_precedence();
   Precedence current_precedence();
 
@@ -52,7 +84,5 @@ public:
 
   std::vector<std::string> errors_;
 };
-
-std::unique_ptr<Program> parse_source(std::string source);
 
 #endif

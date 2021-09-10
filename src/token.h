@@ -36,6 +36,11 @@ enum class tokentypes {
   Else,
   Return,
   String,
+
+  IntType,
+  CharType,
+  StringType,
+  FloatType,
 };
 
 struct Token {
@@ -44,10 +49,12 @@ struct Token {
 };
 
 const std::unordered_map<std::string, tokentypes> TokenKeywords = {
-  { "func", tokentypes::Function }, { "let", tokentypes::Let },
-  { "true", tokentypes::True },     { "false", tokentypes::False },
-  { "if", tokentypes::If },         { "else", tokentypes::Else },
-  { "return", tokentypes::Return },
+  { "fn", tokentypes::Function },     { "let", tokentypes::Let },
+  { "true", tokentypes::True },       { "false", tokentypes::False },
+  { "if", tokentypes::If },           { "else", tokentypes::Else },
+  { "return", tokentypes::Return },   { "int", tokentypes::IntType },
+  { "char", tokentypes::CharType },   { "string", tokentypes::StringType },
+  { "float", tokentypes::FloatType },
 };
 
 #endif
