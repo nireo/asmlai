@@ -4,55 +4,50 @@
 #include <string>
 #include <unordered_map>
 
-typedef std::string TokenType;
+enum class tokentypes {
+  Illegal,
+  Eof,
+  Ident,
+  Int,
+  Assign,
+  Plus,
+  Minus,
+  Bang,
+  Asterisk,
+  Slash,
+  Comma,
+  Semicolon,
+  Eq,
+  Neq,
+  Colon,
+  LParen,
+  RParen,
+  LBrace,
+  RBrace,
+  LBracket,
+  RBracket,
+  LT,
+  GT,
+  Function,
+  Let,
+  True,
+  False,
+  If,
+  Else,
+  Return,
+  String,
+};
+
 struct Token {
-  TokenType type;
+  tokentypes type;
   std::string literal;
 };
 
-namespace tokentypes
-{
-const TokenType ILLEGAL = "ILLEGAL";
-const TokenType EOFF = "EOF";
-const TokenType IDENT = "IDENT";
-const TokenType INT = "INT";
-
-const TokenType ASSIGN = "=";
-const TokenType PLUS = "+";
-const TokenType MINUS = "=";
-const TokenType BANG = "!";
-const TokenType ASTERISK = "*";
-const TokenType SLASH = "/";
-const TokenType COMMA = ",";
-const TokenType SEMICOLON = ";";
-const TokenType EQ = "==";
-const TokenType NEQ = "!=";
-const TokenType COLON = ":";
-
-const TokenType LPAREN = "(";
-const TokenType RPAREN = ")";
-const TokenType LBRACE = "{";
-const TokenType RBRACE = "}";
-const TokenType LBRACKET = "[";
-const TokenType RBRACKET = "]";
-
-const TokenType LT = "<";
-const TokenType GT = ">";
-
-const TokenType FUNCTION = "FUNCTION";
-const TokenType LET = "LET";
-const TokenType TRUE = "TRUE";
-const TokenType FALSE = "FALSE";
-const TokenType IF = "IF";
-const TokenType ELSE = "ELSE";
-const TokenType RETURN = "RETURN";
-const TokenType STRING = "STRING";
-
-const std::unordered_map<std::string, TokenType> KEYWORDS = {
-  { "func", FUNCTION }, { "let", LET }, { "true", TRUE },
-  { "false", FALSE },   { "if", IF },   { "else", ELSE },
-  { "return", RETURN },
+const std::unordered_map<std::string, tokentypes> TokenKeywords = {
+  { "func", tokentypes::Function }, { "let", tokentypes::Let },
+  { "true", tokentypes::True },     { "false", tokentypes::False },
+  { "if", tokentypes::If },         { "else", tokentypes::Else },
+  { "return", tokentypes::Return },
 };
-} // namespace tokentypes
 
 #endif

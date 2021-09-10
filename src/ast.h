@@ -1,5 +1,5 @@
-#ifndef LUPS_AST_H
-#define LUPS_AST_H
+#ifndef LAI_AST_H
+#define LAI_AST_H
 
 #include "token.h"
 #include <cstdint>
@@ -84,7 +84,7 @@ public:
     return AstType::LetStatement;
   }
 
-  TokenType type;
+  tokentypes type;
   std::unique_ptr<Identifier> name_;
   std::unique_ptr<Expression> value_;
 };
@@ -142,7 +142,7 @@ public:
     return AstType::PrefixExpression;
   }
 
-  TokenType opr;
+  tokentypes opr;
   std::unique_ptr<Expression> right_;
 };
 
@@ -155,7 +155,7 @@ public:
     return AstType::InfixExpression;
   }
 
-  TokenType opr;
+  tokentypes opr;
   std::unique_ptr<Expression> right_;
   std::unique_ptr<Expression> left_;
 };
