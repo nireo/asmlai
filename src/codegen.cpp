@@ -7,7 +7,7 @@ static std::FILE *fp = nullptr;
 static bool free_registers[4];
 static std::string registers[4] = { "%r8", "%r9", "%r10", "%r11" };
 
-static void
+void
 free_all_registers()
 {
   free_registers[0] = true;
@@ -149,4 +149,28 @@ end_codegen()
         "\tret\n",
         fp);
   fclose(fp);
+}
+
+int
+store_global(int r, std::string identifier)
+{
+  std::fprintf(fp, "\tmovq\t%s, %s(\%%rip)\n", registers[r].c_str(),
+               identifier.c_str());
+  return r;
+}
+
+void
+generate_sym(std::string symbol)
+{
+  std::fprintf(fp, "\t.comm\t%s,8,8\n", symbol.c_str());
+}
+
+int
+load_global(std::string identifier)
+{
+  int free_reg = get_register();
+
+  std::fprintf(fp, "\tmovq\t%s(\%%rip), %s\n", identifier.c_str(),
+               registers[free_reg].c_str());
+  return free_reg;
 }
