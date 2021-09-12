@@ -30,6 +30,10 @@ compile_ast_node(const Node &node)
   case AstType::InfixExpression: {
     const auto &infix_exp = static_cast<const InfixExpression &>(node);
 
+    if (infix_exp.left_ != nullptr && infix_exp.right_ == nullptr) {
+      return compile_ast_node(*infix_exp.left_);
+    }
+
     int left = 0, right = 0;
     if(infix_exp.left_ != nullptr) {
       left = compile_ast_node(*infix_exp.left_);
