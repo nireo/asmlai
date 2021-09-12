@@ -178,7 +178,6 @@ Lexer::read_string()
 void
 Lexer::skip_whitespace()
 {
-  printf("hello world");
   while(ch_ == ' ' || ch_ == '\t' || ch_ == '\n' || ch_ == '\r')
     read_char();
 }

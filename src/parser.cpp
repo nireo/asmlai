@@ -8,13 +8,11 @@
 #include <string>
 #include <unordered_map>
 
-using std::unique_ptr;
-
-unique_ptr<Program>
+std::unique_ptr<Program>
 Parser::parse_program()
 {
   auto program = std::make_unique<Program>();
-  program->statements_ = std::vector<unique_ptr<Statement> >();
+  program->statements_ = std::vector<std::unique_ptr<Statement> >();
 
   while(current_.type != tokentypes::Eof) {
     auto stmt = parse_statement();
@@ -27,7 +25,7 @@ Parser::parse_program()
   return program;
 }
 
-Parser::Parser(unique_ptr<Lexer> lx)
+Parser::Parser(std::unique_ptr<Lexer> lx)
 {
   lx_ = std::move(lx);
 
@@ -68,7 +66,7 @@ Parser::next_token()
   peek_ = lx_->next_token();
 }
 
-unique_ptr<Statement>
+std::unique_ptr<Statement>
 Parser::parse_statement()
 {
   if(current_.type == tokentypes::Let) {
@@ -104,7 +102,7 @@ Parser::expect_peek(tokentypes tt)
   return false;
 }
 
-unique_ptr<Statement>
+std::unique_ptr<Statement>
 Parser::parse_let_statement()
 {
   auto letstmt = std::make_unique<LetStatement>();
@@ -131,7 +129,7 @@ Parser::parse_let_statement()
   return letstmt;
 }
 
-unique_ptr<Statement>
+std::unique_ptr<Statement>
 Parser::parse_return_statement()
 {
   auto returnstmt = std::make_unique<ReturnStatement>();
@@ -145,7 +143,7 @@ Parser::parse_return_statement()
   return returnstmt;
 }
 
-unique_ptr<Statement>
+std::unique_ptr<Statement>
 Parser::parse_expression_statement()
 {
   auto stmt = std::make_unique<ExpressionStatement>();
@@ -158,7 +156,7 @@ Parser::parse_expression_statement()
   return stmt;
 }
 
-unique_ptr<Expression>
+std::unique_ptr<Expression>
 Parser::parse_expression(Precedence prec)
 {
   if(m_prefix_parse_fns.find(current_.type) == m_prefix_parse_fns.end()) {
@@ -179,7 +177,7 @@ Parser::parse_expression(Precedence prec)
   return left;
 }
 
-unique_ptr<Expression>
+std::unique_ptr<Expression>
 Parser::parse_identifier()
 {
   auto identifier = std::make_unique<Identifier>();
@@ -188,7 +186,7 @@ Parser::parse_identifier()
   return identifier;
 }
 
-unique_ptr<Expression>
+std::unique_ptr<Expression>
 Parser::parse_integer_literal()
 {
   auto lit = std::make_unique<IntegerLiteral>();
@@ -204,7 +202,7 @@ Parser::parse_integer_literal()
   return lit;
 }
 
-unique_ptr<Expression>
+std::unique_ptr<Expression>
 Parser::parse_prefix_expression()
 {
   auto exp = std::make_unique<PrefixExpression>();
@@ -232,8 +230,8 @@ Parser::current_precedence()
   return LOWEST;
 }
 
-unique_ptr<Expression>
-Parser::parse_infix_expression(unique_ptr<Expression> left)
+std::unique_ptr<Expression>
+Parser::parse_infix_expression(std::unique_ptr<Expression> left)
 {
   auto exp = std::make_unique<InfixExpression>();
   exp->opr = current_.type;
@@ -246,7 +244,7 @@ Parser::parse_infix_expression(unique_ptr<Expression> left)
   return exp;
 }
 
-unique_ptr<Expression>
+std::unique_ptr<Expression>
 Parser::parse_grouped_expression()
 {
   next_token();
@@ -257,7 +255,7 @@ Parser::parse_grouped_expression()
   return exp;
 }
 
-unique_ptr<Expression>
+std::unique_ptr<Expression>
 Parser::parse_boolean()
 {
   auto exp = std::make_unique<BooleanExpression>();
@@ -266,7 +264,7 @@ Parser::parse_boolean()
   return exp;
 }
 
-unique_ptr<Expression>
+std::unique_ptr<Expression>
 Parser::parse_if_expression()
 {
   auto exp = std::make_unique<IfExpression>();
@@ -298,12 +296,12 @@ Parser::parse_if_expression()
   return exp;
 }
 
-unique_ptr<BlockStatement>
+std::unique_ptr<BlockStatement>
 Parser::parse_block_statement()
 {
   auto block = std::make_unique<BlockStatement>();
   block->token = current_;
-  block->statements_ = std::vector<unique_ptr<Statement> >();
+  block->statements_ = std::vector<std::unique_ptr<Statement> >();
 
   next_token();
 
@@ -319,7 +317,7 @@ Parser::parse_block_statement()
   return block;
 }
 
-unique_ptr<Expression>
+std::unique_ptr<Expression>
 Parser::parse_function_literal()
 {
   auto lit = std::make_unique<FunctionLiteral>();
@@ -337,10 +335,10 @@ Parser::parse_function_literal()
   return lit;
 }
 
-std::vector<unique_ptr<Identifier> >
+std::vector<std::unique_ptr<Identifier> >
 Parser::parse_function_params()
 {
-  std::vector<unique_ptr<Identifier> > params;
+  std::vector<std::unique_ptr<Identifier> > params;
   if(peek_token_is(tokentypes::LParen)) {
     next_token();
     return params;
@@ -362,13 +360,13 @@ Parser::parse_function_params()
   }
 
   if(!expect_peek(tokentypes::RParen))
-    return std::vector<unique_ptr<Identifier> >();
+    return std::vector<std::unique_ptr<Identifier> >();
 
   return params;
 }
 
-unique_ptr<Expression>
-Parser::parse_call_expression(unique_ptr<Expression> func)
+std::unique_ptr<Expression>
+Parser::parse_call_expression(std::unique_ptr<Expression> func)
 {
   auto exp = std::make_unique<CallExpression>();
   exp->func_ = std::move(func);
@@ -377,7 +375,7 @@ Parser::parse_call_expression(unique_ptr<Expression> func)
   return exp;
 }
 
-unique_ptr<Expression>
+std::unique_ptr<Expression>
 Parser::parse_string_literal()
 {
   auto strlit = std::make_unique<StringLiteral>();
@@ -386,7 +384,7 @@ Parser::parse_string_literal()
   return strlit;
 }
 
-unique_ptr<Expression>
+std::unique_ptr<Expression>
 Parser::parse_array_literal()
 {
   auto arr = std::make_unique<ArrayLiteral>();
@@ -395,10 +393,10 @@ Parser::parse_array_literal()
   return arr;
 }
 
-std::vector<unique_ptr<Expression> >
+std::vector<std::unique_ptr<Expression> >
 Parser::parse_expression_list(tokentypes end)
 {
-  std::vector<unique_ptr<Expression> > expressions;
+  std::vector<std::unique_ptr<Expression> > expressions;
   if(peek_token_is(end)) {
     next_token();
     return expressions;
@@ -414,15 +412,15 @@ Parser::parse_expression_list(tokentypes end)
   }
 
   if(!expect_peek(end))
-    return std::vector<unique_ptr<Expression> >();
+    return std::vector<std::unique_ptr<Expression> >();
 
   return expressions;
 }
 
-std::vector<unique_ptr<Expression> >
+std::vector<std::unique_ptr<Expression> >
 Parser::parse_call_arguments()
 {
-  std::vector<unique_ptr<Expression> > args;
+  std::vector<std::unique_ptr<Expression> > args;
 
   if(peek_token_is(tokentypes::RParen)) {
     next_token();
@@ -440,7 +438,7 @@ Parser::parse_call_arguments()
   }
 
   if(!expect_peek(tokentypes::RParen))
-    return std::vector<unique_ptr<Expression> >();
+    return std::vector<std::unique_ptr<Expression> >();
 
   return args;
 }
