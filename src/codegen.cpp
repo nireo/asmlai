@@ -33,7 +33,7 @@ get_register()
 static void
 free_register(int reg)
 {
-  if(!free_registers[reg]) {
+  if(free_registers[reg] != 0) {
     std::fprintf(stderr, "register is already free");
     std::exit(1);
   }
@@ -136,7 +136,7 @@ print_register(int r)
 {
   fprintf(fp,
           "\tmovq\t%s, %%rdi\n"
-          "\tcall\tprint_integer\n",
+          "\tcall\ttest_print_integer\n",
           registers[r].c_str());
   free_register(r);
 }

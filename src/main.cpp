@@ -1,14 +1,34 @@
+#include "codegen.h"
+#include "compiler.h"
+#include "fstream"
 #include "lexer.h"
 #include "parser.h"
+#include <sstream>
 
 int
 main(int argc, char *argv[])
 {
-  std::string input = "let x = 10;";
-  auto lexer = Lexer(input);
-  auto parser = Parser(std::make_unique<Lexer>(lexer));
+  if(argc != 2) {
+    printf("usage: lai [input_file]\n");
+    return EXIT_FAILURE;
+  }
 
+  std::string as_string = std::string(argv[1]);
+  std::ifstream t(as_string);
+
+  std::stringstream buffer;
+  buffer << t.rdbuf();
+
+  auto lexer = Lexer(buffer.str());
+  auto parser = Parser(std::make_unique<Lexer>(lexer));
   auto program = parser.parse_program();
+
+  init_out_file();
+  gen_start();
+  int last_register = compile_ast_node(*program);
+  print_register(last_register);
+
+  end_codegen();
 
   return EXIT_SUCCESS;
 }
