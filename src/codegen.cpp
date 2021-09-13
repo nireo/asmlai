@@ -6,6 +6,7 @@
 static std::FILE *fp = nullptr;
 static bool free_registers[4];
 static std::string registers[4] = { "%r8", "%r9", "%r10", "%r11" };
+static std::string b_registers[4] = { "%r8b", "%r9b", "%r10b", "%r11b" };
 
 void
 free_all_registers()
@@ -173,4 +174,52 @@ load_global(std::string identifier)
   std::fprintf(fp, "\tmovq\t%s(\%%rip), %s\n", identifier.c_str(),
                registers[free_reg].c_str());
   return free_reg;
+}
+
+static int
+compare(int reg1, int reg2, std::string method)
+{
+  std::fprintf(fp, "\tcmpq\t%s, %s\n", registers[reg2].c_str(), registers[reg1].c_str());
+  std::fprintf(fp, "\t%s\t%s\n", method.c_str(), b_registers[reg2].c_str());
+  std::fprintf(fp, "\tandq\t$255,%s\n", registers[reg2].c_str());
+
+  free_register(reg1);
+
+  return reg2;
+}
+
+int
+codegen_equal(int reg1, int reg2)
+{
+  return compare(reg1, reg2, "sete");
+}
+
+int
+codegen_nequal(int reg1, int reg2)
+{
+  return compare(reg1, reg2, "setne");
+}
+
+int
+codegen_lt(int reg1, int reg2)
+{
+  return compare(reg1, reg2, "setl");
+}
+
+int
+codegen_gt(int reg1, int reg2)
+{
+  return compare(reg1, reg2, "setg");
+}
+
+int
+codegen_le(int reg1, int reg2)
+{
+  return compare(reg1, reg2, "setle");
+}
+
+int
+codegen_ge(int reg1, int reg2)
+{
+  return compare(reg1, reg2, "setge");
 }

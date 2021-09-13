@@ -16,5 +16,11 @@ int store_global(int, std::string);
 void generate_sym(std::string);
 int load_global(std::string);
 void free_all_registers();
+int codegen_equal(int, int);
+int codegen_nequal(int, int);
+int codegen_lt(int, int);
+int codegen_gt(int, int);
+int codegen_le(int, int);
+int codegen_ge(int, int);
 
 #endif

@@ -60,6 +60,18 @@ compile_ast_node(const Node &node)
     case tokentypes::Slash: {
       return div_registers(left, right);
     }
+    case tokentypes::LT: {
+      return codegen_lt(left, right);
+    }
+    case tokentypes::GT: {
+      return codegen_gt(left, right);
+    }
+    case tokentypes::Eq: {
+      return codegen_equal(left, right);
+    }
+    case tokentypes::Neq: {
+      return codegen_nequal(left, right);
+    }
     default: {
       std::fprintf(stderr, "unknown operator type type\n");
       std::exit(1);
