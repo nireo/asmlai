@@ -8,8 +8,15 @@
 
 static std::unordered_map<std::string, bool> global_symbols;
 
+static int
+label()
+{
+  static int id = 1;
+  return id++;
+}
+
 int
-compile_ast_node(const Node &node)
+compile_ast_node(const Node &node, int reg, AstType top_type)
 {
   switch(node.Type()) {
   case AstType::Program: {
@@ -26,6 +33,22 @@ compile_ast_node(const Node &node)
     }
 
     return last;
+  }
+  case AstType::IfExpression: {
+    const auto &if_stmt = static_cast<const IfExpression &>(node);
+    int false_label = label();
+    int end_label;
+    if(if_stmt.other_ != nullptr) {
+      end_label = label();
+    }
+
+    compile_ast_node(*if_stmt.cond_, false_label, if_stmt.Type());
+    free_all_registers();
+
+    compile_ast_node(*if_stmt.after_, -1, if_stmt.Type());
+    free_all_registers();
+
+    return 0;
   }
   case AstType::ExpressionStatement: {
     const auto &expr_stmt = static_cast<const ExpressionStatement &>(node);
@@ -86,13 +109,14 @@ compile_ast_node(const Node &node)
     generate_sym(identifier.value_);
 
     int reg = compile_ast_node(*assigment.value_);
-    return  store_global(reg, identifier.value_);
+    return store_global(reg, identifier.value_);
   }
   case AstType::Identifier: {
     const auto &identifier = static_cast<const Identifier &>(node);
 
-    if (global_symbols.find(identifier.value_) == global_symbols.end()) {
-      std::fprintf(stderr, "identifier '%s' not found\n", identifier.value_.c_str());
+    if(global_symbols.find(identifier.value_) == global_symbols.end()) {
+      std::fprintf(stderr, "identifier '%s' not found\n",
+                   identifier.value_.c_str());
       std::exit(1);
     }
 

@@ -5,8 +5,8 @@
 
 static std::FILE *fp = nullptr;
 static bool free_registers[4];
-static std::string registers[4] = { "%r8", "%r9", "%r10", "%r11" };
-static std::string b_registers[4] = { "%r8b", "%r9b", "%r10b", "%r11b" };
+static const std::string registers[4] = { "%r8", "%r9", "%r10", "%r11" };
+static const std::string b_registers[4] = { "%r8b", "%r9b", "%r10b", "%r11b" };
 
 void
 free_all_registers()
@@ -179,7 +179,8 @@ load_global(std::string identifier)
 static int
 compare(int reg1, int reg2, std::string method)
 {
-  std::fprintf(fp, "\tcmpq\t%s, %s\n", registers[reg2].c_str(), registers[reg1].c_str());
+  std::fprintf(fp, "\tcmpq\t%s, %s\n", registers[reg2].c_str(),
+               registers[reg1].c_str());
   std::fprintf(fp, "\t%s\t%s\n", method.c_str(), b_registers[reg2].c_str());
   std::fprintf(fp, "\tandq\t$255,%s\n", registers[reg2].c_str());
 
@@ -222,4 +223,31 @@ int
 codegen_ge(int reg1, int reg2)
 {
   return compare(reg1, reg2, "setge");
+}
+
+void
+gen_label(int label)
+{
+  std::fprintf(fp, "L%d:\n", label);
+}
+
+void
+gen_jmp(int label)
+{
+  std::fprintf(fp, "\tjmp\tL%d\n", label);
+}
+
+static const std::string jump_insts[]
+    = { "jne", "je", "jge", "jle", "jg", "jl" };
+
+int
+compare_jmp(int reg1, int reg2, int label)
+{
+  std::fprintf(fp, "\tcmpq\t%s, %s\n", registers[reg2].c_str(), registers[reg1].c_str());
+
+  // TODO;
+  // std::fprintf(fp, "\t%s\tL%d\n", jump function based on condition, label);
+
+  free_all_registers();
+  return -1;
 }
