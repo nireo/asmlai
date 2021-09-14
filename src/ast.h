@@ -26,6 +26,7 @@ enum class AstType {
   IntegerLiteral,
   BooleanExpression,
   FunctionLiteral,
+  PrintStatement,
 };
 
 class Node
@@ -103,6 +104,21 @@ public:
   }
 
   std::unique_ptr<Expression> return_value_;
+};
+
+class PrintStatement : public Statement
+{
+public:
+  void
+  statementNode()
+  {
+  }
+
+  AstType Type() const noexcept {
+    return AstType::PrintStatement;
+  }
+
+  std::unique_ptr<Expression> print_value_;
 };
 
 class ExpressionStatement : public Statement

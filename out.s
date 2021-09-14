@@ -28,6 +28,9 @@ main:
 	movq	$1, %r8
 	movq	$1, %r9
 	addq	%r8, %r9
-L1:
-	movq	%r8, %rdi
+	movq	%r9, %rdi
 	call	test_print_integer
+L1:
+	movl $0, %eax
+	popq %rbp
+	ret

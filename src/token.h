@@ -38,6 +38,7 @@ enum class tokentypes {
   Else,
   Return,
   String,
+  Print,
 
   IntType,
   CharType,
@@ -56,7 +57,7 @@ const std::unordered_map<std::string, tokentypes> TokenKeywords = {
   { "if", tokentypes::If },           { "else", tokentypes::Else },
   { "return", tokentypes::Return },   { "int", tokentypes::IntType },
   { "char", tokentypes::CharType },   { "string", tokentypes::StringType },
-  { "float", tokentypes::FloatType },
+  { "float", tokentypes::FloatType }, { "print", tokentypes::Print },
 };
 
 #endif

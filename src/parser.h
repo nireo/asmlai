@@ -55,6 +55,7 @@ private:
   std::unique_ptr<Statement> parse_let_statement();
   std::unique_ptr<Statement> parse_return_statement();
   std::unique_ptr<Statement> parse_expression_statement();
+  std::unique_ptr<Statement> parse_print_statement();
   std::unique_ptr<Expression> parse_expression(Precedence prec);
   std::unique_ptr<Expression> parse_identifier();
   std::unique_ptr<Expression> parse_integer_literal();

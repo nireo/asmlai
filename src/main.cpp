@@ -25,8 +25,7 @@ main(int argc, char *argv[])
 
   init_out_file();
   gen_start();
-  int last_register = compile_ast_node(*program, -1, AstType::Program);
-  print_register(last_register);
+  compile_ast_node(*program, -1, AstType::Program);
 
   end_codegen();
 

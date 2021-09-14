@@ -72,6 +72,15 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
 
     return 0;
   }
+  case AstType::PrintStatement: {
+    const auto &print_stmt = static_cast<const PrintStatement&>(node);
+    int reg = compile_ast_node(*print_stmt.print_value_, -1, node.Type());
+
+    print_register(reg);
+    free_all_registers();
+
+    return -1;
+  }
   case AstType::ExpressionStatement: {
     const auto &expr_stmt = static_cast<const ExpressionStatement &>(node);
     return compile_ast_node(*expr_stmt.expression_, -1, node.Type());

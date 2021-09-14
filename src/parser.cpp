@@ -71,7 +71,9 @@ Parser::parse_statement()
 {
   if(current_.type == tokentypes::Let) {
     return parse_let_statement();
-  } else if(current_.type == tokentypes::Return) {
+  } else if (current_.type == tokentypes::Print) {
+    return parse_print_statement();
+  }else if(current_.type == tokentypes::Return) {
     return parse_return_statement();
   } else {
     return parse_expression_statement();
@@ -141,6 +143,20 @@ Parser::parse_return_statement()
     next_token();
 
   return returnstmt;
+}
+
+std::unique_ptr<Statement>
+Parser::parse_print_statement()
+{
+  auto print_stmt = std::make_unique<PrintStatement>();
+  next_token();
+
+  print_stmt->print_value_ = parse_expression(LOWEST);
+
+  if (peek_token_is(tokentypes::Semicolon))
+    next_token();
+
+  return print_stmt;
 }
 
 std::unique_ptr<Statement>
