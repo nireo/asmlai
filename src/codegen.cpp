@@ -8,6 +8,33 @@ static bool free_registers[4];
 static const std::string registers[4] = { "%r8", "%r9", "%r10", "%r11" };
 static const std::string b_registers[4] = { "%r8b", "%r9b", "%r10b", "%r11b" };
 
+static const std::string jump_insts[]
+    = { "jne", "je", "jge", "jle", "jg", "jl" };
+static const std::string compare_instructions[]
+    = { "sete", "setne", "setl", "setg", "setle", "setge" };
+
+static int
+get_corresponding_inst_index(const tokentypes type)
+{
+  switch(type) {
+  case tokentypes::Eq:
+    return 0;
+  case tokentypes::Neq:
+    return 1;
+  case tokentypes::LT:
+    return 2;
+  case tokentypes::GT:
+    return 3;
+  case tokentypes::ELT:
+    return 4;
+  case tokentypes::EGT:
+    return 5;
+  default:
+    std::fprintf(stderr, "no free registers\n");
+    std::exit(1);
+  }
+}
+
 void
 free_all_registers()
 {
@@ -176,13 +203,17 @@ load_global(std::string identifier)
   return free_reg;
 }
 
-static int
-compare(int reg1, int reg2, std::string method)
+int
+codegen_compare_no_jump(int reg1, int reg2, const tokentypes type)
 {
+  auto index = get_corresponding_inst_index(type);
+
   std::fprintf(fp, "\tcmpq\t%s, %s\n", registers[reg2].c_str(),
                registers[reg1].c_str());
-  std::fprintf(fp, "\t%s\t%s\n", method.c_str(), b_registers[reg2].c_str());
-  std::fprintf(fp, "\tandq\t$255,%s\n", registers[reg2].c_str());
+  std::fprintf(fp, "\t%s\t%s\n", compare_instructions[index].c_str(),
+               b_registers[reg2].c_str());
+  std::fprintf(fp, "\tmovzbq\t%s, %s\n", b_registers[reg2].c_str(),
+               registers[reg2].c_str());
 
   free_register(reg1);
 
@@ -190,39 +221,15 @@ compare(int reg1, int reg2, std::string method)
 }
 
 int
-codegen_equal(int reg1, int reg2)
+codegen_compare_jump(int reg1, int reg2, int label, const tokentypes type)
 {
-  return compare(reg1, reg2, "sete");
-}
+  auto index = get_corresponding_inst_index(type);
 
-int
-codegen_nequal(int reg1, int reg2)
-{
-  return compare(reg1, reg2, "setne");
-}
+  std::fprintf(fp, "\tcmpq\t%s, %s\n", registers[reg2].c_str(), registers[reg1].c_str());
+  std::fprintf(fp, "\t%s\tL%d\n", jump_insts[index].c_str(), label);
+  free_all_registers();
 
-int
-codegen_lt(int reg1, int reg2)
-{
-  return compare(reg1, reg2, "setl");
-}
-
-int
-codegen_gt(int reg1, int reg2)
-{
-  return compare(reg1, reg2, "setg");
-}
-
-int
-codegen_le(int reg1, int reg2)
-{
-  return compare(reg1, reg2, "setle");
-}
-
-int
-codegen_ge(int reg1, int reg2)
-{
-  return compare(reg1, reg2, "setge");
+  return -1;
 }
 
 void
@@ -235,19 +242,4 @@ void
 gen_jmp(int label)
 {
   std::fprintf(fp, "\tjmp\tL%d\n", label);
-}
-
-static const std::string jump_insts[]
-    = { "jne", "je", "jge", "jle", "jg", "jl" };
-
-int
-compare_jmp(int reg1, int reg2, int label)
-{
-  std::fprintf(fp, "\tcmpq\t%s, %s\n", registers[reg2].c_str(), registers[reg1].c_str());
-
-  // TODO;
-  // std::fprintf(fp, "\t%s\tL%d\n", jump function based on condition, label);
-
-  free_all_registers();
-  return -1;
 }

@@ -16,7 +16,7 @@ label()
 }
 
 int
-compile_ast_node(const Node &node, int reg, AstType top_type)
+compile_ast_node(const Node &node, int reg, const AstType top_type)
 {
   switch(node.Type()) {
   case AstType::Program: {
@@ -24,12 +24,22 @@ compile_ast_node(const Node &node, int reg, AstType top_type)
     const auto &program = static_cast<const Program &>(node);
 
     for(const auto &stmt : program.statements_) {
-      last = compile_ast_node(*stmt);
+      last = compile_ast_node(*stmt, -1, AstType::Program);
     }
 
     if(last == -1) {
       std::fprintf(stderr, "something went wrong in the execution");
       std::exit(1);
+    }
+
+    return last;
+  }
+  case AstType::BlockStatement: {
+    const auto &block = static_cast<const BlockStatement &>(node);
+
+    int last = -1;
+    for(const auto &stmt : block.statements_) {
+      last = compile_ast_node(*stmt, -1, AstType::BlockStatement);
     }
 
     return last;
@@ -42,58 +52,65 @@ compile_ast_node(const Node &node, int reg, AstType top_type)
       end_label = label();
     }
 
-    compile_ast_node(*if_stmt.cond_, false_label, if_stmt.Type());
+    compile_ast_node(*if_stmt.cond_, false_label, node.Type());
     free_all_registers();
 
-    compile_ast_node(*if_stmt.after_, -1, if_stmt.Type());
+    compile_ast_node(*if_stmt.after_, -1, node.Type());
     free_all_registers();
+
+    if(if_stmt.other_ != nullptr) {
+      gen_jmp(end_label);
+    }
+
+    gen_label(false_label);
+
+    if(if_stmt.other_ != nullptr) {
+      compile_ast_node(*if_stmt.other_, -1, node.Type());
+      free_all_registers();
+      gen_label(end_label);
+    }
 
     return 0;
   }
   case AstType::ExpressionStatement: {
     const auto &expr_stmt = static_cast<const ExpressionStatement &>(node);
-    return compile_ast_node(*expr_stmt.expression_);
+    return compile_ast_node(*expr_stmt.expression_, -1, node.Type());
   }
   case AstType::InfixExpression: {
     const auto &infix_exp = static_cast<const InfixExpression &>(node);
 
     if(infix_exp.left_ != nullptr && infix_exp.right_ == nullptr) {
-      return compile_ast_node(*infix_exp.left_);
+      return compile_ast_node(*infix_exp.left_, -1, node.Type());
     }
 
     int left = 0, right = 0;
     if(infix_exp.left_ != nullptr) {
-      left = compile_ast_node(*infix_exp.left_);
+      left = compile_ast_node(*infix_exp.left_, -1, node.Type());
     }
 
     if(infix_exp.right_ != nullptr) {
-      right = compile_ast_node(*infix_exp.right_);
+      right = compile_ast_node(*infix_exp.right_, left, node.Type());
     }
 
     switch(infix_exp.opr) {
-    case tokentypes::Plus: {
+    case tokentypes::Plus:
       return add_registers(left, right);
-    }
-    case tokentypes::Minus: {
+    case tokentypes::Minus:
       return sub_registers(left, right);
-    }
-    case tokentypes::Asterisk: {
+    case tokentypes::Asterisk:
       return mul_registers(left, right);
-    }
-    case tokentypes::Slash: {
+    case tokentypes::Slash:
       return div_registers(left, right);
-    }
-    case tokentypes::LT: {
-      return codegen_lt(left, right);
-    }
-    case tokentypes::GT: {
-      return codegen_gt(left, right);
-    }
-    case tokentypes::Eq: {
-      return codegen_equal(left, right);
-    }
+    case tokentypes::LT:
+    case tokentypes::EGT:
+    case tokentypes::ELT:
+    case tokentypes::GT:
+    case tokentypes::Eq:
     case tokentypes::Neq: {
-      return codegen_nequal(left, right);
+      if(top_type == AstType::IfExpression) {
+        return codegen_compare_jump(left, right, reg, infix_exp.opr);
+      }
+      return codegen_compare_no_jump(left, right, infix_exp.opr);
     }
     default: {
       std::fprintf(stderr, "unknown operator type type\n");
@@ -108,7 +125,7 @@ compile_ast_node(const Node &node, int reg, AstType top_type)
     global_symbols[identifier.value_] = true;
     generate_sym(identifier.value_);
 
-    int reg = compile_ast_node(*assigment.value_);
+    int reg = compile_ast_node(*assigment.value_, -1, node.Type());
     return store_global(reg, identifier.value_);
   }
   case AstType::Identifier: {
@@ -128,7 +145,7 @@ compile_ast_node(const Node &node, int reg, AstType top_type)
     return load_into_register(int_lit.value_);
   }
   default: {
-    std::fprintf(stderr, "unknown node type\n");
+    std::fprintf(stderr, "unknown node type %d\n", node.Type());
     std::exit(1);
   }
   }

@@ -21,11 +21,13 @@ test_print_integer:
 main:
 	pushq %rbp
 	movq %rsp, %rbp
-	movq	$100, %r8
-	movq	$100, %r9
+	movq	$1, %r8
+	movq	$1, %r9
+	cmpq	%r9, %r8
+	jne	L1
+	movq	$1, %r8
+	movq	$1, %r9
 	addq	%r8, %r9
-	movq	%r9, %rdi
+L1:
+	movq	%r8, %rdi
 	call	test_print_integer
-	movl $0, %eax
-	popq %rbp
-	ret

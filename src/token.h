@@ -28,6 +28,8 @@ enum class tokentypes {
   RBracket,
   LT,
   GT,
+  ELT,
+  EGT,
   Function,
   Let,
   True,

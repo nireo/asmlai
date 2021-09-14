@@ -9,13 +9,13 @@ Lexer::Lexer(const std::string &input)
   read_char();
 }
 
-bool
+static bool
 is_letter(char ch)
 {
   return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '_';
 }
 
-bool
+static bool
 is_digit(char ch)
 {
   return '0' <= ch && ch <= '9';
@@ -119,11 +119,21 @@ Lexer::next_token()
     read_char();
     break;
   case '<':
-    tok = new_token(tokentypes::LT, ch_);
+    if(peek_char() == '=') {
+      tok = Token{ .type = tokentypes::ELT, .literal = "<=" };
+      read_char();
+    } else {
+      tok = new_token(tokentypes::LT, ch_);
+    }
     read_char();
     break;
   case '>':
-    tok = new_token(tokentypes::GT, ch_);
+    if(peek_char() == '=') {
+      tok = Token{ .type = tokentypes::EGT, .literal = ">=" };
+      read_char();
+    } else {
+      tok = new_token(tokentypes::GT, ch_);
+    }
     read_char();
     break;
   case '{':

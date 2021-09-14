@@ -1,6 +1,7 @@
 #ifndef LAI_CODEGEN_H
 #define LAI_CODEGEN_H
 
+#include "token.h"
 #include <string>
 
 int load_into_register(int);
@@ -16,11 +17,9 @@ int store_global(int, std::string);
 void generate_sym(std::string);
 int load_global(std::string);
 void free_all_registers();
-int codegen_equal(int, int);
-int codegen_nequal(int, int);
-int codegen_lt(int, int);
-int codegen_gt(int, int);
-int codegen_le(int, int);
-int codegen_ge(int, int);
+int codegen_compare_no_jump(int, int, const tokentypes);
+int codegen_compare_jump(int, int, int, const tokentypes);
+void gen_jmp(int);
+void gen_label(int);
 
 #endif

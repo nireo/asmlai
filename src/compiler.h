@@ -3,6 +3,6 @@
 
 #include "ast.h"
 
-int compile_ast_node(const Node&);
+int compile_ast_node(const Node&, int, const AstType);
 
 #endif
