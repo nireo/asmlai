@@ -1,3 +1,5 @@
-if (1 == 1) {
-  print 1 + 1;
+let i = 0;
+
+while (i <= 5) {
+  print 1;
 }

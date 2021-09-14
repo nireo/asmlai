@@ -71,9 +71,11 @@ Parser::parse_statement()
 {
   if(current_.type == tokentypes::Let) {
     return parse_let_statement();
-  } else if (current_.type == tokentypes::Print) {
+  } else if(current_.type == tokentypes::Print) {
     return parse_print_statement();
-  }else if(current_.type == tokentypes::Return) {
+  } else if(current_.type == tokentypes::While) {
+    return parse_while_statement();
+  } else if(current_.type == tokentypes::Return) {
     return parse_return_statement();
   } else {
     return parse_expression_statement();
@@ -153,7 +155,7 @@ Parser::parse_print_statement()
 
   print_stmt->print_value_ = parse_expression(LOWEST);
 
-  if (peek_token_is(tokentypes::Semicolon))
+  if(peek_token_is(tokentypes::Semicolon))
     next_token();
 
   return print_stmt;
@@ -278,6 +280,27 @@ Parser::parse_boolean()
   exp->value_ = current_token_is(tokentypes::True);
 
   return exp;
+}
+
+std::unique_ptr<Statement>
+Parser::parse_while_statement()
+{
+  auto while_stmt = std::make_unique<WhileStatement>();
+  if(!expect_peek(tokentypes::LParen))
+    return nullptr;
+
+  next_token();
+  while_stmt->cond_ = parse_expression(LOWEST);
+
+  if(!expect_peek(tokentypes::RParen))
+    return nullptr;
+
+  if(!expect_peek(tokentypes::LBrace))
+    return nullptr;
+
+  while_stmt->body_ = parse_block_statement();
+
+  return while_stmt;
 }
 
 std::unique_ptr<Expression>

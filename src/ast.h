@@ -27,6 +27,8 @@ enum class AstType {
   BooleanExpression,
   FunctionLiteral,
   PrintStatement,
+  WhileStatement,
+  ForStatement,
 };
 
 class Node
@@ -114,7 +116,9 @@ public:
   {
   }
 
-  AstType Type() const noexcept {
+  AstType
+  Type() const noexcept
+  {
     return AstType::PrintStatement;
   }
 
@@ -218,6 +222,23 @@ public:
   std::unique_ptr<Expression> cond_;
   std::unique_ptr<BlockStatement> after_;
   std::unique_ptr<BlockStatement> other_;
+};
+
+class WhileStatement : public Statement
+{
+public:
+  void
+  statementNode()
+  {
+  }
+  AstType
+  Type() const noexcept
+  {
+    return AstType::WhileStatement;
+  }
+
+  std::unique_ptr<Expression> cond_;
+  std::unique_ptr<BlockStatement> body_;
 };
 
 class FunctionLiteral : public Expression

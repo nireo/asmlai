@@ -27,11 +27,6 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
       last = compile_ast_node(*stmt, -1, AstType::Program);
     }
 
-    if(last == -1) {
-      std::fprintf(stderr, "something went wrong in the execution");
-      std::exit(1);
-    }
-
     return last;
   }
   case AstType::BlockStatement: {
@@ -40,9 +35,28 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     int last = -1;
     for(const auto &stmt : block.statements_) {
       last = compile_ast_node(*stmt, -1, AstType::BlockStatement);
-    }
+   }
 
     return last;
+  }
+  case AstType::WhileStatement: {
+    const auto &while_stmt = static_cast<const WhileStatement &>(node);
+
+    int start_label = label();
+    int end_label = label();
+
+    gen_label(start_label);
+
+    compile_ast_node(*while_stmt.cond_, end_label, node.Type());
+    free_all_registers();
+
+    compile_ast_node(*while_stmt.body_, -1, node.Type());
+    free_all_registers();
+
+    gen_jmp(start_label);
+    gen_label(end_label);
+
+    return -1;
   }
   case AstType::IfExpression: {
     const auto &if_stmt = static_cast<const IfExpression &>(node);
@@ -83,7 +97,9 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
   }
   case AstType::ExpressionStatement: {
     const auto &expr_stmt = static_cast<const ExpressionStatement &>(node);
-    return compile_ast_node(*expr_stmt.expression_, -1, node.Type());
+
+    compile_ast_node(*expr_stmt.expression_, -1, node.Type());
+    return -1;
   }
   case AstType::InfixExpression: {
     const auto &infix_exp = static_cast<const InfixExpression &>(node);
@@ -116,7 +132,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     case tokentypes::GT:
     case tokentypes::Eq:
     case tokentypes::Neq: {
-      if(top_type == AstType::IfExpression) {
+      if(top_type == AstType::IfExpression || top_type == AstType::WhileStatement) {
         return codegen_compare_jump(left, right, reg, infix_exp.opr);
       }
       return codegen_compare_no_jump(left, right, infix_exp.opr);
