@@ -60,7 +60,7 @@ const std::unordered_map<std::string, tokentypes> TokenKeywords = {
   { "return", tokentypes::Return },   { "int", tokentypes::IntType },
   { "char", tokentypes::CharType },   { "string", tokentypes::StringType },
   { "float", tokentypes::FloatType }, { "print", tokentypes::Print },
-  {"while", tokentypes::While}, {"for", tokentypes::For},
+  { "while", tokentypes::While },     { "for", tokentypes::For },
 };
 
 #endif

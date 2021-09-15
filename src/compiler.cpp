@@ -35,7 +35,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     int last = -1;
     for(const auto &stmt : block.statements_) {
       last = compile_ast_node(*stmt, -1, AstType::BlockStatement);
-   }
+    }
 
     return last;
   }
@@ -87,7 +87,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     return 0;
   }
   case AstType::PrintStatement: {
-    const auto &print_stmt = static_cast<const PrintStatement&>(node);
+    const auto &print_stmt = static_cast<const PrintStatement &>(node);
     int reg = compile_ast_node(*print_stmt.print_value_, -1, node.Type());
 
     print_register(reg);
@@ -132,7 +132,8 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     case tokentypes::GT:
     case tokentypes::Eq:
     case tokentypes::Neq: {
-      if(top_type == AstType::IfExpression || top_type == AstType::WhileStatement) {
+      if(top_type == AstType::IfExpression
+         || top_type == AstType::WhileStatement) {
         return codegen_compare_jump(left, right, reg, infix_exp.opr);
       }
       return codegen_compare_no_jump(left, right, infix_exp.opr);
@@ -147,8 +148,10 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     const auto &assigment = static_cast<const LetStatement &>(node);
     const auto &identifier = static_cast<const Identifier &>(*assigment.name_);
 
-    global_symbols[identifier.value_] = true;
-    generate_sym(identifier.value_);
+    if(global_symbols.find(identifier.value_) == global_symbols.end()) {
+      global_symbols[identifier.value_] = true;
+      generate_sym(identifier.value_);
+    }
 
     int reg = compile_ast_node(*assigment.value_, -1, node.Type());
     return store_global(reg, identifier.value_);
