@@ -39,6 +39,7 @@ Parser::Parser(std::unique_ptr<Lexer> lx)
   add_prefix_parse(tokentypes::False, &Parser::parse_boolean);
   add_prefix_parse(tokentypes::LParen, &Parser::parse_grouped_expression);
   add_prefix_parse(tokentypes::If, &Parser::parse_if_expression);
+  add_prefix_parse(tokentypes::While, &Parser::parse_while_expression);
   add_prefix_parse(tokentypes::Function, &Parser::parse_function_literal);
   add_prefix_parse(tokentypes::String, &Parser::parse_string_literal);
   add_prefix_parse(tokentypes::LBracket, &Parser::parse_array_literal);
@@ -73,8 +74,6 @@ Parser::parse_statement()
     return parse_let_statement();
   } else if(current_.type == tokentypes::Print) {
     return parse_print_statement();
-  } else if(current_.type == tokentypes::While) {
-    return parse_while_statement();
   } else if(current_.type == tokentypes::Return) {
     return parse_return_statement();
   } else {
@@ -282,8 +281,8 @@ Parser::parse_boolean()
   return exp;
 }
 
-std::unique_ptr<Statement>
-Parser::parse_while_statement()
+std::unique_ptr<Expression>
+Parser::parse_while_expression()
 {
   auto while_stmt = std::make_unique<WhileStatement>();
   if(!expect_peek(tokentypes::LParen))

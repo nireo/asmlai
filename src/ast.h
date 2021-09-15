@@ -224,13 +224,9 @@ public:
   std::unique_ptr<BlockStatement> other_;
 };
 
-class WhileStatement : public Statement
+class WhileStatement : public Expression
 {
 public:
-  void
-  statementNode()
-  {
-  }
   AstType
   Type() const noexcept
   {
