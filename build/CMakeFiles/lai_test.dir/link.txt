@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/lai_test.dir/src/parser.cpp.o CMakeFiles/lai_test.dir/src/tests.cpp.o CMakeFiles/lai_test.dir/src/lexer.cpp.o -o lai_test  lib/libgtest_main.a lib/libgtest.a -lpthread 

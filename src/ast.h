@@ -108,14 +108,9 @@ public:
   std::unique_ptr<Expression> return_value_;
 };
 
-class PrintStatement : public Statement
+class PrintStatement : public Expression
 {
 public:
-  void
-  statementNode()
-  {
-  }
-
   AstType
   Type() const noexcept
   {
@@ -124,6 +119,7 @@ public:
 
   std::unique_ptr<Expression> print_value_;
 };
+
 
 class ExpressionStatement : public Statement
 {
@@ -297,6 +293,21 @@ public:
 
   std::unique_ptr<Expression> left_;
   std::unique_ptr<Expression> index_;
+};
+
+class ForStatement : public Expression
+{
+public:
+  AstType
+  Type() const noexcept
+  {
+    return AstType::ForStatement;
+  }
+
+  std::unique_ptr<Statement> assignment_;
+  std::unique_ptr<Expression> cond_;
+  std::unique_ptr<Statement> after_every_;
+  std::unique_ptr<BlockStatement> body_;
 };
 
 #endif

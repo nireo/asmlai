@@ -43,6 +43,8 @@ Parser::Parser(std::unique_ptr<Lexer> lx)
   add_prefix_parse(tokentypes::Function, &Parser::parse_function_literal);
   add_prefix_parse(tokentypes::String, &Parser::parse_string_literal);
   add_prefix_parse(tokentypes::LBracket, &Parser::parse_array_literal);
+  add_prefix_parse(tokentypes::Print, &Parser::parse_print_statement);
+  add_prefix_parse(tokentypes::For, &Parser::parse_for_expression);
 
   m_infix_parse_fns = std::unordered_map<tokentypes, InfixParseFn>();
   add_infix_parse(tokentypes::Plus, &Parser::parse_infix_expression);
@@ -72,8 +74,6 @@ Parser::parse_statement()
 {
   if(current_.type == tokentypes::Let) {
     return parse_let_statement();
-  } else if(current_.type == tokentypes::Print) {
-    return parse_print_statement();
   } else if(current_.type == tokentypes::Return) {
     return parse_return_statement();
   } else {
@@ -146,7 +146,7 @@ Parser::parse_return_statement()
   return returnstmt;
 }
 
-std::unique_ptr<Statement>
+std::unique_ptr<Expression>
 Parser::parse_print_statement()
 {
   auto print_stmt = std::make_unique<PrintStatement>();
@@ -429,6 +429,37 @@ Parser::parse_array_literal()
   arr->elements_ = std::move(parse_expression_list(tokentypes::RBracket));
 
   return arr;
+}
+
+std::unique_ptr<Expression>
+Parser::parse_for_expression()
+{
+  auto for_stmt = std::make_unique<ForStatement>();
+
+  if(!expect_peek(tokentypes::LParen))
+    return nullptr;
+
+  for_stmt->assignment_ = parse_let_statement();
+
+  if(!expect_peek(tokentypes::Semicolon))
+    return nullptr;
+
+  for_stmt->cond_ = parse_expression(LOWEST);
+
+  if(!expect_peek(tokentypes::Semicolon))
+    return nullptr;
+
+  for_stmt->after_every_ = parse_let_statement();
+
+  if (!expect_peek(tokentypes::RParen))
+    return nullptr;
+
+  if (!expect_peek(tokentypes::LBrace))
+    return nullptr;
+
+  for_stmt->body_ = parse_block_statement();
+
+  return for_stmt;
 }
 
 std::vector<std::unique_ptr<Expression> >
