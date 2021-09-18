@@ -1,5 +1,7 @@
-let i = 0;
-while (i != 5) {
-  let i = i + 1;
-  print i;
+fn main() {
+  let i = 0;
+  while (i != 5) {
+    let i = i + 1;
+    print i;
+  }
 }

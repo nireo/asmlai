@@ -40,7 +40,6 @@ Parser::Parser(std::unique_ptr<Lexer> lx)
   add_prefix_parse(tokentypes::LParen, &Parser::parse_grouped_expression);
   add_prefix_parse(tokentypes::If, &Parser::parse_if_expression);
   add_prefix_parse(tokentypes::While, &Parser::parse_while_expression);
-  add_prefix_parse(tokentypes::Function, &Parser::parse_function_literal);
   add_prefix_parse(tokentypes::String, &Parser::parse_string_literal);
   add_prefix_parse(tokentypes::LBracket, &Parser::parse_array_literal);
   add_prefix_parse(tokentypes::Print, &Parser::parse_print_statement);
@@ -74,6 +73,8 @@ Parser::parse_statement()
 {
   if(current_.type == tokentypes::Let) {
     return parse_let_statement();
+  } if (current_.type == tokentypes::Function) {
+    return parse_function_literal();
   } else if(current_.type == tokentypes::Return) {
     return parse_return_statement();
   } else {
@@ -355,10 +356,18 @@ Parser::parse_block_statement()
   return block;
 }
 
-std::unique_ptr<Expression>
+std::unique_ptr<Statement>
 Parser::parse_function_literal()
 {
   auto lit = std::make_unique<FunctionLiteral>();
+
+  if(!expect_peek(tokentypes::Ident)) {
+    return nullptr;
+  }
+
+  auto ident = std::make_unique<Identifier>();
+  ident->value_ = current_.literal;
+  lit->name_ = std::move(ident);
 
   if(!expect_peek(tokentypes::LParen))
     return nullptr;
@@ -451,10 +460,10 @@ Parser::parse_for_expression()
 
   for_stmt->after_every_ = parse_let_statement();
 
-  if (!expect_peek(tokentypes::RParen))
+  if(!expect_peek(tokentypes::RParen))
     return nullptr;
 
-  if (!expect_peek(tokentypes::LBrace))
+  if(!expect_peek(tokentypes::LBrace))
     return nullptr;
 
   for_stmt->body_ = parse_block_statement();

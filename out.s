@@ -1,4 +1,3 @@
-	.file "main.c"
 	.text
 .LC0:
 	.string	"%d\n"
@@ -15,12 +14,12 @@ test_print_integer:
 	nop
 	leave
 	ret
-
+	.text
 	.globl	main
 	.type	main, @function
 main:
-	pushq %rbp
-	movq %rsp, %rbp
+	pushq	%rbp
+	movq	%rsp, %rbp
 	.comm	i,8,8
 	movq	$0, %r8
 	movq	%r8, i(%rip)
@@ -39,5 +38,5 @@ L1:
 	jmp	L1
 L2:
 	movl $0, %eax
-	popq %rbp
+	popq     %rbp
 	ret

@@ -167,6 +167,18 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
 
     return load_global(identifier.value_);
   }
+  case AstType::FunctionLiteral: {
+    const auto &func = static_cast<const FunctionLiteral &>(node);
+    const auto &name = static_cast<const Identifier &>(*func.name_);
+
+    global_symbols[name.value_] = true;
+
+    function_start(name.value_);
+    compile_ast_node(*func.body_, -1, node.Type());
+    function_end();
+
+    return -1;
+  }
   case AstType::IntegerLiteral: {
     const auto &int_lit = static_cast<const IntegerLiteral &>(node);
 

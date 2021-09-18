@@ -120,7 +120,6 @@ public:
   std::unique_ptr<Expression> print_value_;
 };
 
-
 class ExpressionStatement : public Statement
 {
 public:
@@ -233,9 +232,13 @@ public:
   std::unique_ptr<BlockStatement> body_;
 };
 
-class FunctionLiteral : public Expression
+class FunctionLiteral : public Statement
 {
 public:
+  void
+  statementNode()
+  {
+  }
   AstType
   Type() const noexcept
   {
@@ -244,6 +247,7 @@ public:
 
   std::vector<std::unique_ptr<Identifier> > params_;
   std::unique_ptr<BlockStatement> body_;
+  std::unique_ptr<Identifier> name_;
 };
 
 class CallExpression : public Expression

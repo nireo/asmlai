@@ -21,5 +21,7 @@ int codegen_compare_no_jump(int, int, const tokentypes);
 int codegen_compare_jump(int, int, int, const tokentypes);
 void gen_jmp(int);
 void gen_label(int);
+void function_start(const std::string&);
+void function_end();
 
 #endif

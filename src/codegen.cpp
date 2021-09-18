@@ -83,8 +83,7 @@ gen_start()
 {
   free_all_registers();
 
-  fputs("\t.file \"main.c\"\n"
-        "\t.text\n"
+  fputs("\t.text\n"
         ".LC0:\n"
         "\t.string\t\"%d\\n\"\n"
         "test_print_integer:\n"
@@ -99,13 +98,7 @@ gen_start()
         "\tcall	printf@PLT\n"
         "\tnop\n"
         "\tleave\n"
-        "\tret\n"
-        "\n"
-        "\t.globl\tmain\n"
-        "\t.type\tmain, @function\n"
-        "main:\n"
-        "\tpushq %rbp\n"
-        "\tmovq %rsp, %rbp\n",
+        "\tret\n",
         fp);
 }
 
@@ -225,7 +218,8 @@ codegen_compare_jump(int reg1, int reg2, int label, const tokentypes type)
 {
   auto index = get_corresponding_inst_index(type);
 
-  std::fprintf(fp, "\tcmpq\t%s, %s\n", registers[reg2].c_str(), registers[reg1].c_str());
+  std::fprintf(fp, "\tcmpq\t%s, %s\n", registers[reg2].c_str(),
+               registers[reg1].c_str());
   std::fprintf(fp, "\t%s\tL%d\n", jump_insts[index].c_str(), label);
   free_all_registers();
 
@@ -242,4 +236,26 @@ void
 gen_jmp(int label)
 {
   std::fprintf(fp, "\tjmp\tL%d\n", label);
+}
+
+void
+function_start(const std::string &name)
+{
+  std::fprintf(fp,
+               "\t.text\n"
+               "\t.globl\t%s\n"
+               "\t.type\t%s, @function\n"
+               "%s:\n"
+               "\tpushq\t%%rbp\n"
+               "\tmovq\t%%rsp, %%rbp\n",
+               name.c_str(), name.c_str(), name.c_str());
+}
+
+void
+function_end()
+{
+  std::fputs("\tmovl $0, %eax\n"
+             "\tpopq     %rbp\n"
+             "\tret\n",
+             fp);
 }

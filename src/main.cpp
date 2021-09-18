@@ -27,7 +27,5 @@ main(int argc, char *argv[])
   gen_start();
   compile_ast_node(*program, -1, AstType::Program);
 
-  end_codegen();
-
   return EXIT_SUCCESS;
 }
