@@ -6,7 +6,18 @@
 #include <sstream>
 #include <unordered_map>
 
-static std::unordered_map<std::string, bool> global_symbols;
+enum symboltype {
+  TYPE_VARIABLE,
+  TYPE_FUNCTION,
+};
+
+struct Symbol {
+  std::string name_;
+  symboltype type_;
+  valuetype value_type_;
+};
+
+static std::unordered_map<std::string, Symbol> global_symbols;
 
 static int
 label()
@@ -149,7 +160,11 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     const auto &identifier = static_cast<const Identifier &>(*assigment.name_);
 
     if(global_symbols.find(identifier.value_) == global_symbols.end()) {
-      global_symbols[identifier.value_] = true;
+      global_symbols[identifier.value_] = Symbol{
+        .name_ = identifier.value_,
+        .type_ = TYPE_FUNCTION,
+        .value_type_ = assigment.v_type,
+      };
       generate_sym(identifier.value_);
     }
 
@@ -171,7 +186,11 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     const auto &func = static_cast<const FunctionLiteral &>(node);
     const auto &name = static_cast<const Identifier &>(*func.name_);
 
-    global_symbols[name.value_] = true;
+    global_symbols[name.value_] = Symbol{
+      .name_ = name.value_,
+      .type_ = TYPE_FUNCTION,
+      .value_type_ = func.return_type_,
+    };
 
     function_start(name.value_);
     compile_ast_node(*func.body_, -1, node.Type());

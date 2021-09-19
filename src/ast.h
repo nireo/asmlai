@@ -31,6 +31,12 @@ enum class AstType {
   ForStatement,
 };
 
+enum valuetype {
+  TYPE_VOID,
+  TYPE_CHAR,
+  TYPE_INT,
+};
+
 class Node
 {
 public:
@@ -88,6 +94,7 @@ public:
   }
 
   tokentypes type;
+  valuetype v_type;
   std::unique_ptr<Identifier> name_;
   std::unique_ptr<Expression> value_;
 };
@@ -248,6 +255,7 @@ public:
   std::vector<std::unique_ptr<Identifier> > params_;
   std::unique_ptr<BlockStatement> body_;
   std::unique_ptr<Identifier> name_;
+  valuetype return_type_;
 };
 
 class CallExpression : public Expression

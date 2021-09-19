@@ -73,7 +73,8 @@ Parser::parse_statement()
 {
   if(current_.type == tokentypes::Let) {
     return parse_let_statement();
-  } if (current_.type == tokentypes::Function) {
+  }
+  if(current_.type == tokentypes::Function) {
     return parse_function_literal();
   } else if(current_.type == tokentypes::Return) {
     return parse_return_statement();
@@ -106,6 +107,21 @@ Parser::expect_peek(tokentypes tt)
   return false;
 }
 
+static valuetype
+v_from_token(const tokentypes type)
+{
+  switch(type) {
+  case tokentypes::Void:
+    return TYPE_VOID;
+  case tokentypes::IntType:
+    return TYPE_INT;
+  case tokentypes::CharType:
+    return TYPE_CHAR;
+  default:
+    std::exit(1);
+  }
+}
+
 std::unique_ptr<Statement>
 Parser::parse_let_statement()
 {
@@ -118,6 +134,18 @@ Parser::parse_let_statement()
   auto ident = std::make_unique<Identifier>();
   ident->value_ = current_.literal;
   letstmt->name_ = std::move(ident);
+
+  if(!expect_peek(tokentypes::Colon)) {
+    return nullptr;
+  }
+
+  if(peek_token_is(tokentypes::Void) || peek_token_is(tokentypes::IntType)
+     || peek_token_is(tokentypes::CharType)) {
+    letstmt->v_type = v_from_token(peek_.type);
+    next_token();
+  } else {
+    return nullptr;
+  }
 
   if(!expect_peek(tokentypes::Assign)) {
     return nullptr;
@@ -373,6 +401,17 @@ Parser::parse_function_literal()
     return nullptr;
 
   lit->params_ = parse_function_params();
+
+  if(!expect_peek(tokentypes::Arrow))
+    return nullptr;
+
+  if(peek_token_is(tokentypes::Void) || peek_token_is(tokentypes::IntType)
+     || peek_token_is(tokentypes::CharType)) {
+    lit->return_type_ = v_from_token(peek_.type);
+    next_token();
+  } else {
+    return nullptr;
+  }
 
   if(!expect_peek(tokentypes::LBrace))
     return nullptr;

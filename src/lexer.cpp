@@ -60,6 +60,9 @@ Lexer::next_token()
     if(peek_char() == '=') {
       tok = Token{ .type = tokentypes::Eq, .literal = "==" };
       read_char();
+    } else if(peek_char() == '>') {
+      tok = Token{ .type = tokentypes::Arrow, .literal = "=>" };
+      read_char();
     } else {
       tok = new_token(tokentypes::Assign, ch_);
     }
