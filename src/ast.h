@@ -41,6 +41,10 @@ class Node
 {
 public:
   virtual AstType Type() const noexcept = 0;
+
+  // we need to know the value type such that we can compare if types are
+  // applicable.
+  virtual valuetype ValueType() const noexcept = 0;
 };
 
 class Statement : public Node
@@ -48,12 +52,14 @@ class Statement : public Node
 public:
   virtual void statementNode() = 0;
   virtual AstType Type() const noexcept = 0;
+  virtual valuetype ValueType() const noexcept = 0;
 };
 
 class Expression : public Node
 {
 public:
   virtual AstType Type() const noexcept = 0;
+  virtual valuetype ValueType() const noexcept = 0;
 };
 
 class Program : public Node
@@ -63,6 +69,11 @@ public:
   Type() const noexcept
   {
     return AstType::Program;
+  }
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
   }
 
   std::vector<std::unique_ptr<Statement> > statements_;
@@ -76,8 +87,14 @@ public:
   {
     return AstType::Identifier;
   }
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
+  }
 
   std::string value_;
+  valuetype value_type;
 };
 
 class LetStatement : public Statement
@@ -91,6 +108,11 @@ public:
   Type() const noexcept
   {
     return AstType::LetStatement;
+  }
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
   }
 
   tokentypes type;
@@ -111,6 +133,11 @@ public:
   {
     return AstType::ReturnStatement;
   }
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
+  }
 
   std::unique_ptr<Expression> return_value_;
 };
@@ -123,6 +150,11 @@ public:
   {
     return AstType::PrintStatement;
   }
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
+  }
 
   std::unique_ptr<Expression> print_value_;
 };
@@ -134,10 +166,17 @@ public:
   statementNode()
   {
   }
+
   AstType
   Type() const noexcept
   {
     return AstType::ExpressionStatement;
+  }
+
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
   }
 
   std::unique_ptr<Expression> expression_;
@@ -152,7 +191,14 @@ public:
     return AstType::IntegerLiteral;
   }
 
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
+  }
+
   std::int64_t value_;
+  valuetype type = TYPE_INT;
 };
 
 class PrefixExpression : public Expression
@@ -162,6 +208,12 @@ public:
   Type() const noexcept
   {
     return AstType::PrefixExpression;
+  }
+
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
   }
 
   tokentypes opr;
@@ -177,6 +229,12 @@ public:
     return AstType::InfixExpression;
   }
 
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
+  }
+
   tokentypes opr;
   std::unique_ptr<Expression> right_;
   std::unique_ptr<Expression> left_;
@@ -189,6 +247,12 @@ public:
   Type() const noexcept
   {
     return AstType::BooleanExpression;
+  }
+
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
   }
 
   Token token_;
@@ -208,6 +272,12 @@ public:
     return AstType::BlockStatement;
   }
 
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
+  }
+
   Token token;
   std::vector<std::unique_ptr<Statement> > statements_;
 };
@@ -219,6 +289,12 @@ public:
   Type() const noexcept
   {
     return AstType::IfExpression;
+  }
+
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
   }
 
   std::unique_ptr<Expression> cond_;
@@ -233,6 +309,12 @@ public:
   Type() const noexcept
   {
     return AstType::WhileStatement;
+  }
+
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
   }
 
   std::unique_ptr<Expression> cond_;
@@ -252,6 +334,12 @@ public:
     return AstType::FunctionLiteral;
   }
 
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
+  }
+
   std::vector<std::unique_ptr<Identifier> > params_;
   std::unique_ptr<BlockStatement> body_;
   std::unique_ptr<Identifier> name_;
@@ -267,6 +355,12 @@ public:
     return AstType::CallExpression;
   }
 
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
+  }
+
   std::vector<std::unique_ptr<Expression> > arguments_;
   std::unique_ptr<Expression> func_;
 };
@@ -280,6 +374,12 @@ public:
     return AstType::StringLiteral;
   }
 
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
+  }
+
   std::string value_;
 };
 
@@ -291,6 +391,13 @@ public:
   {
     return AstType::ArrayLiteral;
   }
+
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
+  }
+
   std::vector<std::unique_ptr<Expression> > elements_;
 };
 
@@ -301,6 +408,12 @@ public:
   Type() const noexcept
   {
     return AstType::IndexExpression;
+  }
+
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
   }
 
   std::unique_ptr<Expression> left_;
@@ -314,6 +427,12 @@ public:
   Type() const noexcept
   {
     return AstType::ForStatement;
+  }
+
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_VOID;
   }
 
   std::unique_ptr<Statement> assignment_;

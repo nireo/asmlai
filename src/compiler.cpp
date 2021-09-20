@@ -6,24 +6,57 @@
 #include <sstream>
 #include <unordered_map>
 
-enum symboltype {
-  TYPE_VARIABLE,
-  TYPE_FUNCTION,
-};
-
-struct Symbol {
-  std::string name_;
-  symboltype type_;
-  valuetype value_type_;
-};
-
 static std::unordered_map<std::string, Symbol> global_symbols;
+
+void
+add_new_symbol(const std::string &name, const symboltype stype,
+               const valuetype vtype)
+{
+  global_symbols[name] = Symbol{
+    .name_ = name,
+    .type_ = stype,
+    .value_type_ = vtype,
+  };
+}
+
+const Symbol &
+get_symbol(const std::string &name)
+{
+  if(global_symbols.find(name) == global_symbols.end()) {
+    std::fprintf(stderr, "symbol with name '%s' not found", name.c_str());
+    std::exit(1);
+  }
+
+  return global_symbols[name];
+}
 
 static int
 label()
 {
   static int id = 1;
   return id++;
+}
+
+static bool
+check_type_compatible(const valuetype left, const valuetype right, bool noleft)
+{
+  if(left == TYPE_VOID || right == TYPE_VOID)
+    return false;
+
+  if(left == right)
+    return true;
+
+  if(left == TYPE_CHAR && right == TYPE_INT) {
+    return true;
+  }
+
+  if(left == TYPE_INT && right == TYPE_CHAR) {
+    if(noleft)
+      return false;
+    return true;
+  }
+
+  return true;
 }
 
 int

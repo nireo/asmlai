@@ -3,6 +3,19 @@
 
 #include "ast.h"
 
-int compile_ast_node(const Node&, int, const AstType);
+enum symboltype {
+  TYPE_VARIABLE,
+  TYPE_FUNCTION,
+};
+
+struct Symbol {
+  std::string name_;
+  symboltype type_;
+  valuetype value_type_;
+};
+
+int compile_ast_node(const Node &, int, const AstType);
+const Symbol &get_symbol(const std::string &);
+void add_new_symbol(const std::string &, const symboltype, const valuetype);
 
 #endif
