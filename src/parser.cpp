@@ -79,6 +79,8 @@ Parser::parse_statement()
     return parse_function_literal();
   } else if(current_.type == tokentypes::Return) {
     return parse_return_statement();
+  } else if(current_.type == tokentypes::Ident) {
+    return parse_assingment();
   } else {
     return parse_expression_statement();
   }
@@ -171,6 +173,35 @@ Parser::parse_let_statement()
     next_token();
 
   return letstmt;
+}
+
+std::unique_ptr<Statement>
+Parser::parse_assingment()
+{
+  auto assign = std::make_unique<AssignmentStatement>();
+
+  auto identifier = std::make_unique<Identifier>();
+  identifier->value_ = current_.literal;
+
+  const auto &sym = get_symbol(current_.literal);
+  assign->assingment_type_ = sym.value_type_;
+
+  next_token();
+
+  if(!expect_peek(tokentypes::Assign)) {
+    return nullptr;
+  }
+
+  auto exp = parse_expression(LOWEST);
+  if (!check_type_compatible(assign->assingment_type_, exp.second, false)) {
+    std::fprintf(stderr, "assignment types are wrong");
+    std::exit(1);
+  }
+
+  if(peek_token_is(tokentypes::Semicolon))
+    next_token();
+
+  return assign;
 }
 
 std::unique_ptr<Statement>

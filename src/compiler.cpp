@@ -210,6 +210,13 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     int reg = compile_ast_node(*assigment.value_, -1, node.Type());
     return store_global(reg, identifier.value_);
   }
+  case AstType::AssingmentStatement: {
+    const auto &assigment = static_cast<const AssignmentStatement&>(node);
+    const auto &identifier = static_cast<const Identifier &>(*assigment.identifier_);
+
+    int reg = compile_ast_node(*assigment.value_, -1, node.Type());
+    return store_global(reg, identifier.value_);
+  }
   case AstType::Identifier: {
     const auto &identifier = static_cast<const Identifier &>(node);
 

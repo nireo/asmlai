@@ -58,6 +58,7 @@ private:
   std::unique_ptr<Expression> parse_for_expression();
   std::unique_ptr<Expression> parse_print_statement();
   std::unique_ptr<Expression> parse_while_expression();
+  std::unique_ptr<Statement> parse_assingment();
   std::pair<std::unique_ptr<Expression>, valuetype>
   parse_expression(Precedence prec);
   std::unique_ptr<Expression> parse_identifier();

@@ -29,6 +29,7 @@ enum class AstType {
   PrintStatement,
   WhileStatement,
   ForStatement,
+  AssingmentStatement,
 };
 
 enum valuetype {
@@ -77,6 +78,30 @@ public:
   }
 
   std::vector<std::unique_ptr<Statement> > statements_;
+};
+
+class AssignmentStatement : public Statement
+{
+public:
+  void
+  statementNode()
+  {
+  }
+  AstType
+  Type() const noexcept
+  {
+    return AstType::AssingmentStatement;
+  }
+
+  valuetype
+  ValueType() const noexcept
+  {
+    return assingment_type_;
+  }
+
+  std::unique_ptr<Expression> identifier_;
+  std::unique_ptr<Expression> value_;
+  valuetype assingment_type_;
 };
 
 class Identifier : public Expression
