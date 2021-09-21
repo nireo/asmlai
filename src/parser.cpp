@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "ast.h"
+#include "compiler.h"
 #include "token.h"
 #include <algorithm>
 #include <cstdlib>
@@ -132,8 +133,8 @@ Parser::parse_let_statement()
   }
 
   auto ident = std::make_unique<Identifier>();
-  ident->value_ = current_.literal;
-  letstmt->name_ = std::move(ident);
+  const std::string name = current_.literal;
+  ident->value_ = name;
 
   if(!expect_peek(tokentypes::Colon)) {
     return nullptr;
@@ -153,7 +154,16 @@ Parser::parse_let_statement()
 
   next_token();
 
-  letstmt->value_ = parse_expression(LOWEST);
+  letstmt->name_ = std::move(ident);
+
+  auto exp = parse_expression(LOWEST);
+  // check if the types are applicable.
+  if (!check_type_compatible(letstmt->v_type, exp->ValueType(), false)) {
+    std::fprintf(stderr, "types are not applicable in let statement.");
+    std::exit(1);
+  }
+
+  letstmt->value_ = std::move(exp);
 
   if(peek_token_is(tokentypes::Semicolon))
     next_token();
@@ -216,8 +226,18 @@ Parser::parse_expression(Precedence prec)
     auto infix = m_infix_parse_fns[peek_.type];
     if(infix == nullptr)
       return left;
+
     next_token();
     left = (this->*infix)(std::move(left));
+
+    // we cannot cast infix expression on these, so ignore them for now.
+    if (left->Type() != AstType::CallExpression || left->Type() != AstType::InfixExpression) {
+      const auto &inf = static_cast<const InfixExpression&>(*left);
+      if (!check_type_compatible(inf.left_->ValueType(), inf.right_->ValueType(), true)) {
+        std::fprintf(stderr, "types are not equal in infix expression");
+        std::exit(1);
+      }
+    }
   }
 
   return left;

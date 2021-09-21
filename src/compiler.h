@@ -17,5 +17,7 @@ struct Symbol {
 int compile_ast_node(const Node &, int, const AstType);
 const Symbol &get_symbol(const std::string &);
 void add_new_symbol(const std::string &, const symboltype, const valuetype);
+bool symbol_exists(const std::string&);
+bool check_type_compatible(const valuetype, const valuetype, bool noleft);
 
 #endif

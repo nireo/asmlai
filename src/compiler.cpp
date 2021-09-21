@@ -1,6 +1,6 @@
 #include "compiler.h"
 #include "ast.h"
-#include "codegen.h"
+#include "codegen_x64.h"
 #include "token.h"
 #include <cstdio>
 #include <sstream>
@@ -30,6 +30,12 @@ get_symbol(const std::string &name)
   return global_symbols[name];
 }
 
+bool
+symbol_exists(const std::string &name)
+{
+  return global_symbols.find(name) != global_symbols.end();
+}
+
 static int
 label()
 {
@@ -37,7 +43,7 @@ label()
   return id++;
 }
 
-static bool
+bool
 check_type_compatible(const valuetype left, const valuetype right, bool noleft)
 {
   if(left == TYPE_VOID || right == TYPE_VOID)

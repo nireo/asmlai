@@ -87,10 +87,11 @@ public:
   {
     return AstType::Identifier;
   }
+
   valuetype
   ValueType() const noexcept
   {
-    return TYPE_VOID;
+    return value_type;
   }
 
   std::string value_;
@@ -194,11 +195,10 @@ public:
   valuetype
   ValueType() const noexcept
   {
-    return TYPE_VOID;
+    return TYPE_INT;
   }
 
   std::int64_t value_;
-  valuetype type = TYPE_INT;
 };
 
 class PrefixExpression : public Expression
@@ -328,6 +328,7 @@ public:
   statementNode()
   {
   }
+
   AstType
   Type() const noexcept
   {

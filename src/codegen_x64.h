@@ -1,5 +1,5 @@
-#ifndef LAI_CODEGEN_H
-#define LAI_CODEGEN_H
+#ifndef LAI_CODEX64_H
+#define LAI_CODEX64_H
 
 #include "token.h"
 #include <string>
