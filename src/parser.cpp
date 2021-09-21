@@ -154,16 +154,18 @@ Parser::parse_let_statement()
 
   next_token();
 
+  add_new_symbol(ident->value_, TYPE_VARIABLE, letstmt->v_type);
+
   letstmt->name_ = std::move(ident);
 
   auto exp = parse_expression(LOWEST);
   // check if the types are applicable.
-  if (!check_type_compatible(letstmt->v_type, exp->ValueType(), false)) {
+  if(!check_type_compatible(letstmt->v_type, exp.second, false)) {
     std::fprintf(stderr, "types are not applicable in let statement.");
     std::exit(1);
   }
 
-  letstmt->value_ = std::move(exp);
+  letstmt->value_ = std::move(exp.first);
 
   if(peek_token_is(tokentypes::Semicolon))
     next_token();
@@ -177,7 +179,7 @@ Parser::parse_return_statement()
   auto returnstmt = std::make_unique<ReturnStatement>();
 
   next_token();
-  returnstmt->return_value_ = parse_expression(LOWEST);
+  returnstmt->return_value_ = parse_expression(LOWEST).first;
 
   if(peek_token_is(tokentypes::Semicolon))
     next_token();
@@ -191,7 +193,7 @@ Parser::parse_print_statement()
   auto print_stmt = std::make_unique<PrintStatement>();
   next_token();
 
-  print_stmt->print_value_ = parse_expression(LOWEST);
+  print_stmt->print_value_ = parse_expression(LOWEST).first;
 
   if(peek_token_is(tokentypes::Semicolon))
     next_token();
@@ -204,7 +206,7 @@ Parser::parse_expression_statement()
 {
   auto stmt = std::make_unique<ExpressionStatement>();
 
-  stmt->expression_ = parse_expression(LOWEST);
+  stmt->expression_ = parse_expression(LOWEST).first;
   if(peek_token_is(tokentypes::Semicolon)) {
     next_token();
   }
@@ -212,35 +214,40 @@ Parser::parse_expression_statement()
   return stmt;
 }
 
-std::unique_ptr<Expression>
+std::pair<std::unique_ptr<Expression>, valuetype>
 Parser::parse_expression(Precedence prec)
 {
   if(m_prefix_parse_fns.find(current_.type) == m_prefix_parse_fns.end()) {
-    return nullptr;
+    return { nullptr, TYPE_VOID };
   }
 
   auto fn = m_prefix_parse_fns[current_.type];
   auto left = (this->*fn)();
+  valuetype type;
 
   while(!peek_token_is(tokentypes::Semicolon) && prec < peek_precedence()) {
     auto infix = m_infix_parse_fns[peek_.type];
     if(infix == nullptr)
-      return left;
+      return { std::move(left), left->ValueType() };
 
     next_token();
     left = (this->*infix)(std::move(left));
 
     // we cannot cast infix expression on these, so ignore them for now.
-    if (left->Type() != AstType::CallExpression || left->Type() != AstType::InfixExpression) {
-      const auto &inf = static_cast<const InfixExpression&>(*left);
-      if (!check_type_compatible(inf.left_->ValueType(), inf.right_->ValueType(), true)) {
+    if(left->Type() != AstType::CallExpression
+       || left->Type() != AstType::InfixExpression) {
+      const auto &inf = static_cast<const InfixExpression &>(*left);
+      if(!check_type_compatible(inf.left_->ValueType(),
+                                inf.right_->ValueType(), true)) {
         std::fprintf(stderr, "types are not equal in infix expression");
         std::exit(1);
       }
+
+      type = inf.left_->ValueType();
     }
   }
 
-  return left;
+  return { std::move(left), type };
 }
 
 std::unique_ptr<Expression>
@@ -248,6 +255,9 @@ Parser::parse_identifier()
 {
   auto identifier = std::make_unique<Identifier>();
   identifier->value_ = current_.literal;
+
+  const auto &sym = get_symbol(current_.literal);
+  identifier->value_type = sym.value_type_;
 
   return identifier;
 }
@@ -275,7 +285,7 @@ Parser::parse_prefix_expression()
   exp->opr = current_.type;
 
   next_token();
-  exp->right_ = parse_expression(PREFIX);
+  exp->right_ = parse_expression(PREFIX).first;
 
   return exp;
 }
@@ -305,7 +315,7 @@ Parser::parse_infix_expression(std::unique_ptr<Expression> left)
 
   auto prec = current_precedence();
   next_token();
-  exp->right_ = std::move(parse_expression(prec));
+  exp->right_ = std::move(parse_expression(prec).first);
 
   return exp;
 }
@@ -318,7 +328,7 @@ Parser::parse_grouped_expression()
   if(!expect_peek(tokentypes::RParen))
     return nullptr;
 
-  return exp;
+  return std::move(exp.first);
 }
 
 std::unique_ptr<Expression>
@@ -338,7 +348,7 @@ Parser::parse_while_expression()
     return nullptr;
 
   next_token();
-  while_stmt->cond_ = parse_expression(LOWEST);
+  while_stmt->cond_ = parse_expression(LOWEST).first;
 
   if(!expect_peek(tokentypes::RParen))
     return nullptr;
@@ -360,7 +370,7 @@ Parser::parse_if_expression()
     return nullptr;
 
   next_token();
-  exp->cond_ = parse_expression(LOWEST);
+  exp->cond_ = parse_expression(LOWEST).first;
 
   if(!expect_peek(tokentypes::RParen))
     return nullptr;
@@ -512,7 +522,7 @@ Parser::parse_for_expression()
   if(!expect_peek(tokentypes::Semicolon))
     return nullptr;
 
-  for_stmt->cond_ = parse_expression(LOWEST);
+  for_stmt->cond_ = parse_expression(LOWEST).first;
 
   if(!expect_peek(tokentypes::Semicolon))
     return nullptr;
@@ -540,12 +550,12 @@ Parser::parse_expression_list(tokentypes end)
   }
 
   next_token();
-  expressions.push_back(std::move(parse_expression(LOWEST)));
+  expressions.push_back(std::move(parse_expression(LOWEST).first));
   while(peek_token_is(tokentypes::Comma)) {
     next_token();
     next_token();
 
-    expressions.push_back(std::move(parse_expression(LOWEST)));
+    expressions.push_back(std::move(parse_expression(LOWEST).first));
   }
 
   if(!expect_peek(end))
@@ -565,13 +575,13 @@ Parser::parse_call_arguments()
   }
 
   next_token();
-  args.push_back(std::move(parse_expression(LOWEST)));
+  args.push_back(std::move(parse_expression(LOWEST).first));
 
   while(peek_token_is(tokentypes::Comma)) {
     next_token();
     next_token();
 
-    args.push_back(std::move(parse_expression(LOWEST)));
+    args.push_back(std::move(parse_expression(LOWEST).first));
   }
 
   if(!expect_peek(tokentypes::RParen))
@@ -587,7 +597,7 @@ Parser::parse_index_expression(std::unique_ptr<Expression> left)
   exp->left_ = std::move(left);
 
   next_token();
-  exp->index_ = parse_expression(LOWEST);
+  exp->index_ = parse_expression(LOWEST).first;
   if(!expect_peek(tokentypes::RBracket))
     return nullptr;
 

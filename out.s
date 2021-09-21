@@ -20,9 +20,14 @@ test_print_integer:
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	.comm	i,8,8
-	movq	$0, %r8
-	movq	%r8, i(%rip)
+	movq	$10, %r8
+	movq	$10, %r9
+	addq	%r8, %r9
+	movq	%r9, i(%rip)
+	movq	i(%rip), %r8
+	movq	$10, %r10
+	addq	%r8, %r10
+	movq	%r10, i(%rip)
 	movl $0, %eax
 	popq     %rbp
 	ret

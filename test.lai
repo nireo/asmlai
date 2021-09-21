@@ -1,3 +1,4 @@
 fn main() => int {
-  let i: int = 0;
+  let i: int = 10 + 10;
+  let i: int = i + 10 + 10;
 }
