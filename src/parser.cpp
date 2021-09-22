@@ -193,7 +193,7 @@ Parser::parse_assingment()
   }
 
   auto exp = parse_expression(LOWEST);
-  if (!check_type_compatible(assign->assingment_type_, exp.second, false)) {
+  if(!check_type_compatible(assign->assingment_type_, exp.second, false)) {
     std::fprintf(stderr, "assignment types are wrong");
     std::exit(1);
   }
@@ -275,6 +275,22 @@ Parser::parse_expression(Precedence prec)
       }
 
       type = inf.left_->ValueType();
+    } else if(left->Type() == AstType::CallExpression) {
+      const auto &cexp = static_cast<const CallExpression &>(*left);
+      switch(cexp.func_->Type()) {
+      case AstType::Identifier: {
+        const auto &ident = static_cast<const CallExpression &>(*left);
+        break;
+      }
+      case AstType::FunctionLiteral: {
+        const auto &fn_lit = static_cast<const CallExpression &>(*left);
+        break;
+      }
+      default: {
+        std::fprintf(stderr, "cannot call non-function.");
+        std::exit(0);
+      }
+      }
     }
   }
 
@@ -455,7 +471,8 @@ Parser::parse_function_literal()
   }
 
   auto ident = std::make_unique<Identifier>();
-  ident->value_ = current_.literal;
+  const std::string name = current_.literal;
+  ident->value_ = name;
   lit->name_ = std::move(ident);
 
   if(!expect_peek(tokentypes::LParen))
@@ -473,6 +490,7 @@ Parser::parse_function_literal()
   } else {
     return nullptr;
   }
+  add_new_symbol(name, TYPE_FUNCTION, lit->return_type_);
 
   if(!expect_peek(tokentypes::LBrace))
     return nullptr;
