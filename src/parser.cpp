@@ -6,8 +6,11 @@
 #include <cstdlib>
 #include <memory>
 #include <sstream>
+#include <stack>
 #include <string>
 #include <unordered_map>
+
+static std::stack<std::string> latest_function_identifers;
 
 std::unique_ptr<Program>
 Parser::parse_program()
@@ -208,8 +211,29 @@ std::unique_ptr<Statement>
 Parser::parse_return_statement()
 {
   auto returnstmt = std::make_unique<ReturnStatement>();
+  const std::string top = latest_function_identifers.top();
+  returnstmt->function_identifier_ = top;
+  // get functions valuetype
+  valuetype function_return_type_ = get_symbol(top).value_type_;
 
   next_token();
+
+  // returnstatement without expression.
+  if(peek_token_is(tokentypes::Semicolon)) {
+    if(!check_type_compatible(TYPE_VOID, function_return_type_, false)) {
+      std::fprintf(stderr, "returning a value from a void function");
+      std::exit(1);
+    }
+
+    return returnstmt;
+  }
+
+  auto exp = parse_expression(LOWEST);
+  if(!check_type_compatible(function_return_type_, exp.second, false)) {
+    std::fprintf(stderr, "return value doesn't match functions return type");
+    std::exit(1);
+  }
+
   returnstmt->return_value_ = parse_expression(LOWEST).first;
 
   if(peek_token_is(tokentypes::Semicolon))
@@ -279,7 +303,7 @@ Parser::parse_expression(Precedence prec)
       const auto &cexp = static_cast<const CallExpression &>(*left);
       switch(cexp.func_->Type()) {
       case AstType::Identifier: {
-        const auto &ident = static_cast<const Identifier&>(*left);
+        const auto &ident = static_cast<const Identifier &>(*left);
         break;
       }
       case AstType::FunctionLiteral: {
@@ -492,10 +516,14 @@ Parser::parse_function_literal()
   }
   add_new_symbol(name, TYPE_FUNCTION, lit->return_type_);
 
+  latest_function_identifers.push(name);
+
   if(!expect_peek(tokentypes::LBrace))
     return nullptr;
 
   lit->body_ = std::move(parse_block_statement());
+
+  latest_function_identifers.pop();
 
   return lit;
 }

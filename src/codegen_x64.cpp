@@ -313,6 +313,28 @@ function_start(const std::string &name)
                name.c_str(), name.c_str(), name.c_str());
 }
 
+void
+codegen_return(int reg, const Symbol &sym)
+{
+  switch(sym.value_type_) {
+  case TYPE_CHAR:
+    fprintf(fp, "\tmovzbl\t%s, %%eax\n", b_registers[reg].c_str());
+    break;
+  case TYPE_INT:
+    fprintf(fp, "\tmovl\t%s, %%eax\n", d_registers[reg].c_str());
+    break;
+  case TYPE_LONG:
+    std::fprintf(fp, "\tmovq\t%s, %%rax\n", registers[reg].c_str());
+    break;
+  default: {
+    std::fprintf(stderr, "undefined return function");
+    std::exit(1);
+  }
+  }
+
+  gen_jmp(0);
+}
+
 int
 codegen_call(int reg, const std::string &name)
 {

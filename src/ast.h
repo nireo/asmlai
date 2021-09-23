@@ -167,6 +167,8 @@ public:
   }
 
   std::unique_ptr<Expression> return_value_;
+  std::string function_identifier_;
+  valuetype types_;
 };
 
 class PrintStatement : public Expression
