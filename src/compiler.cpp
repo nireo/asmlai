@@ -30,14 +30,21 @@ get_symbol(const std::string &name)
   return global_symbols[name];
 }
 
+Symbol &
+get_symbol_ref(const std::string &name)
+{
+  auto &symbol = global_symbols[name];
+  return symbol;
+}
+
 bool
 symbol_exists(const std::string &name)
 {
   return global_symbols.find(name) != global_symbols.end();
 }
 
-static int
-label()
+int
+get_next_label()
 {
   static int id = 1;
   return id++;
@@ -92,8 +99,8 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
   case AstType::WhileStatement: {
     const auto &while_stmt = static_cast<const WhileStatement &>(node);
 
-    int start_label = label();
-    int end_label = label();
+    int start_label = get_next_label();
+    int end_label = get_next_label();
 
     gen_label(start_label);
 
@@ -110,10 +117,10 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
   }
   case AstType::IfExpression: {
     const auto &if_stmt = static_cast<const IfExpression &>(node);
-    int false_label = label();
+    int false_label = get_next_label();
     int end_label;
     if(if_stmt.other_ != nullptr) {
-      end_label = label();
+      end_label = get_next_label();
     }
 
     compile_ast_node(*if_stmt.cond_, false_label, node.Type());
@@ -208,14 +215,33 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     }
 
     int reg = compile_ast_node(*assigment.value_, -1, node.Type());
-    return store_global(reg, identifier.value_);
+    return store_global(reg, get_symbol(identifier.value_));
+  }
+  case AstType::ReturnStatement: {
+    const auto &returnstmt = static_cast<const ReturnStatement &>(node);
+
+    int left_reg
+        = compile_ast_node(*returnstmt.return_value_, -1, node.Type());
+
+    codegen_return(left_reg, get_symbol(returnstmt.function_identifier_));
+
+    return -1;
+  }
+  case AstType::CallExpression: {
+    const auto &call_exp = static_cast<const CallExpression &>(node);
+    const auto &identifier = static_cast<const Identifier &>(*call_exp.func_);
+
+    int left_reg = compile_ast_node(*call_exp.arguments_[0], -1, node.Type());
+
+    return codegen_call(left_reg, identifier.value_);
   }
   case AstType::AssingmentStatement: {
-    const auto &assigment = static_cast<const AssignmentStatement&>(node);
-    const auto &identifier = static_cast<const Identifier &>(*assigment.identifier_);
+    const auto &assigment = static_cast<const AssignmentStatement &>(node);
+    const auto &identifier
+        = static_cast<const Identifier &>(*assigment.identifier_);
 
     int reg = compile_ast_node(*assigment.value_, -1, node.Type());
-    return store_global(reg, identifier.value_);
+    return store_global(reg, get_symbol(identifier.value_));
   }
   case AstType::Identifier: {
     const auto &identifier = static_cast<const Identifier &>(node);
@@ -226,21 +252,17 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
       std::exit(1);
     }
 
-    return load_global(identifier.value_);
+    return load_global(get_symbol(identifier.value_));
   }
   case AstType::FunctionLiteral: {
     const auto &func = static_cast<const FunctionLiteral &>(node);
     const auto &name = static_cast<const Identifier &>(*func.name_);
 
-    global_symbols[name.value_] = Symbol{
-      .name_ = name.value_,
-      .type_ = TYPE_FUNCTION,
-      .value_type_ = func.return_type_,
-    };
+    const auto &sym = get_symbol(name.value_);
 
     function_start(name.value_);
     compile_ast_node(*func.body_, -1, node.Type());
-    function_end();
+    function_end(sym.label);
 
     return -1;
   }

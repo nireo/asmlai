@@ -4,6 +4,7 @@
 #include "token.h"
 #include <algorithm>
 #include <cstdlib>
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <stack>
@@ -218,15 +219,17 @@ Parser::parse_return_statement()
 
   next_token();
 
-  // returnstatement without expression.
-  if(peek_token_is(tokentypes::Semicolon)) {
-    if(!check_type_compatible(TYPE_VOID, function_return_type_, false)) {
-      std::fprintf(stderr, "returning a value from a void function");
-      std::exit(1);
-    }
+  returnstmt->types_ = function_return_type_;
 
-    return returnstmt;
-  }
+  // returnstatement without expression.
+  // if(peek_token_is(tokentypes::Semicolon)) {
+  //   if(!check_type_compatible(TYPE_VOID, function_return_type_, false)) {
+  //     std::fprintf(stderr, "returning a value from a void function");
+  //     std::exit(1);
+  //   }
+
+  //   return returnstmt;
+  // }
 
   auto exp = parse_expression(LOWEST);
   if(!check_type_compatible(function_return_type_, exp.second, false)) {
@@ -234,7 +237,7 @@ Parser::parse_return_statement()
     std::exit(1);
   }
 
-  returnstmt->return_value_ = parse_expression(LOWEST).first;
+  returnstmt->return_value_ = std::move(exp.first);
 
   if(peek_token_is(tokentypes::Semicolon))
     next_token();
@@ -290,7 +293,7 @@ Parser::parse_expression(Precedence prec)
 
     // we cannot cast infix expression on these, so ignore them for now.
     if(left->Type() != AstType::CallExpression
-       || left->Type() != AstType::InfixExpression) {
+       && left->Type() != AstType::InfixExpression) {
       const auto &inf = static_cast<const InfixExpression &>(*left);
       if(!check_type_compatible(inf.left_->ValueType(),
                                 inf.right_->ValueType(), true)) {
@@ -304,9 +307,14 @@ Parser::parse_expression(Precedence prec)
       switch(cexp.func_->Type()) {
       case AstType::Identifier: {
         const auto &ident = static_cast<const Identifier &>(*left);
+        std::cout << ident.value_ << '\n';
+        const auto &sym = get_symbol(ident.value_);
+        type = sym.value_type_;
+
         break;
       }
       case AstType::FunctionLiteral: {
+        // TODO: no
         const auto &fn_lit = static_cast<const CallExpression &>(*left);
         break;
       }
@@ -515,6 +523,7 @@ Parser::parse_function_literal()
     return nullptr;
   }
   add_new_symbol(name, TYPE_FUNCTION, lit->return_type_);
+  get_symbol_ref(name).label = get_next_label();
 
   latest_function_identifers.push(name);
 

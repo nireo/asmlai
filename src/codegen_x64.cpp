@@ -332,7 +332,7 @@ codegen_return(int reg, const Symbol &sym)
   }
   }
 
-  gen_jmp(0);
+  gen_jmp(sym.label);
 }
 
 int
@@ -342,16 +342,17 @@ codegen_call(int reg, const std::string &name)
   std::fprintf(fp, "\tmovq\t%s, %%rdi\n", registers[reg].c_str());
   std::fprintf(fp, "\tcall\t%s\n", name.c_str());
   std::fprintf(fp, "\tmovq\t%%rax, %s\n", registers[outer].c_str());
+
   free_register(reg);
 
   return outer;
 }
 
 void
-function_end()
+function_end(int label)
 {
-  std::fputs("\tmovl $0, %eax\n"
-             "\tpopq     %rbp\n"
+  gen_label(label);
+  std::fputs("\tpopq %rbp\n"
              "\tret\n",
              fp);
 }

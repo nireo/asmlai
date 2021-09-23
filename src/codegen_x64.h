@@ -1,6 +1,7 @@
 #ifndef LAI_CODEX64_H
 #define LAI_CODEX64_H
 
+#include "compiler.h"
 #include "token.h"
 #include <string>
 
@@ -13,15 +14,17 @@ void print_register(int);
 void init_out_file();
 void gen_start();
 void end_codegen();
-int store_global(int, std::string);
+int store_global(int, const Symbol &);
 void generate_sym(std::string);
-int load_global(std::string);
+int load_global(const Symbol &);
 void free_all_registers();
 int codegen_compare_no_jump(int, int, const tokentypes);
 int codegen_compare_jump(int, int, int, const tokentypes);
 void gen_jmp(int);
 void gen_label(int);
-void function_start(const std::string&);
-void function_end();
+void function_start(const std::string &);
+void function_end(int);
+int codegen_call(int, const std::string &);
+void codegen_return(int, const Symbol &);
 
 #endif

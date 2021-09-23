@@ -1,4 +1,8 @@
+fn fib() => int {
+  return 10;
+}
+
 fn main() => int {
-  let i: int = 10 + 10;
-  let i: int = i + 10 + 10;
+  let i: int = fib(10);
+  print i;
 }
