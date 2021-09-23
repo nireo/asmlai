@@ -1,4 +1,6 @@
 #include "codegen_x64.h"
+#include "ast.h"
+#include "compiler.h"
 #include <cstdio>
 #include <cstdlib>
 #include <string>
@@ -7,6 +9,7 @@ static std::FILE *fp = nullptr;
 static bool free_registers[4];
 static const std::string registers[4] = { "%r8", "%r9", "%r10", "%r11" };
 static const std::string b_registers[4] = { "%r8b", "%r9b", "%r10b", "%r11b" };
+static const std::string d_registers[4] = { "%r8d", "%r9d", "%r10d", "%r11d" };
 
 static const std::string jump_insts[]
     = { "jne", "je", "jge", "jle", "jg", "jl" };
@@ -32,6 +35,25 @@ get_corresponding_inst_index(const tokentypes type)
   default:
     std::fprintf(stderr, "no free registers\n");
     std::exit(1);
+  }
+}
+
+static int
+get_bytesize_of_type(valuetype type)
+{
+  switch(type) {
+  case TYPE_VOID:
+    return 0;
+  case TYPE_CHAR:
+    return 1;
+  case TYPE_INT:
+    return 2;
+  case TYPE_LONG:
+    return 3;
+  default: {
+    std::fprintf(stderr, "type not found.");
+    std::exit(1);
+  }
   }
 }
 
@@ -173,10 +195,30 @@ end_codegen()
 }
 
 int
-store_global(int r, std::string identifier)
+store_global(int r, const Symbol &sym)
 {
-  std::fprintf(fp, "\tmovq\t%s, %s(\%%rip)\n", registers[r].c_str(),
-               identifier.c_str());
+  switch(sym.value_type_) {
+  case TYPE_CHAR: {
+    std::fprintf(fp, "\tmovb\t%s, %s(\%%rip)\n", b_registers[r].c_str(),
+                 sym.name_.c_str());
+    break;
+  }
+  case TYPE_INT: {
+    std::fprintf(fp, "\tmovl\t%s, %s(\%%rip)\n", d_registers[r].c_str(),
+                 sym.name_.c_str());
+    break;
+  }
+  case TYPE_LONG: {
+    std::fprintf(fp, "\tmovq\t%s, %s(\%%rip)\n", registers[r].c_str(),
+                 sym.name_.c_str());
+    break;
+  }
+  default: {
+    std::fprintf(stderr, "cannot load global type.\n");
+    std::exit(1);
+  }
+  }
+
   return r;
 }
 
@@ -187,12 +229,32 @@ generate_sym(std::string symbol)
 }
 
 int
-load_global(std::string identifier)
+load_global(const Symbol &sym)
 {
   int free_reg = get_register();
 
-  std::fprintf(fp, "\tmovq\t%s(\%%rip), %s\n", identifier.c_str(),
-               registers[free_reg].c_str());
+  switch(sym.value_type_) {
+  case TYPE_CHAR: {
+    std::fprintf(fp, "\tmovzbq\t%s(\%%rip), %s\n", sym.name_.c_str(),
+                 registers[free_reg].c_str());
+    break;
+  }
+  case TYPE_INT: {
+    std::fprintf(fp, "\tmovzbl\t%s(\%%rip), %s\n", sym.name_.c_str(),
+                 registers[free_reg].c_str());
+    break;
+  }
+  case TYPE_LONG: {
+    std::fprintf(fp, "\tmovq\t%s(\%%rip), %s\n", sym.name_.c_str(),
+                 registers[free_reg].c_str());
+    break;
+  }
+  default: {
+    std::fprintf(stderr, "cannot load global type.\n");
+    std::exit(1);
+  }
+  }
+
   return free_reg;
 }
 
@@ -249,6 +311,18 @@ function_start(const std::string &name)
                "\tpushq\t%%rbp\n"
                "\tmovq\t%%rsp, %%rbp\n",
                name.c_str(), name.c_str(), name.c_str());
+}
+
+int
+codegen_call(int reg, const std::string &name)
+{
+  int outer = get_register();
+  std::fprintf(fp, "\tmovq\t%s, %%rdi\n", registers[reg].c_str());
+  std::fprintf(fp, "\tcall\t%s\n", name.c_str());
+  std::fprintf(fp, "\tmovq\t%%rax, %s\n", registers[outer].c_str());
+  free_register(reg);
+
+  return outer;
 }
 
 void

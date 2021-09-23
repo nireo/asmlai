@@ -279,7 +279,7 @@ Parser::parse_expression(Precedence prec)
       const auto &cexp = static_cast<const CallExpression &>(*left);
       switch(cexp.func_->Type()) {
       case AstType::Identifier: {
-        const auto &ident = static_cast<const CallExpression &>(*left);
+        const auto &ident = static_cast<const Identifier&>(*left);
         break;
       }
       case AstType::FunctionLiteral: {
