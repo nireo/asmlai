@@ -37,6 +37,10 @@ enum valuetype {
   TYPE_CHAR,
   TYPE_INT,
   TYPE_LONG,
+  TYPE_PTR_VOID,
+  TYPE_PTR_CHAR,
+  TYPE_PTR_INT,
+  TYPE_PTR_LONG,
 };
 
 class Node

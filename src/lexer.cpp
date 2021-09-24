@@ -147,6 +147,9 @@ Lexer::next_token()
     tok = new_token(tokentypes::RBrace, ch_);
     read_char();
     break;
+  case '&':
+    tok = new_token(tokentypes::Amper, ch_);
+    read_char();
   case '"':
     tok.type = tokentypes::String;
     tok.literal = read_string();

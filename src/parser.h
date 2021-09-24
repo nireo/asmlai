@@ -82,6 +82,7 @@ private:
 
   std::vector<std::unique_ptr<Identifier> > parse_function_params();
   std::vector<std::unique_ptr<Expression> > parse_call_arguments();
+  valuetype parse_type();
 
   Precedence peek_precedence();
   Precedence current_precedence();

@@ -42,6 +42,7 @@ enum class tokentypes {
   While,
   For,
   Arrow,
+  Amper,
 
   IntType,
   CharType,

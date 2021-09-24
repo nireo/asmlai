@@ -40,6 +40,8 @@ Parser::Parser(std::unique_ptr<Lexer> lx)
   add_prefix_parse(tokentypes::Int, &Parser::parse_integer_literal);
   add_prefix_parse(tokentypes::Bang, &Parser::parse_prefix_expression);
   add_prefix_parse(tokentypes::Minus, &Parser::parse_prefix_expression);
+  add_prefix_parse(tokentypes::Asterisk, &Parser::parse_prefix_expression);
+  add_prefix_parse(tokentypes::Amper, &Parser::parse_prefix_expression);
   add_prefix_parse(tokentypes::True, &Parser::parse_boolean);
   add_prefix_parse(tokentypes::False, &Parser::parse_boolean);
   add_prefix_parse(tokentypes::LParen, &Parser::parse_grouped_expression);
@@ -88,6 +90,58 @@ Parser::parse_statement()
   } else {
     return parse_expression_statement();
   }
+}
+
+static valuetype
+convert_type_to_pointer(const valuetype type)
+{
+  switch (type) {
+  case TYPE_VOID: {
+    return TYPE_PTR_VOID;
+  }
+  case TYPE_INT: {
+    return TYPE_PTR_VOID;
+  }
+  case TYPE_LONG: {
+    return TYPE_PTR_LONG;
+  }
+  default: {
+    std::fprintf(stderr, "cannot convert type into pointer");
+    std::exit(1);
+  }
+  }
+}
+
+valuetype
+Parser::parse_type()
+{
+  valuetype type;
+
+  switch(peek_.type) {
+  case tokentypes::IntType: {
+    type = TYPE_INT;
+    break;
+  }
+  case tokentypes::Void: {
+    type = TYPE_VOID;
+    break;
+  }
+  default: {
+    std::fprintf(stderr, "cannot parse type\n");
+    std::exit(1);
+  }
+  }
+
+  while (true) {
+    next_token();
+    if (peek_token_is(tokentypes::Asterisk)) {
+      break;
+    }
+
+    type = convert_type_to_pointer(type);
+  }
+
+  return type;
 }
 
 bool
