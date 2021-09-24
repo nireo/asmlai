@@ -274,6 +274,23 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
 
     return -1;
   }
+  case AstType::PrefixExpression: {
+    const auto &pref = static_cast<const PrefixExpression &>(node);
+    switch(pref.opr) {
+    case tokentypes::Amper: {
+      const auto &identifier = static_cast<const Identifier &>(*pref.right_);
+      return codegen_addr(get_symbol(identifier.value_));
+    }
+    case tokentypes::Asterisk: {
+      int right = compile_ast_node(*pref.right_, -1, node.Type());
+      return codegen_dereference(right, pref.right_->ValueType());
+    }
+    default: {
+      std::fprintf(stderr, "cannot codegen for given operation.\n");
+      std::exit(1);
+    }
+    }
+  }
   case AstType::IntegerLiteral: {
     const auto &int_lit = static_cast<const IntegerLiteral &>(node);
 

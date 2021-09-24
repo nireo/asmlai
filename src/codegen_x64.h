@@ -26,5 +26,7 @@ void function_start(const std::string &);
 void function_end(int);
 int codegen_call(int, const std::string &);
 void codegen_return(int, const Symbol &);
+int codegen_addr(const Symbol &);
+int codegen_dereference(int, const valuetype);
 
 #endif

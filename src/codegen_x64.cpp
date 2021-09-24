@@ -356,3 +356,37 @@ function_end(int label)
              "\tret\n",
              fp);
 }
+
+int
+codegen_addr(const Symbol &sym)
+{
+  int r = get_register();
+
+  std::fprintf(fp, "\tleaq\t%s(%%rip), %s\n", sym.name_.c_str(),
+               registers[r].c_str());
+
+  return r;
+}
+
+int
+codegen_dereference(int reg, const valuetype type)
+{
+  switch(type) {
+  case TYPE_PTR_CHAR: {
+    std::fprintf(fp, "\tmovzbq\t(%s), %s\n", registers[reg].c_str(),
+                 registers[reg].c_str());
+    break;
+  }
+  case TYPE_PTR_INT: {
+    std::fprintf(fp, "\tmovq\t(%s), %s\n", registers[reg].c_str(),
+                 registers[reg].c_str());
+    break;
+  }
+  default: {
+    std::fprintf(stderr, "unrecognized pointer type.\n");
+    std::exit(1);
+  }
+  }
+
+  return reg;
+}
