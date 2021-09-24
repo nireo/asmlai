@@ -240,7 +240,7 @@ load_global(const Symbol &sym)
     break;
   }
   case TYPE_INT: {
-    std::fprintf(fp, "\tmovzbl\t%s(\%%rip), %s\n", sym.name_.c_str(),
+    std::fprintf(fp, "\tmovzbq\t%s(\%%rip), %s\n", sym.name_.c_str(),
                  registers[free_reg].c_str());
     break;
   }

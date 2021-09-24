@@ -306,8 +306,7 @@ Parser::parse_expression(Precedence prec)
       const auto &cexp = static_cast<const CallExpression &>(*left);
       switch(cexp.func_->Type()) {
       case AstType::Identifier: {
-        const auto &ident = static_cast<const Identifier &>(*left);
-        std::cout << ident.value_ << '\n';
+        const auto &ident = static_cast<const Identifier &>(*cexp.func_);
         const auto &sym = get_symbol(ident.value_);
         type = sym.value_type_;
 
@@ -522,8 +521,7 @@ Parser::parse_function_literal()
   } else {
     return nullptr;
   }
-  add_new_symbol(name, TYPE_FUNCTION, lit->return_type_);
-  get_symbol_ref(name).label = get_next_label();
+  add_new_symbol(name, TYPE_FUNCTION, lit->return_type_, get_next_label());
 
   latest_function_identifers.push(name);
 

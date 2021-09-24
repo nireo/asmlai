@@ -1,4 +1,4 @@
-fn fib() => int {
+fn fib(yeaah) => int {
   return 10;
 }
 

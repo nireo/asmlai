@@ -16,6 +16,19 @@ add_new_symbol(const std::string &name, const symboltype stype,
     .name_ = name,
     .type_ = stype,
     .value_type_ = vtype,
+    .label = 0,
+  };
+}
+
+void
+add_new_symbol(const std::string &name, const symboltype stype,
+               const valuetype vtype, int label)
+{
+  global_symbols[name] = Symbol{
+    .name_ = name,
+    .type_ = stype,
+    .value_type_ = vtype,
+    .label = label,
   };
 }
 
@@ -205,12 +218,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     const auto &assigment = static_cast<const LetStatement &>(node);
     const auto &identifier = static_cast<const Identifier &>(*assigment.name_);
 
-    if(global_symbols.find(identifier.value_) == global_symbols.end()) {
-      global_symbols[identifier.value_] = Symbol{
-        .name_ = identifier.value_,
-        .type_ = TYPE_FUNCTION,
-        .value_type_ = assigment.v_type,
-      };
+    if(symbol_exists(identifier.value_)) {
       generate_sym(identifier.value_);
     }
 
