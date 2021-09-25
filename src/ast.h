@@ -245,7 +245,13 @@ public:
   valuetype
   ValueType() const noexcept
   {
-    return TYPE_VOID;
+    if (opr == tokentypes::Amper) {
+      return TYPE_PTR_INT;
+    } else if (opr == tokentypes::Asterisk) {
+      return TYPE_INT;
+    }
+
+    return right_->ValueType();
   }
 
   tokentypes opr;

@@ -208,6 +208,7 @@ Parser::parse_let_statement()
   if(!expect_peek(tokentypes::Assign)) {
     return nullptr;
   }
+  next_token();
 
   add_new_symbol(ident->value_, TYPE_VARIABLE, letstmt->v_type);
   letstmt->name_ = std::move(ident);
@@ -325,17 +326,19 @@ std::pair<std::unique_ptr<Expression>, valuetype>
 Parser::parse_expression(Precedence prec)
 {
   if(m_prefix_parse_fns.find(current_.type) == m_prefix_parse_fns.end()) {
+    std::cout << current_.literal << '\n';
     return { nullptr, TYPE_VOID };
   }
 
   auto fn = m_prefix_parse_fns[current_.type];
   auto left = (this->*fn)();
-  valuetype type;
+  valuetype type = left->ValueType();
 
   while(!peek_token_is(tokentypes::Semicolon) && prec < peek_precedence()) {
     auto infix = m_infix_parse_fns[peek_.type];
-    if(infix == nullptr)
+    if(infix == nullptr) {
       return { std::move(left), left->ValueType() };
+    }
 
     next_token();
     left = (this->*infix)(std::move(left));

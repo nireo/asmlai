@@ -213,6 +213,13 @@ store_global(int r, const Symbol &sym)
                  sym.name_.c_str());
     break;
   }
+  case TYPE_PTR_CHAR:
+  case TYPE_PTR_LONG:
+  case TYPE_PTR_INT: {
+    std::fprintf(fp, "\tmovq\t%s, %s(\%%rip)\n", registers[r].c_str(),
+                 sym.name_.c_str());
+    break;
+  }
   default: {
     std::fprintf(stderr, "cannot load global type.\n");
     std::exit(1);
@@ -245,6 +252,13 @@ load_global(const Symbol &sym)
     break;
   }
   case TYPE_LONG: {
+    std::fprintf(fp, "\tmovq\t%s(\%%rip), %s\n", sym.name_.c_str(),
+                 registers[free_reg].c_str());
+    break;
+  }
+  case TYPE_PTR_CHAR:
+  case TYPE_PTR_LONG:
+  case TYPE_PTR_INT: {
     std::fprintf(fp, "\tmovq\t%s(\%%rip), %s\n", sym.name_.c_str(),
                  registers[free_reg].c_str());
     break;
@@ -377,6 +391,7 @@ codegen_dereference(int reg, const valuetype type)
                  registers[reg].c_str());
     break;
   }
+  case TYPE_PTR_LONG:
   case TYPE_PTR_INT: {
     std::fprintf(fp, "\tmovq\t(%s), %s\n", registers[reg].c_str(),
                  registers[reg].c_str());
