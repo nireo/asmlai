@@ -23,6 +23,9 @@ Parser::parse_program()
     auto stmt = parse_statement();
     if(stmt != nullptr) {
       program->statements_.push_back(std::move(stmt));
+    } else {
+      std::fprintf(stderr, "error parsing statement");
+      std::exit(1);
     }
     next_token();
   }
@@ -95,12 +98,12 @@ Parser::parse_statement()
 static valuetype
 convert_type_to_pointer(const valuetype type)
 {
-  switch (type) {
+  switch(type) {
   case TYPE_VOID: {
     return TYPE_PTR_VOID;
   }
   case TYPE_INT: {
-    return TYPE_PTR_VOID;
+    return TYPE_PTR_INT;
   }
   case TYPE_LONG: {
     return TYPE_PTR_LONG;
@@ -132,9 +135,9 @@ Parser::parse_type()
   }
   }
 
-  while (true) {
+  while(true) {
     next_token();
-    if (peek_token_is(tokentypes::Asterisk)) {
+    if(!peek_token_is(tokentypes::Asterisk)) {
       break;
     }
 
@@ -200,26 +203,18 @@ Parser::parse_let_statement()
     return nullptr;
   }
 
-  if(peek_token_is(tokentypes::Void) || peek_token_is(tokentypes::IntType)
-     || peek_token_is(tokentypes::CharType)) {
-    letstmt->v_type = v_from_token(peek_.type);
-    next_token();
-  } else {
-    return nullptr;
-  }
+  letstmt->v_type = parse_type();
 
   if(!expect_peek(tokentypes::Assign)) {
     return nullptr;
   }
 
-  next_token();
-
   add_new_symbol(ident->value_, TYPE_VARIABLE, letstmt->v_type);
-
   letstmt->name_ = std::move(ident);
 
   auto exp = parse_expression(LOWEST);
   // check if the types are applicable.
+  std::cout << letstmt->v_type << ' ' << exp.second << '\n';
   if(!check_type_compatible(letstmt->v_type, exp.second, false)) {
     std::fprintf(stderr, "types are not applicable in let statement.");
     std::exit(1);

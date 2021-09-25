@@ -3,6 +3,7 @@
 #include "codegen_x64.h"
 #include "token.h"
 #include <cstdio>
+#include <iostream>
 #include <sstream>
 #include <unordered_map>
 
@@ -12,6 +13,8 @@ void
 add_new_symbol(const std::string &name, const symboltype stype,
                const valuetype vtype)
 {
+  std::cout << "added symbol: " << name << '\n';
+
   global_symbols[name] = Symbol{
     .name_ = name,
     .type_ = stype,
@@ -82,7 +85,7 @@ check_type_compatible(const valuetype left, const valuetype right, bool noleft)
     return true;
   }
 
-  return true;
+  return false;
 }
 
 int

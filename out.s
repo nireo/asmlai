@@ -15,32 +15,9 @@ test_print_integer:
 	leave
 	ret
 	.text
-	.globl	fib
-	.type	fib, @function
-fib:
-	pushq	%rbp
-	movq	%rsp, %rbp
-	movq	$10, %r8
-	movl	%r8d, %eax
-	jmp	L1
-L1:
-	popq %rbp
-	ret
-	.text
 	.globl	main
 	.type	main, @function
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	.comm	i,8,8
-	movq	$10, %r9
-	movq	%r9, %rdi
-	call	fib
-	movq	%rax, %r10
-	movl	%r10d, i(%rip)
-	movzbq	i(%rip), %r9
-	movq	%r9, %rdi
-	call	test_print_integer
-L2:
-	popq %rbp
-	ret
+	movq	$10, %r8
