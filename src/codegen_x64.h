@@ -15,7 +15,7 @@ void init_out_file();
 void gen_start();
 void end_codegen();
 int store_global(int, const Symbol &);
-void generate_sym(std::string);
+void generate_sym(const Symbol &);
 int load_global(const Symbol &);
 void free_all_registers();
 int codegen_compare_no_jump(int, int, const tokentypes);
@@ -28,5 +28,6 @@ int codegen_call(int, const std::string &);
 void codegen_return(int, const Symbol &);
 int codegen_addr(const Symbol &);
 int codegen_dereference(int, const valuetype);
+int shift_left(int, int);
 
 #endif

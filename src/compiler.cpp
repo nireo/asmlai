@@ -222,7 +222,8 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     const auto &identifier = static_cast<const Identifier &>(*assigment.name_);
 
     if(symbol_exists(identifier.value_)) {
-      generate_sym(identifier.value_);
+      const auto& sym = get_symbol(identifier.value_);
+      generate_sym(sym);
     }
 
     int reg = compile_ast_node(*assigment.value_, -1, node.Type());

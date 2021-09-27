@@ -47,9 +47,13 @@ get_bytesize_of_type(valuetype type)
   case TYPE_CHAR:
     return 1;
   case TYPE_INT:
-    return 2;
+    return 4;
+  case TYPE_PTR_CHAR:
+  case TYPE_PTR_VOID:
+  case TYPE_PTR_INT:
+  case TYPE_PTR_LONG:
   case TYPE_LONG:
-    return 3;
+    return 8;
   default: {
     std::fprintf(stderr, "type not found.");
     std::exit(1);
@@ -230,9 +234,29 @@ store_global(int r, const Symbol &sym)
 }
 
 void
-generate_sym(std::string symbol)
+generate_sym(const Symbol &sym)
 {
-  std::fprintf(fp, "\t.comm\t%s,8,8\n", symbol.c_str());
+  int size = get_bytesize_of_type(sym.value_type_);
+
+  std::fprintf(fp,
+               "\t.data\n"
+               "\t.globl\t%s\n",
+               sym.name_.c_str());
+
+  switch(size) {
+  case 1:
+    std::fprintf(fp, "%s:\t.byte\t0\n", sym.name_.c_str());
+    break;
+  case 4:
+    std::fprintf(fp, "%s:\t.long\t0\n", sym.name_.c_str());
+    break;
+  case 8:
+    std::fprintf(fp, "%s:\t.quad\t0\n", sym.name_.c_str());
+    break;
+  default:
+    std::fprintf(stderr, "unrecognized byte size.");
+    std::exit(1);
+  }
 }
 
 int
@@ -366,7 +390,7 @@ void
 function_end(int label)
 {
   gen_label(label);
-  std::fputs("\tpopq %rbp\n"
+  std::fputs("\tpopq	%rbp\n"
              "\tret\n",
              fp);
 }
@@ -403,5 +427,12 @@ codegen_dereference(int reg, const valuetype type)
   }
   }
 
+  return reg;
+}
+
+int
+shift_left(int reg, int value)
+{
+  std::fprintf(fp, "\tsalq\t$%d, %s\n", value, registers[reg].c_str());
   return reg;
 }

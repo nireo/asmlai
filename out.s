@@ -20,22 +20,17 @@ test_print_integer:
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	.comm	i,8,8
+	.data
+	.globl	i
+i:	.long	0
 	movq	$10, %r8
 	movl	%r8d, i(%rip)
-	.comm	ptr,8,8
-	leaq	i(%rip), %r9
-	movq	%r9, ptr(%rip)
-	.comm	after_deref,8,8
-	movq	ptr(%rip), %r10
-	movq	(%r10), %r10
-	movl	%r10d, after_deref(%rip)
-	movzbq	after_deref(%rip), %r11
-	movq	%r11, %rdi
+	movzbq	i(%rip), %r9
+	movq	%r9, %rdi
 	call	test_print_integer
 	movq	$0, %r8
 	movl	%r8d, %eax
 	jmp	L1
 L1:
-	popq %rbp
+	popq	%rbp
 	ret

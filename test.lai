@@ -1,10 +1,7 @@
 fn main() => int {
   let i: int = 10;
 
-  let ptr: int* = &i;
-  let after_deref: int = *ptr;
-
-  print after_deref;
+  print i;
 
   return 0;
 }
