@@ -5,6 +5,7 @@
 #include "token.h"
 #include <string>
 
+int get_bytesize_of_type(valuetype);
 int load_into_register(int);
 int mul_registers(int, int);
 int div_registers(int, int);

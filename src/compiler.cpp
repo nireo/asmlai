@@ -88,6 +88,87 @@ check_type_compatible(const valuetype left, const valuetype right, bool noleft)
   return false;
 }
 
+static bool
+number_type(const valuetype type)
+{
+  if(type == TYPE_CHAR || type == TYPE_INT || type == TYPE_LONG)
+    return true;
+
+  return false;
+}
+
+static bool
+is_ptr_type(const valuetype type)
+{
+
+  if(type == TYPE_PTR_CHAR || type == TYPE_PTR_INT || type == TYPE_PTR_LONG
+     || type == TYPE_PTR_VOID) {
+    return true;
+  }
+
+  return false;
+}
+
+static const valuetype
+convert_pointer_to_normal(const valuetype type)
+{
+  switch (type) {
+  case TYPE_PTR_VOID:
+    return TYPE_VOID;
+  case TYPE_PTR_CHAR:
+    return TYPE_CHAR;
+  case TYPE_PTR_INT:
+    return TYPE_INT;
+  case TYPE_PTR_LONG:
+    return TYPE_LONG;
+  default: {
+    std::fprintf(stderr, "type is not convertable to normal type.");
+    std::exit(1);
+  }
+  }
+}
+
+std::unique_ptr<Expression>
+change_type(std::unique_ptr<Expression> exp, valuetype change_type)
+{
+  auto exp_type = exp->ValueType();
+  if(number_type(change_type) && number_type(exp_type)) {
+    if(change_type == exp->ValueType())
+      return std::move(exp);
+
+    int size_1 = get_bytesize_of_type(exp_type);
+    int size_2 = get_bytesize_of_type(change_type);
+
+    if(size_1 > size_2)
+      return nullptr;
+
+    if(size_2 > size_1) {
+      // TODO: widen the expression
+      return std::move(exp);
+    }
+  }
+
+  if (is_ptr_type(exp_type)) {
+    if(exp->Type() != AstType::InfixExpression && exp_type == change_type)
+      return std::move(exp);
+  }
+
+  if(exp->Type() == AstType::InfixExpression) {
+    const auto &infix = static_cast<const InfixExpression &>(*exp);
+    if(infix.opr == tokentypes::Plus && infix.opr == tokentypes::Minus) {
+      if(number_type(exp_type) && is_ptr_type(change_type)) {
+        if (get_bytesize_of_type(convert_pointer_to_normal(change_type)) > 1) {
+          // TODO: scale the pointer
+          return std::move(exp);
+        }
+      }
+    }
+  }
+
+  // type cannot be change, and thus is not compatible
+  return nullptr;
+}
+
 int
 compile_ast_node(const Node &node, int reg, const AstType top_type)
 {
@@ -222,7 +303,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     const auto &identifier = static_cast<const Identifier &>(*assigment.name_);
 
     if(symbol_exists(identifier.value_)) {
-      const auto& sym = get_symbol(identifier.value_);
+      const auto &sym = get_symbol(identifier.value_);
       generate_sym(sym);
     }
 

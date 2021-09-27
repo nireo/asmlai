@@ -38,7 +38,7 @@ get_corresponding_inst_index(const tokentypes type)
   }
 }
 
-static int
+int
 get_bytesize_of_type(valuetype type)
 {
   switch(type) {
