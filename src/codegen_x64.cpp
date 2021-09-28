@@ -436,3 +436,12 @@ shift_left(int reg, int value)
   std::fprintf(fp, "\tsalq\t$%d, %s\n", value, registers[reg].c_str());
   return reg;
 }
+
+int
+codegen_load_int(int value)
+{
+  int free_reg = get_register();
+
+  std::fprintf(fp, "\tmovq\t$%d, %s\n", value, registers[free_reg].c_str());
+  return free_reg;
+}

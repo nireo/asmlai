@@ -30,6 +30,7 @@ enum class AstType {
   WhileStatement,
   ForStatement,
   AssingmentStatement,
+  TypeChangeAction,
 };
 
 enum valuetype {
@@ -245,9 +246,9 @@ public:
   valuetype
   ValueType() const noexcept
   {
-    if (opr == tokentypes::Amper) {
+    if(opr == tokentypes::Amper) {
       return TYPE_PTR_INT;
-    } else if (opr == tokentypes::Asterisk) {
+    } else if(opr == tokentypes::Asterisk) {
       return TYPE_INT;
     }
 
@@ -478,6 +479,30 @@ public:
   std::unique_ptr<Expression> cond_;
   std::unique_ptr<Statement> after_every_;
   std::unique_ptr<BlockStatement> body_;
+};
+
+enum class TypeChange {
+  Widen,
+  Scale,
+};
+
+class TypeChangeAction : public Expression
+{
+public:
+  valuetype
+  Valuetype() const noexcept
+  {
+    return inner_->ValueType();
+  }
+
+  AstType
+  Type() const noexcept
+  {
+    return AstType::TypeChangeAction;
+  }
+
+  TypeChange action_;
+  std::unique_ptr<Expression> inner_;
 };
 
 #endif

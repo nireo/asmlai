@@ -1,6 +1,7 @@
-fn main() => int {
-  let i: int = 10;
+let i: int = 10;
 
+
+fn main() => int {
   print i;
 
   return 0;

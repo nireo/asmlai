@@ -359,6 +359,17 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
 
     return -1;
   }
+  case AstType::TypeChangeAction: {
+    const auto &tca = static_cast<const TypeChangeAction&>(node);
+    switch (tca.action_) {
+    case TypeChange::Widen:
+      return compile_ast_node(*tca.inner_, -1, node.Type());
+    case TypeChange::Scale: {
+    }
+    }
+
+    return -1;
+  }
   case AstType::PrefixExpression: {
     const auto &pref = static_cast<const PrefixExpression &>(node);
     switch(pref.opr) {
