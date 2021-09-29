@@ -112,7 +112,7 @@ is_ptr_type(const valuetype type)
 static const valuetype
 convert_pointer_to_normal(const valuetype type)
 {
-  switch (type) {
+  switch(type) {
   case TYPE_PTR_VOID:
     return TYPE_VOID;
   case TYPE_PTR_CHAR:
@@ -148,7 +148,7 @@ change_type(std::unique_ptr<Expression> exp, valuetype change_type)
     }
   }
 
-  if (is_ptr_type(exp_type)) {
+  if(is_ptr_type(exp_type)) {
     if(exp->Type() != AstType::InfixExpression && exp_type == change_type)
       return std::move(exp);
   }
@@ -157,9 +157,14 @@ change_type(std::unique_ptr<Expression> exp, valuetype change_type)
     const auto &infix = static_cast<const InfixExpression &>(*exp);
     if(infix.opr == tokentypes::Plus && infix.opr == tokentypes::Minus) {
       if(number_type(exp_type) && is_ptr_type(change_type)) {
-        if (get_bytesize_of_type(convert_pointer_to_normal(change_type)) > 1) {
-          // TODO: scale the pointer
-          return std::move(exp);
+        int size = get_bytesize_of_type(convert_pointer_to_normal(change_type));
+        if(size > 1) {
+          auto wrapper = std::make_unique<TypeChangeAction>();
+          wrapper->size = size;
+          wrapper->inner_ = std::move(exp);
+          wrapper->action_ = TypeChange::Scale;
+
+          return std::move(wrapper);
         }
       }
     }
@@ -360,11 +365,15 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     return -1;
   }
   case AstType::TypeChangeAction: {
-    const auto &tca = static_cast<const TypeChangeAction&>(node);
-    switch (tca.action_) {
+    const auto &tca = static_cast<const TypeChangeAction &>(node);
+    switch(tca.action_) {
     case TypeChange::Widen:
       return compile_ast_node(*tca.inner_, -1, node.Type());
     case TypeChange::Scale: {
+      int left = compile_ast_node(*tca.inner_, -1, node.Type());
+      int right = codegen_load_int(0);
+
+      return mul_registers(left, right);
     }
     }
 

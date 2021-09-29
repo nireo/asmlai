@@ -49,6 +49,7 @@ enum class tokentypes {
   StringType,
   FloatType,
   Void,
+  Global,
 };
 
 struct Token {
@@ -64,7 +65,7 @@ const std::unordered_map<std::string, tokentypes> TokenKeywords = {
   { "char", tokentypes::CharType },   { "string", tokentypes::StringType },
   { "float", tokentypes::FloatType }, { "print", tokentypes::Print },
   { "while", tokentypes::While },     { "for", tokentypes::For },
-  { "void", tokentypes::Void },
+  { "void", tokentypes::Void },       { "global", tokentypes::Global }
 };
 
 #endif

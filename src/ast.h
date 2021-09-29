@@ -31,6 +31,7 @@ enum class AstType {
   ForStatement,
   AssingmentStatement,
   TypeChangeAction,
+  GlobalStatement
 };
 
 enum valuetype {
@@ -490,7 +491,7 @@ class TypeChangeAction : public Expression
 {
 public:
   valuetype
-  Valuetype() const noexcept
+  ValueType() const noexcept
   {
     return inner_->ValueType();
   }
@@ -501,8 +502,33 @@ public:
     return AstType::TypeChangeAction;
   }
 
-  TypeChange action_;
-  std::unique_ptr<Expression> inner_;
+  TypeChange action_ = TypeChange::Widen;
+  std::unique_ptr<Expression> inner_ = nullptr;
+  int size = 0;
+};
+
+class GlobalVariable : public Statement
+{
+public:
+  void
+  statementNode()
+  {
+  }
+
+  AstType
+  Type() const noexcept
+  {
+    return AstType::GlobalStatement;
+  }
+
+  valuetype
+  ValueType() const noexcept
+  {
+    return type_;
+  }
+
+  valuetype type_;
+  std::unique_ptr<Expression> identifier_;
 };
 
 #endif
