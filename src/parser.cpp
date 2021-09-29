@@ -147,6 +147,7 @@ Parser::parse_type()
   return type;
 }
 
+
 bool
 Parser::current_token_is(tokentypes tt)
 {
@@ -738,6 +739,36 @@ Parser::parse_index_expression(std::unique_ptr<Expression> left)
     return nullptr;
 
   return exp;
+}
+
+std::unique_ptr<Statement>
+Parser::parse_global_decl()
+{
+  // cannot use global keyword inside function
+  if (!latest_function_identifers.empty()) {
+    return nullptr;
+  }
+
+  auto globl = std::make_unique<GlobalVariable>();
+  globl->type_ = parse_type();
+
+  if (!expect_peek(tokentypes::Ident))
+    return nullptr;
+
+  auto ident = std::make_unique<Identifier>();
+  ident->value_ = current_.literal;
+
+  // we don't want multiple global defintions
+  if (symbol_exists(ident->value_)) {
+    return nullptr;
+  }
+
+  if (!expect_peek(tokentypes::Semicolon))
+    return nullptr;
+  next_token();
+  add_new_symbol(ident->value_, TYPE_VARIABLE, globl->type_);
+
+  return globl;
 }
 
 std::vector<std::string>

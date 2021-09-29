@@ -396,6 +396,16 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     }
     }
   }
+  case AstType::GlobalStatement: {
+    const auto &globl = static_cast<const GlobalVariable&>(node);
+    const auto &ident = static_cast<const Identifier&>(*globl.identifier_);
+
+    // parser has already generated symbol
+    const auto &sym = get_symbol(ident.value_);
+    generate_sym(sym);
+
+    return -1;
+  }
   case AstType::IntegerLiteral: {
     const auto &int_lit = static_cast<const IntegerLiteral &>(node);
 
