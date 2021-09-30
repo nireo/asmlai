@@ -310,7 +310,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     const auto &assigment = static_cast<const LetStatement &>(node);
     const auto &identifier = static_cast<const Identifier &>(*assigment.name_);
 
-    if(symbol_exists(identifier.value_)) {
+    if(!symbol_exists(identifier.value_)) {
       const auto &sym = get_symbol(identifier.value_);
       generate_sym(sym);
     }

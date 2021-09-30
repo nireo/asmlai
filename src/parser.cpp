@@ -212,13 +212,15 @@ Parser::parse_let_statement()
   }
   next_token();
 
-  add_new_symbol(ident->value_, TYPE_VARIABLE, letstmt->v_type);
+  if(!symbol_exists(ident->value_)) {
+    add_new_symbol(ident->value_, TYPE_VARIABLE, letstmt->v_type);
+  }
+
   letstmt->name_ = std::move(ident);
 
   auto exp = parse_expression(LOWEST);
   // check if the types are applicable.
-  std::cout << letstmt->v_type << ' ' << exp.second << '\n';
-  if(!check_type_compatible(letstmt->v_type, exp.second, false)) {
+  if(res == nullptr) {
     std::fprintf(stderr, "types are not applicable in let statement.");
     std::exit(1);
   }
@@ -770,7 +772,6 @@ Parser::parse_global_decl()
 
   if(!expect_peek(tokentypes::Semicolon))
     return nullptr;
-
 
   return globl;
 }

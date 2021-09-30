@@ -10,7 +10,6 @@ static bool free_registers[4];
 static const std::string registers[4] = { "%r8", "%r9", "%r10", "%r11" };
 static const std::string b_registers[4] = { "%r8b", "%r9b", "%r10b", "%r11b" };
 static const std::string d_registers[4] = { "%r8d", "%r9d", "%r10d", "%r11d" };
-
 static const std::string jump_insts[]
     = { "jne", "je", "jge", "jle", "jg", "jl" };
 static const std::string compare_instructions[]
@@ -237,12 +236,10 @@ void
 generate_sym(const Symbol &sym)
 {
   int size = get_bytesize_of_type(sym.value_type_);
-
   std::fprintf(fp,
                "\t.data\n"
                "\t.globl\t%s\n",
                sym.name_.c_str());
-
   switch(size) {
   case 1:
     std::fprintf(fp, "%s:\t.byte\t0\n", sym.name_.c_str());

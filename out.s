@@ -17,6 +17,9 @@ test_print_integer:
 	.data
 	.globl	i
 i:	.long	0
+	.data
+	.globl	ptr
+ptr:	.quad	0
 	.text
 	.globl	main
 	.type	main, @function
@@ -24,8 +27,12 @@ main:
 	pushq	%rbp
 	movq	%rsp, %rbp
 	movq	$10, %r8
-	movzbq	i(%rip), %r9
-	movq	%r9, %rdi
+	movl	%r8d, i(%rip)
+	leaq	i(%rip), %r9
+	movq	%r9, ptr(%rip)
+	movq	ptr(%rip), %r10
+	movq	(%r10), %r10
+	movq	%r10, %rdi
 	call	test_print_integer
 	movq	$0, %r8
 	movl	%r8d, %eax
