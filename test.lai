@@ -1,7 +1,7 @@
-let i: int = 10;
-
+global int i;
 
 fn main() => int {
+  i = 10;
   print i;
 
   return 0;

@@ -17,14 +17,13 @@ test_print_integer:
 	.data
 	.globl	i
 i:	.long	0
-	movq	$10, %r8
-	movl	%r8d, i(%rip)
 	.text
 	.globl	main
 	.type	main, @function
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
+	movq	$10, %r8
 	movzbq	i(%rip), %r9
 	movq	%r9, %rdi
 	call	test_print_integer

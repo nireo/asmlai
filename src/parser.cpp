@@ -90,6 +90,8 @@ Parser::parse_statement()
     return parse_return_statement();
   } else if(current_.type == tokentypes::Ident) {
     return parse_assingment();
+  } else if(current_.type == tokentypes::Global) {
+    return parse_global_decl();
   } else {
     return parse_expression_statement();
   }
@@ -146,7 +148,6 @@ Parser::parse_type()
 
   return type;
 }
-
 
 bool
 Parser::current_token_is(tokentypes tt)
@@ -745,28 +746,31 @@ std::unique_ptr<Statement>
 Parser::parse_global_decl()
 {
   // cannot use global keyword inside function
-  if (!latest_function_identifers.empty()) {
+  if(!latest_function_identifers.empty()) {
     return nullptr;
   }
 
   auto globl = std::make_unique<GlobalVariable>();
   globl->type_ = parse_type();
 
-  if (!expect_peek(tokentypes::Ident))
+  if(!expect_peek(tokentypes::Ident))
     return nullptr;
 
   auto ident = std::make_unique<Identifier>();
-  ident->value_ = current_.literal;
+  const std::string name = current_.literal;
+  ident->value_ = name;
+  globl->identifier_ = std::move(ident);
 
   // we don't want multiple global defintions
-  if (symbol_exists(ident->value_)) {
+  if(symbol_exists(name)) {
     return nullptr;
   }
 
-  if (!expect_peek(tokentypes::Semicolon))
+  add_new_symbol(name, TYPE_VARIABLE, globl->type_);
+
+  if(!expect_peek(tokentypes::Semicolon))
     return nullptr;
-  next_token();
-  add_new_symbol(ident->value_, TYPE_VARIABLE, globl->type_);
+
 
   return globl;
 }

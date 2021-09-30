@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
+#include <string>
 
 static std::unordered_map<std::string, Symbol> global_symbols;
 
@@ -13,8 +14,7 @@ void
 add_new_symbol(const std::string &name, const symboltype stype,
                const valuetype vtype)
 {
-  std::cout << "added symbol: " << name << '\n';
-
+  std::cout << "added new symbol with name: " << name << '\n';
   global_symbols[name] = Symbol{
     .name_ = name,
     .type_ = stype,
@@ -27,6 +27,8 @@ void
 add_new_symbol(const std::string &name, const symboltype stype,
                const valuetype vtype, int label)
 {
+  std::cout << "added new symbol with name: " << name << '\n';
+
   global_symbols[name] = Symbol{
     .name_ = name,
     .type_ = stype,
@@ -157,7 +159,8 @@ change_type(std::unique_ptr<Expression> exp, valuetype change_type)
     const auto &infix = static_cast<const InfixExpression &>(*exp);
     if(infix.opr == tokentypes::Plus && infix.opr == tokentypes::Minus) {
       if(number_type(exp_type) && is_ptr_type(change_type)) {
-        int size = get_bytesize_of_type(convert_pointer_to_normal(change_type));
+        int size
+            = get_bytesize_of_type(convert_pointer_to_normal(change_type));
         if(size > 1) {
           auto wrapper = std::make_unique<TypeChangeAction>();
           wrapper->size = size;
@@ -397,8 +400,8 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     }
   }
   case AstType::GlobalStatement: {
-    const auto &globl = static_cast<const GlobalVariable&>(node);
-    const auto &ident = static_cast<const Identifier&>(*globl.identifier_);
+    const auto &globl = static_cast<const GlobalVariable &>(node);
+    const auto &ident = static_cast<const Identifier &>(*globl.identifier_);
 
     // parser has already generated symbol
     const auto &sym = get_symbol(ident.value_);
