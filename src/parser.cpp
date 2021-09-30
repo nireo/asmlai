@@ -220,12 +220,13 @@ Parser::parse_let_statement()
 
   auto exp = parse_expression(LOWEST);
   // check if the types are applicable.
+  auto res = change_type(std::move(exp.first), letstmt->v_type);
   if(res == nullptr) {
     std::fprintf(stderr, "types are not applicable in let statement.");
     std::exit(1);
   }
 
-  letstmt->value_ = std::move(exp.first);
+  letstmt->value_ = std::move(res);
 
   if(peek_token_is(tokentypes::Semicolon))
     next_token();
@@ -324,6 +325,98 @@ Parser::parse_expression_statement()
   }
 
   return stmt;
+}
+
+std::unique_ptr<Expression>
+Parser::parse_primary()
+{
+  switch(current_.type) {
+  case tokentypes::Int: {
+    return parse_integer_literal();
+  }
+  case tokentypes::Ident: {
+    auto identifier = parse_identifier();
+
+    if(peek_token_is(tokentypes::LParen)) {
+      next_token();
+      return parse_call_expression(std::move(identifier));
+    }
+
+    const auto &ident = static_cast<const Identifier &>(*identifier);
+    if(!symbol_exists(ident.value_)) {
+      std::fprintf(stderr, "cannot find variable.");
+      std::exit(1);
+    }
+
+    return identifier;
+  }
+  default: {
+    std::fprintf(stderr,
+                 "unrecognized token when parsing primary expression factor.");
+    std::exit(1);
+  }
+  }
+}
+
+std::unique_ptr<Expression>
+Parser::parse_prefix()
+{
+  switch(current_.type) {
+  case tokentypes::Amper:
+  case tokentypes::Bang:
+  case tokentypes::Minus:
+  case tokentypes::Asterisk: {
+    return parse_prefix_expression();
+  }
+  default:
+    return parse_primary();
+  }
+}
+
+std::pair<std::unique_ptr<Expression>, valuetype>
+Parser::parse_expression_rec(Precedence prec)
+{
+  auto left = parse_prefix();
+
+  if(peek_token_is(tokentypes::Semicolon)
+     || peek_token_is(tokentypes::RParen)) {
+    next_token();
+    return { std::move(left), TYPE_VOID };
+  }
+
+  while(prec < peek_precedence()) {
+    next_token();
+
+    auto right = parse_expression_rec(precedences[current_.type]).first;
+    auto left_type = left->ValueType();
+    auto left_temp = change_type(std::move(left), right->ValueType());
+    auto right_temp = change_type(std::move(right), left_type);
+
+    if(left_temp == nullptr && right_temp == nullptr) {
+      std::fprintf(stderr, "bad types in expression");
+      std::exit(1);
+    }
+
+    auto infix = std::make_unique<InfixExpression>();
+    if(left_temp != nullptr) {
+      infix->left_ = std::move(left_temp);
+    }
+
+    if(right_temp != nullptr) {
+      infix->right_ = std::move(right_temp);
+    }
+
+    infix->v_type_ = infix->left_->ValueType();
+
+    left = std::move(infix);
+    if(peek_token_is(tokentypes::Semicolon)
+       || peek_token_is(tokentypes::RParen)) {
+      next_token();
+      return { std::move(left), TYPE_VOID };
+    }
+  }
+
+  return { std::move(left), TYPE_VOID };
 }
 
 std::pair<std::unique_ptr<Expression>, valuetype>

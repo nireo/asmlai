@@ -272,12 +272,13 @@ public:
   valuetype
   ValueType() const noexcept
   {
-    return TYPE_VOID;
+    return v_type_;
   }
 
   tokentypes opr;
   std::unique_ptr<Expression> right_;
   std::unique_ptr<Expression> left_;
+  valuetype v_type_ = TYPE_VOID;
 };
 
 class BooleanExpression : public Expression

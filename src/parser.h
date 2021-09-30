@@ -24,7 +24,7 @@ enum Precedence {
   INDEX,
 };
 
-const std::unordered_map<tokentypes, Precedence> precedences = {
+static std::unordered_map<tokentypes, Precedence> precedences = {
   { tokentypes::Eq, EQUALS },      { tokentypes::Neq, EQUALS },
   { tokentypes::LT, LESSGREATER }, { tokentypes::GT, LESSGREATER },
   { tokentypes::Plus, SUM },       { tokentypes::Minus, SUM },
@@ -60,6 +60,10 @@ private:
   std::unique_ptr<Expression> parse_while_expression();
   std::unique_ptr<Statement> parse_assingment();
   std::unique_ptr<Statement> parse_global_decl();
+  std::unique_ptr<Expression> parse_primary();
+  std::unique_ptr<Expression> parse_prefix();
+  std::pair<std::unique_ptr<Expression>, valuetype>
+  parse_expression_rec(Precedence prec);
   std::pair<std::unique_ptr<Expression>, valuetype>
   parse_expression(Precedence prec);
   std::unique_ptr<Expression> parse_identifier();

@@ -14,7 +14,6 @@ void
 add_new_symbol(const std::string &name, const symboltype stype,
                const valuetype vtype)
 {
-  std::cout << "added new symbol with name: " << name << '\n';
   global_symbols[name] = Symbol{
     .name_ = name,
     .type_ = stype,
@@ -27,8 +26,6 @@ void
 add_new_symbol(const std::string &name, const symboltype stype,
                const valuetype vtype, int label)
 {
-  std::cout << "added new symbol with name: " << name << '\n';
-
   global_symbols[name] = Symbol{
     .name_ = name,
     .type_ = stype,
