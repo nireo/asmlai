@@ -62,7 +62,7 @@ private:
   std::unique_ptr<Statement> parse_global_decl();
   std::unique_ptr<Expression> parse_primary();
   std::unique_ptr<Expression> parse_prefix();
-  std::pair<std::unique_ptr<Expression>, valuetype>
+  std::unique_ptr<Expression>
   parse_expression_rec(Precedence prec);
   std::pair<std::unique_ptr<Expression>, valuetype>
   parse_expression(Precedence prec);

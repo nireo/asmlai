@@ -1,10 +1,8 @@
 global int i;
-global int* ptr;
 
 fn main() => int {
   let i: int = 10;
-  let ptr: int* = &i;
+  print i;
 
-  print *ptr;
   return 0;
 }

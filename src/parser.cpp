@@ -3,6 +3,7 @@
 #include "compiler.h"
 #include "token.h"
 #include <algorithm>
+#include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -81,6 +82,8 @@ Parser::next_token()
 std::unique_ptr<Statement>
 Parser::parse_statement()
 {
+  std::cout << current_.literal << '\n';
+
   if(current_.type == tokentypes::Let) {
     return parse_let_statement();
   }
@@ -218,18 +221,14 @@ Parser::parse_let_statement()
 
   letstmt->name_ = std::move(ident);
 
-  auto exp = parse_expression(LOWEST);
+  auto exp = parse_expression_rec(LOWEST);
   // check if the types are applicable.
-  auto res = change_type(std::move(exp.first), letstmt->v_type);
+  auto res = change_type(std::move(exp), letstmt->v_type);
   if(res == nullptr) {
     std::fprintf(stderr, "types are not applicable in let statement.");
     std::exit(1);
   }
-
   letstmt->value_ = std::move(res);
-
-  if(peek_token_is(tokentypes::Semicolon))
-    next_token();
 
   return letstmt;
 }
@@ -286,16 +285,12 @@ Parser::parse_return_statement()
   //   return returnstmt;
   // }
 
-  auto exp = parse_expression(LOWEST);
-  if(!check_type_compatible(function_return_type_, exp.second, false)) {
+  auto value = parse_expression_rec(LOWEST);
+  if(!check_type_compatible(function_return_type_, value->ValueType(), false)) {
     std::fprintf(stderr, "return value doesn't match functions return type");
     std::exit(1);
   }
-
-  returnstmt->return_value_ = std::move(exp.first);
-
-  if(peek_token_is(tokentypes::Semicolon))
-    next_token();
+  returnstmt->return_value_ = std::move(value);
 
   return returnstmt;
 }
@@ -306,10 +301,8 @@ Parser::parse_print_statement()
   auto print_stmt = std::make_unique<PrintStatement>();
   next_token();
 
-  print_stmt->print_value_ = parse_expression(LOWEST).first;
-
-  if(peek_token_is(tokentypes::Semicolon))
-    next_token();
+  print_stmt->print_value_ = parse_expression_rec(LOWEST);
+  std::cout << current_.literal << '\n';
 
   return print_stmt;
 }
@@ -318,11 +311,7 @@ std::unique_ptr<Statement>
 Parser::parse_expression_statement()
 {
   auto stmt = std::make_unique<ExpressionStatement>();
-
-  stmt->expression_ = parse_expression(LOWEST).first;
-  if(peek_token_is(tokentypes::Semicolon)) {
-    next_token();
-  }
+  stmt->expression_ = parse_expression_rec(LOWEST);
 
   return stmt;
 }
@@ -330,16 +319,19 @@ Parser::parse_expression_statement()
 std::unique_ptr<Expression>
 Parser::parse_primary()
 {
+  std::unique_ptr<Expression> result = nullptr;
   switch(current_.type) {
   case tokentypes::Int: {
-    return parse_integer_literal();
+    result = parse_integer_literal();
+    break;
   }
   case tokentypes::Ident: {
     auto identifier = parse_identifier();
 
     if(peek_token_is(tokentypes::LParen)) {
       next_token();
-      return parse_call_expression(std::move(identifier));
+      result = parse_call_expression(std::move(identifier));
+      break;
     }
 
     const auto &ident = static_cast<const Identifier &>(*identifier);
@@ -348,14 +340,20 @@ Parser::parse_primary()
       std::exit(1);
     }
 
-    return identifier;
+    result = std::move(identifier);
+    break;
   }
   default: {
-    std::fprintf(stderr,
-                 "unrecognized token when parsing primary expression factor.");
+    std::fprintf(
+        stderr,
+        "unrecognized token when parsing primary expression factor. '%s",
+        current_.literal.c_str());
     std::exit(1);
   }
   }
+
+  next_token();
+  return result;
 }
 
 std::unique_ptr<Expression>
@@ -368,26 +366,36 @@ Parser::parse_prefix()
   case tokentypes::Asterisk: {
     return parse_prefix_expression();
   }
+  case tokentypes::Print: {
+    auto print_stmt = std::make_unique<PrintStatement>();
+    next_token();
+
+    print_stmt->print_value_ = parse_expression_rec(LOWEST);
+    std::cout << current_.literal << '\n';
+
+    return print_stmt;
+  }
   default:
     return parse_primary();
   }
 }
 
-std::pair<std::unique_ptr<Expression>, valuetype>
+std::unique_ptr<Expression>
 Parser::parse_expression_rec(Precedence prec)
 {
   auto left = parse_prefix();
 
-  if(peek_token_is(tokentypes::Semicolon)
-     || peek_token_is(tokentypes::RParen)) {
-    next_token();
-    return { std::move(left), TYPE_VOID };
+  if(current_token_is(tokentypes::Semicolon)
+     || current_token_is(tokentypes::RParen)) {
+    return left;
   }
 
-  while(prec < peek_precedence()) {
+  auto tokentype = current_.type;
+
+  while(prec < precedences[tokentype]) {
     next_token();
 
-    auto right = parse_expression_rec(precedences[current_.type]).first;
+    auto right = parse_expression_rec(precedences[tokentype]);
     auto left_type = left->ValueType();
     auto left_temp = change_type(std::move(left), right->ValueType());
     auto right_temp = change_type(std::move(right), left_type);
@@ -407,16 +415,17 @@ Parser::parse_expression_rec(Precedence prec)
     }
 
     infix->v_type_ = infix->left_->ValueType();
+    infix->opr = tokentype;
 
     left = std::move(infix);
-    if(peek_token_is(tokentypes::Semicolon)
-       || peek_token_is(tokentypes::RParen)) {
-      next_token();
-      return { std::move(left), TYPE_VOID };
+    tokentype = current_.type;
+    if(current_token_is(tokentypes::Semicolon)
+       || current_token_is(tokentypes::RParen)) {
+      return left;
     }
   }
 
-  return { std::move(left), TYPE_VOID };
+  return left;
 }
 
 std::pair<std::unique_ptr<Expression>, valuetype>
@@ -497,7 +506,7 @@ Parser::parse_integer_literal()
   try {
     int res = std::stoi(current_.literal);
     lit->value_ = res;
-  } catch(std::invalid_argument e) {
+  } catch(const std::invalid_argument &e) {
     errors_.push_back("could not parse integer");
     return nullptr;
   }

@@ -177,6 +177,8 @@ change_type(std::unique_ptr<Expression> exp, valuetype change_type)
 int
 compile_ast_node(const Node &node, int reg, const AstType top_type)
 {
+  printf("compilign node: %d\n", node.Type());
+
   switch(node.Type()) {
   case AstType::Program: {
     int last = -1;
@@ -298,7 +300,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
       return codegen_compare_no_jump(left, right, infix_exp.opr);
     }
     default: {
-      std::fprintf(stderr, "unknown operator type type\n");
+      std::fprintf(stderr, "unknown operator type in prefix expression\n");
       std::exit(1);
     }
     }

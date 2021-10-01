@@ -207,7 +207,7 @@ store_global(int r, const Symbol &sym)
     break;
   }
   case TYPE_INT: {
-    std::fprintf(fp, "\tmovl\t%s, %s(\%%rip)\n", d_registers[r].c_str(),
+    std::fprintf(fp, "\tmovq\t%s, %s(\%%rip)\n", registers[r].c_str(),
                  sym.name_.c_str());
     break;
   }
