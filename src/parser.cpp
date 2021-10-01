@@ -82,8 +82,6 @@ Parser::next_token()
 std::unique_ptr<Statement>
 Parser::parse_statement()
 {
-  std::cout << current_.literal << '\n';
-
   if(current_.type == tokentypes::Let) {
     return parse_let_statement();
   }
@@ -223,12 +221,15 @@ Parser::parse_let_statement()
 
   auto exp = parse_expression_rec(LOWEST);
   // check if the types are applicable.
-  auto res = change_type(std::move(exp), letstmt->v_type);
-  if(res == nullptr) {
-    std::fprintf(stderr, "types are not applicable in let statement.");
-    std::exit(1);
+  auto res = change_type(std::move(exp), letstmt->v_type, tokentypes::Eof);
+  if(res.second == nullptr) {
+    letstmt->value_ = std::move(res.first);
+    //   std::fprintf(stderr, "types are not applicable in let statement.");
+    //   std::exit(1);
+    // }
+  } else {
+    letstmt->value_ = std::move(res.second);
   }
-  letstmt->value_ = std::move(res);
 
   return letstmt;
 }
@@ -286,7 +287,8 @@ Parser::parse_return_statement()
   // }
 
   auto value = parse_expression_rec(LOWEST);
-  if(!check_type_compatible(function_return_type_, value->ValueType(), false)) {
+  if(!check_type_compatible(function_return_type_, value->ValueType(),
+                            false)) {
     std::fprintf(stderr, "return value doesn't match functions return type");
     std::exit(1);
   }
@@ -302,7 +304,6 @@ Parser::parse_print_statement()
   next_token();
 
   print_stmt->print_value_ = parse_expression_rec(LOWEST);
-  std::cout << current_.literal << '\n';
 
   return print_stmt;
 }
@@ -360,10 +361,26 @@ std::unique_ptr<Expression>
 Parser::parse_prefix()
 {
   switch(current_.type) {
-  case tokentypes::Amper:
+  case tokentypes::Asterisk:
+  case tokentypes::Amper: {
+    auto tokentype = current_.type;
+    next_token();
+
+    auto right = parse_prefix();
+    if(right->Type() != AstType::Identifier) {
+      std::fprintf(stderr,
+                   "ampersand cannot be used for nothing but identifiers.");
+      std::exit(1);
+    }
+
+    auto prefix_exp = std::make_unique<PrefixExpression>();
+    prefix_exp->opr = tokentype;
+    prefix_exp->right_ = std::move(right);
+
+    return prefix_exp;
+  }
   case tokentypes::Bang:
-  case tokentypes::Minus:
-  case tokentypes::Asterisk: {
+  case tokentypes::Minus: {
     return parse_prefix_expression();
   }
   case tokentypes::Print: {
@@ -371,7 +388,6 @@ Parser::parse_prefix()
     next_token();
 
     print_stmt->print_value_ = parse_expression_rec(LOWEST);
-    std::cout << current_.literal << '\n';
 
     return print_stmt;
   }
@@ -397,21 +413,27 @@ Parser::parse_expression_rec(Precedence prec)
 
     auto right = parse_expression_rec(precedences[tokentype]);
     auto left_type = left->ValueType();
-    auto left_temp = change_type(std::move(left), right->ValueType());
-    auto right_temp = change_type(std::move(right), left_type);
 
-    if(left_temp == nullptr && right_temp == nullptr) {
+    auto left_temp
+        = change_type(std::move(left), right->ValueType(), tokentype);
+    auto right_temp = change_type(std::move(right), left_type, tokentype);
+
+    if(left_temp.second == nullptr && right_temp.second == nullptr) {
       std::fprintf(stderr, "bad types in expression");
       std::exit(1);
     }
 
     auto infix = std::make_unique<InfixExpression>();
-    if(left_temp != nullptr) {
-      infix->left_ = std::move(left_temp);
+    if(left_temp.second != nullptr) {
+      infix->left_ = std::move(left_temp.second);
+    } else {
+      infix->left_ = std::move(left_temp.first);
     }
 
-    if(right_temp != nullptr) {
-      infix->right_ = std::move(right_temp);
+    if(right_temp.second != nullptr) {
+      infix->right_ = std::move(right_temp.second);
+    } else {
+      infix->right_ = std::move(right_temp.first);
     }
 
     infix->v_type_ = infix->left_->ValueType();
@@ -432,7 +454,6 @@ std::pair<std::unique_ptr<Expression>, valuetype>
 Parser::parse_expression(Precedence prec)
 {
   if(m_prefix_parse_fns.find(current_.type) == m_prefix_parse_fns.end()) {
-    std::cout << current_.literal << '\n';
     return { nullptr, TYPE_VOID };
   }
 

@@ -2,6 +2,7 @@
 #define LAI_COMPILER_H
 
 #include "ast.h"
+#include "token.h"
 
 enum symboltype {
   TYPE_VARIABLE,
@@ -23,7 +24,8 @@ void add_new_symbol(const std::string &, const symboltype, const valuetype,
                     int label);
 bool symbol_exists(const std::string &);
 bool check_type_compatible(const valuetype, const valuetype, bool noleft);
-std::unique_ptr<Expression> change_type(std::unique_ptr<Expression>, valuetype);
+std::pair<std::unique_ptr<Expression>, std::unique_ptr<Expression> >
+    change_type(std::unique_ptr<Expression>, valuetype, tokentypes);
 int get_next_label();
 
 #endif

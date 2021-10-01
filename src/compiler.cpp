@@ -5,8 +5,8 @@
 #include <cstdio>
 #include <iostream>
 #include <sstream>
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 
 static std::unordered_map<std::string, Symbol> global_symbols;
 
@@ -127,58 +127,52 @@ convert_pointer_to_normal(const valuetype type)
   }
 }
 
-std::unique_ptr<Expression>
-change_type(std::unique_ptr<Expression> exp, valuetype change_type)
+std::pair<std::unique_ptr<Expression>, std::unique_ptr<Expression> >
+change_type(std::unique_ptr<Expression> exp, valuetype change_type,
+            tokentypes infix_opr)
 {
   auto exp_type = exp->ValueType();
   if(number_type(change_type) && number_type(exp_type)) {
     if(change_type == exp->ValueType())
-      return std::move(exp);
+      return { nullptr, std::move(exp) };
 
     int size_1 = get_bytesize_of_type(exp_type);
     int size_2 = get_bytesize_of_type(change_type);
 
     if(size_1 > size_2)
-      return nullptr;
+      return { std::move(exp), nullptr };
 
     if(size_2 > size_1) {
-      // TODO: widen the expression
-      return std::move(exp);
+      return { nullptr, std::move(exp) };
     }
   }
 
   if(is_ptr_type(exp_type)) {
     if(exp->Type() != AstType::InfixExpression && exp_type == change_type)
-      return std::move(exp);
+      return { nullptr, std::move(exp) };
   }
 
-  if(exp->Type() == AstType::InfixExpression) {
-    const auto &infix = static_cast<const InfixExpression &>(*exp);
-    if(infix.opr == tokentypes::Plus && infix.opr == tokentypes::Minus) {
-      if(number_type(exp_type) && is_ptr_type(change_type)) {
-        int size
-            = get_bytesize_of_type(convert_pointer_to_normal(change_type));
-        if(size > 1) {
-          auto wrapper = std::make_unique<TypeChangeAction>();
-          wrapper->size = size;
-          wrapper->inner_ = std::move(exp);
-          wrapper->action_ = TypeChange::Scale;
+  if(infix_opr == tokentypes::Plus || infix_opr == tokentypes::Minus) {
+    if(number_type(exp_type) && is_ptr_type(change_type)) {
+      int size = get_bytesize_of_type(convert_pointer_to_normal(change_type));
+      if(size > 1) {
+        auto wrapper = std::make_unique<TypeChangeAction>();
+        wrapper->size = size;
+        wrapper->inner_ = std::move(exp);
+        wrapper->action_ = TypeChange::Scale;
 
-          return std::move(wrapper);
-        }
+        return { nullptr, std::move(wrapper) };
       }
     }
   }
 
   // type cannot be change, and thus is not compatible
-  return nullptr;
+  return { std::move(exp), nullptr };
 }
 
 int
 compile_ast_node(const Node &node, int reg, const AstType top_type)
 {
-  printf("compilign node: %d\n", node.Type());
-
   switch(node.Type()) {
   case AstType::Program: {
     int last = -1;
@@ -315,7 +309,10 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     }
 
     int reg = compile_ast_node(*assigment.value_, -1, node.Type());
-    return store_global(reg, get_symbol(identifier.value_));
+    store_global(reg, get_symbol(identifier.value_));
+    free_all_registers();
+
+    return -1;
   }
   case AstType::ReturnStatement: {
     const auto &returnstmt = static_cast<const ReturnStatement &>(node);
@@ -373,7 +370,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
       return compile_ast_node(*tca.inner_, -1, node.Type());
     case TypeChange::Scale: {
       int left = compile_ast_node(*tca.inner_, -1, node.Type());
-      int right = codegen_load_int(0);
+      int right = codegen_load_int(tca.size);
 
       return mul_registers(left, right);
     }
