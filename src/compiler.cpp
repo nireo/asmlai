@@ -8,6 +8,8 @@
 #include <string>
 #include <unordered_map>
 
+#define CAST(type, node) static_cast<const type &>(node);
+
 static std::unordered_map<std::string, Symbol> global_symbols;
 
 void
@@ -176,7 +178,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
   switch(node.Type()) {
   case AstType::Program: {
     int last = -1;
-    const auto &program = static_cast<const Program &>(node);
+    const auto &program = CAST(Program, node);
 
     for(const auto &stmt : program.statements_) {
       last = compile_ast_node(*stmt, -1, AstType::Program);
@@ -185,7 +187,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     return last;
   }
   case AstType::BlockStatement: {
-    const auto &block = static_cast<const BlockStatement &>(node);
+    const auto &block = CAST(BlockStatement, node);
 
     int last = -1;
     for(const auto &stmt : block.statements_) {
@@ -195,7 +197,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     return last;
   }
   case AstType::WhileStatement: {
-    const auto &while_stmt = static_cast<const WhileStatement &>(node);
+    const auto &while_stmt = CAST(WhileStatement, node);
 
     int start_label = get_next_label();
     int end_label = get_next_label();
@@ -214,7 +216,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     return -1;
   }
   case AstType::IfExpression: {
-    const auto &if_stmt = static_cast<const IfExpression &>(node);
+    const auto &if_stmt = CAST(IfExpression, node);
     int false_label = get_next_label();
     int end_label;
     if(if_stmt.other_ != nullptr) {
@@ -239,10 +241,10 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
       gen_label(end_label);
     }
 
-    return 0;
+    return -1;
   }
   case AstType::PrintStatement: {
-    const auto &print_stmt = static_cast<const PrintStatement &>(node);
+    const auto &print_stmt = CAST(PrintStatement, node);
     int reg = compile_ast_node(*print_stmt.print_value_, -1, node.Type());
 
     print_register(reg);
@@ -251,13 +253,13 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     return -1;
   }
   case AstType::ExpressionStatement: {
-    const auto &expr_stmt = static_cast<const ExpressionStatement &>(node);
+    const auto &expr_stmt = CAST(ExpressionStatement, node);
 
     compile_ast_node(*expr_stmt.expression_, -1, node.Type());
     return -1;
   }
   case AstType::InfixExpression: {
-    const auto &infix_exp = static_cast<const InfixExpression &>(node);
+    const auto &infix_exp = CAST(InfixExpression, node);
 
     if(infix_exp.left_ != nullptr && infix_exp.right_ == nullptr) {
       return compile_ast_node(*infix_exp.left_, -1, node.Type());
@@ -300,8 +302,8 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     }
   }
   case AstType::LetStatement: {
-    const auto &assigment = static_cast<const LetStatement &>(node);
-    const auto &identifier = static_cast<const Identifier &>(*assigment.name_);
+    const auto &assigment = CAST(LetStatement, node);
+    const auto &identifier = CAST(Identifier, *assigment.name_);
 
     if(!symbol_exists(identifier.value_)) {
       const auto &sym = get_symbol(identifier.value_);
@@ -315,33 +317,31 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     return -1;
   }
   case AstType::ReturnStatement: {
-    const auto &returnstmt = static_cast<const ReturnStatement &>(node);
+    const auto &returnstmt = CAST(ReturnStatement, node);
 
     int left_reg
         = compile_ast_node(*returnstmt.return_value_, -1, node.Type());
-
     codegen_return(left_reg, get_symbol(returnstmt.function_identifier_));
 
     return -1;
   }
   case AstType::CallExpression: {
-    const auto &call_exp = static_cast<const CallExpression &>(node);
-    const auto &identifier = static_cast<const Identifier &>(*call_exp.func_);
+    const auto &call_exp = CAST(CallExpression, node);
+    const auto &identifier = CAST(Identifier, *call_exp.func_);
 
     int left_reg = compile_ast_node(*call_exp.arguments_[0], -1, node.Type());
 
     return codegen_call(left_reg, identifier.value_);
   }
   case AstType::AssingmentStatement: {
-    const auto &assigment = static_cast<const AssignmentStatement &>(node);
-    const auto &identifier
-        = static_cast<const Identifier &>(*assigment.identifier_);
+    const auto &assigment = CAST(AssignmentStatement, node);
+    const auto &identifier = CAST(Identifier, *assigment.identifier_);
 
     int reg = compile_ast_node(*assigment.value_, -1, node.Type());
     return store_global(reg, get_symbol(identifier.value_));
   }
   case AstType::Identifier: {
-    const auto &identifier = static_cast<const Identifier &>(node);
+    const auto &identifier = CAST(Identifier, node);
 
     if(global_symbols.find(identifier.value_) == global_symbols.end()) {
       std::fprintf(stderr, "identifier '%s' not found\n",
@@ -352,8 +352,8 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     return load_global(get_symbol(identifier.value_));
   }
   case AstType::FunctionLiteral: {
-    const auto &func = static_cast<const FunctionLiteral &>(node);
-    const auto &name = static_cast<const Identifier &>(*func.name_);
+    const auto &func = CAST(FunctionLiteral, node);
+    const auto &name = CAST(Identifier, *func.name_);
 
     const auto &sym = get_symbol(name.value_);
 
@@ -364,7 +364,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     return -1;
   }
   case AstType::TypeChangeAction: {
-    const auto &tca = static_cast<const TypeChangeAction &>(node);
+    const auto &tca = CAST(TypeChangeAction, node);
     switch(tca.action_) {
     case TypeChange::Widen:
       return compile_ast_node(*tca.inner_, -1, node.Type());
@@ -379,10 +379,10 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     return -1;
   }
   case AstType::PrefixExpression: {
-    const auto &pref = static_cast<const PrefixExpression &>(node);
+    const auto &pref = CAST(PrefixExpression, node);
     switch(pref.opr) {
     case tokentypes::Amper: {
-      const auto &identifier = static_cast<const Identifier &>(*pref.right_);
+      const auto &identifier = CAST(Identifier, *pref.right_);
       return codegen_addr(get_symbol(identifier.value_));
     }
     case tokentypes::Asterisk: {
@@ -396,8 +396,8 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     }
   }
   case AstType::GlobalStatement: {
-    const auto &globl = static_cast<const GlobalVariable &>(node);
-    const auto &ident = static_cast<const Identifier &>(*globl.identifier_);
+    const auto &globl = CAST(GlobalVariable, node);
+    const auto &ident = CAST(Identifier, *globl.identifier_);
 
     // parser has already generated symbol
     const auto &sym = get_symbol(ident.value_);
@@ -406,7 +406,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     return -1;
   }
   case AstType::IntegerLiteral: {
-    const auto &int_lit = static_cast<const IntegerLiteral &>(node);
+    const auto &int_lit = CAST(IntegerLiteral, node);
 
     return load_into_register(int_lit.value_);
   }

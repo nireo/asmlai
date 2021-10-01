@@ -1,7 +1,3 @@
-#include "parser.h"
-#include "ast.h"
-#include "compiler.h"
-#include "token.h"
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
@@ -10,7 +6,17 @@
 #include <sstream>
 #include <stack>
 #include <string>
-#include <unordered_map>
+
+#include "ast.h"
+#include "compiler.h"
+#include "parser.h"
+#include "token.h"
+
+#define STOP_EXECUTION(message, ...)                                          \
+  do {                                                                        \
+    std::fprintf(stderr, message, ##__VA_ARGS__);                             \
+    std::exit(1);                                                             \
+  } while(false);
 
 static std::stack<std::string> latest_function_identifers;
 
@@ -25,8 +31,7 @@ Parser::parse_program()
     if(stmt != nullptr) {
       program->statements_.push_back(std::move(stmt));
     } else {
-      std::fprintf(stderr, "error parsing statement");
-      std::exit(1);
+      STOP_EXECUTION("error parsing statement\n");
     }
     next_token();
   }
@@ -111,10 +116,8 @@ convert_type_to_pointer(const valuetype type)
   case TYPE_LONG: {
     return TYPE_PTR_LONG;
   }
-  default: {
-    std::fprintf(stderr, "cannot convert type into pointer");
-    std::exit(1);
-  }
+  default:
+    STOP_EXECUTION("cannot convert type: %d into pointer\n", type);
   }
 }
 
@@ -132,10 +135,8 @@ Parser::parse_type()
     type = TYPE_VOID;
     break;
   }
-  default: {
-    std::fprintf(stderr, "cannot parse type\n");
-    std::exit(1);
-  }
+  default:
+    STOP_EXECUTION("cannot parser type for token: %d \n", peek_.type);
   }
 
   while(true) {
@@ -170,7 +171,6 @@ Parser::expect_peek(tokentypes tt)
     return true;
   }
 
-  peek_error(tt);
   return false;
 }
 
@@ -185,7 +185,7 @@ v_from_token(const tokentypes type)
   case tokentypes::CharType:
     return TYPE_CHAR;
   default:
-    std::exit(1);
+    STOP_EXECUTION("cannot convert token type into value.\n");
   }
 }
 
@@ -252,10 +252,8 @@ Parser::parse_assingment()
   }
 
   auto exp = parse_expression(LOWEST);
-  if(!check_type_compatible(assign->assingment_type_, exp.second, false)) {
-    std::fprintf(stderr, "assignment types are wrong");
-    std::exit(1);
-  }
+  if(!check_type_compatible(assign->assingment_type_, exp.second, false))
+    STOP_EXECUTION("assignment types are wrong\n");
 
   if(peek_token_is(tokentypes::Semicolon))
     next_token();
@@ -269,29 +267,15 @@ Parser::parse_return_statement()
   auto returnstmt = std::make_unique<ReturnStatement>();
   const std::string top = latest_function_identifers.top();
   returnstmt->function_identifier_ = top;
-  // get functions valuetype
   valuetype function_return_type_ = get_symbol(top).value_type_;
 
   next_token();
 
   returnstmt->types_ = function_return_type_;
 
-  // returnstatement without expression.
-  // if(peek_token_is(tokentypes::Semicolon)) {
-  //   if(!check_type_compatible(TYPE_VOID, function_return_type_, false)) {
-  //     std::fprintf(stderr, "returning a value from a void function");
-  //     std::exit(1);
-  //   }
-
-  //   return returnstmt;
-  // }
-
   auto value = parse_expression_rec(LOWEST);
-  if(!check_type_compatible(function_return_type_, value->ValueType(),
-                            false)) {
-    std::fprintf(stderr, "return value doesn't match functions return type");
-    std::exit(1);
-  }
+  if(!check_type_compatible(function_return_type_, value->ValueType(), false))
+    STOP_EXECUTION("return value doesn't match functions return type\n");
   returnstmt->return_value_ = std::move(value);
 
   return returnstmt;
@@ -302,7 +286,6 @@ Parser::parse_print_statement()
 {
   auto print_stmt = std::make_unique<PrintStatement>();
   next_token();
-
   print_stmt->print_value_ = parse_expression_rec(LOWEST);
 
   return print_stmt;
@@ -336,21 +319,16 @@ Parser::parse_primary()
     }
 
     const auto &ident = static_cast<const Identifier &>(*identifier);
-    if(!symbol_exists(ident.value_)) {
-      std::fprintf(stderr, "cannot find variable.");
-      std::exit(1);
-    }
+    if(!symbol_exists(ident.value_))
+      STOP_EXECUTION("cannot find variable: '%s'\n", ident.value_.c_str());
 
     result = std::move(identifier);
     break;
   }
-  default: {
-    std::fprintf(
-        stderr,
+  default:
+    STOP_EXECUTION(
         "unrecognized token when parsing primary expression factor. '%s",
         current_.literal.c_str());
-    std::exit(1);
-  }
   }
 
   next_token();
@@ -367,11 +345,9 @@ Parser::parse_prefix()
     next_token();
 
     auto right = parse_prefix();
-    if(right->Type() != AstType::Identifier) {
-      std::fprintf(stderr,
-                   "ampersand cannot be used for nothing but identifiers.");
-      std::exit(1);
-    }
+    if(right->Type() != AstType::Identifier)
+      STOP_EXECUTION(
+          "ampersand cannot be used for nothing but identifiers.\n");
 
     auto prefix_exp = std::make_unique<PrefixExpression>();
     prefix_exp->opr = tokentype;
@@ -419,8 +395,7 @@ Parser::parse_expression_rec(Precedence prec)
     auto right_temp = change_type(std::move(right), left_type, tokentype);
 
     if(left_temp.second == nullptr && right_temp.second == nullptr) {
-      std::fprintf(stderr, "bad types in expression");
-      std::exit(1);
+      STOP_EXECUTION("bad types in expression\n");
     }
 
     auto infix = std::make_unique<InfixExpression>();
@@ -475,10 +450,8 @@ Parser::parse_expression(Precedence prec)
        && left->Type() != AstType::InfixExpression) {
       const auto &inf = static_cast<const InfixExpression &>(*left);
       if(!check_type_compatible(inf.left_->ValueType(),
-                                inf.right_->ValueType(), true)) {
-        std::fprintf(stderr, "types are not equal in infix expression");
-        std::exit(1);
-      }
+                                inf.right_->ValueType(), true))
+        STOP_EXECUTION("types are not equal in infix expression.\n");
 
       type = inf.left_->ValueType();
     } else if(left->Type() == AstType::CallExpression) {
@@ -496,10 +469,8 @@ Parser::parse_expression(Precedence prec)
         const auto &fn_lit = static_cast<const CallExpression &>(*left);
         break;
       }
-      default: {
-        std::fprintf(stderr, "cannot call non-function.");
-        std::exit(0);
-      }
+      default:
+        STOP_EXECUTION("cannot call non-function");
       }
     }
   }
@@ -528,8 +499,7 @@ Parser::parse_integer_literal()
     int res = std::stoi(current_.literal);
     lit->value_ = res;
   } catch(const std::invalid_argument &e) {
-    errors_.push_back("could not parse integer");
-    return nullptr;
+    STOP_EXECUTION("cannot convert string into number.\n");
   }
 
   return lit;
@@ -897,18 +867,6 @@ Parser::parse_global_decl()
     return nullptr;
 
   return globl;
-}
-
-std::vector<std::string>
-Parser::errors() const
-{
-  return errors_;
-}
-
-void
-Parser::peek_error(tokentypes tt)
-{
-  errors_.push_back("peeked wrong token");
 }
 
 void

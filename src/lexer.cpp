@@ -5,6 +5,7 @@
 Lexer::Lexer(const std::string &input)
 {
   input_ = input;
+  line = 0;
   read_pos_ = 0;
   read_char();
 }
@@ -195,8 +196,12 @@ Lexer::read_string()
 void
 Lexer::skip_whitespace()
 {
-  while(ch_ == ' ' || ch_ == '\t' || ch_ == '\n' || ch_ == '\r')
+  while(ch_ == ' ' || ch_ == '\t' || ch_ == '\n' || ch_ == '\r') {
+    if (ch_ == '\n')
+      ++line;
+
     read_char();
+  }
 }
 
 std::string

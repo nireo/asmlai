@@ -9,6 +9,7 @@ class Lexer
 public:
   Lexer(const std::string &input);
   Token next_token();
+  int line;
 
 private:
   std::string input_;

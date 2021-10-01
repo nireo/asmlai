@@ -12,7 +12,6 @@ typedef std::unique_ptr<Expression> (Parser::*PrefixParseFn)();
 typedef std::unique_ptr<Expression> (Parser::*InfixParseFn)(
     std::unique_ptr<Expression>);
 
-// TODO: make scoped enum
 enum Precedence {
   LOWEST,
   EQUALS,
@@ -62,8 +61,7 @@ private:
   std::unique_ptr<Statement> parse_global_decl();
   std::unique_ptr<Expression> parse_primary();
   std::unique_ptr<Expression> parse_prefix();
-  std::unique_ptr<Expression>
-  parse_expression_rec(Precedence prec);
+  std::unique_ptr<Expression> parse_expression_rec(Precedence prec);
   std::pair<std::unique_ptr<Expression>, valuetype>
   parse_expression(Precedence prec);
   std::unique_ptr<Expression> parse_identifier();
@@ -95,9 +93,6 @@ private:
   bool expect_peek(tokentypes tt);
   bool peek_token_is(tokentypes tt);
   bool current_token_is(tokentypes tt);
-  void peek_error(tokentypes tt);
-
-  std::vector<std::string> errors_;
 };
 
 #endif
