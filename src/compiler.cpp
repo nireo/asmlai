@@ -295,6 +295,30 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
       }
       return codegen_compare_no_jump(left, right, infix_exp.opr);
     }
+    case tokentypes::Assign: {
+      switch(infix_exp.right_->Type()) {
+      case AstType::Identifier: {
+        const auto &identifier = CAST(Identifier, *infix_exp.right_);
+
+        return store_global(left, get_symbol(identifier.value_));
+      }
+      case AstType::PrefixExpression: {
+        const auto &pref = CAST(PrefixExpression, *infix_exp.right_);
+        if(pref.opr != tokentypes::Asterisk) {
+          std::fprintf(
+              stderr,
+              "cannot assign into prefix expression without the * symbol.");
+          std::exit(1);
+        }
+
+        return store_dereference(left, right, infix_exp.right_->ValueType());
+      }
+      default: {
+        std::fprintf(stderr, "cannot assign.");
+        std::exit(1);
+      }
+      }
+    }
     default: {
       std::fprintf(stderr, "unknown operator type in prefix expression\n");
       std::exit(1);
@@ -349,7 +373,12 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
       std::exit(1);
     }
 
-    return load_global(get_symbol(identifier.value_));
+    // TODO: make sure the prefix expression is a dereference.
+    if(identifier.rvalue || node.Type() == AstType::PrefixExpression) {
+      return load_global(get_symbol(identifier.value_));
+    } else {
+      return -1;
+    }
   }
   case AstType::FunctionLiteral: {
     const auto &func = CAST(FunctionLiteral, node);
@@ -387,7 +416,11 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     }
     case tokentypes::Asterisk: {
       int right = compile_ast_node(*pref.right_, -1, node.Type());
-      return codegen_dereference(right, pref.right_->ValueType());
+      if(pref.right_->is_rvalue()) {
+        return codegen_dereference(right, pref.right_->ValueType());
+      }
+
+      return right;
     }
     default: {
       std::fprintf(stderr, "cannot codegen for given operation.\n");

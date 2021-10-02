@@ -442,3 +442,24 @@ codegen_load_int(int value)
   std::fprintf(fp, "\tmovq\t$%d, %s\n", value, registers[free_reg].c_str());
   return free_reg;
 }
+
+int
+store_dereference(int reg1, int reg2, valuetype type)
+{
+  switch(type) {
+  case TYPE_CHAR:
+    std::fprintf(fp, "\tmovb\t%s, (%s)\n", b_registers[reg1].c_str(), registers[reg2].c_str());
+    break;
+  case TYPE_INT:
+    std::fprintf(fp, "\tmovq\t%s, (%s)\n", registers[reg1].c_str(), registers[reg2].c_str());
+    break;
+  case TYPE_LONG:
+    std::fprintf(fp, "\tmovq\t%s, (%s)\n", registers[reg1].c_str(), registers[reg2].c_str());
+    break;
+  default:
+    std::fprintf(stderr, "uncompatible type for deference storing.");
+    std::exit(1);
+  }
+
+  return reg1;
+}

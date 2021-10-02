@@ -31,5 +31,6 @@ int codegen_addr(const Symbol &);
 int codegen_dereference(int, const valuetype);
 int shift_left(int, int);
 int codegen_load_int(int);
+int store_dereference(int, int, valuetype);
 
 #endif

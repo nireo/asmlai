@@ -392,38 +392,62 @@ Parser::parse_expression_rec(Precedence prec)
     auto right = parse_expression_rec(precedences[tokentype]);
     auto left_type = left->ValueType();
 
-    auto left_temp
-        = change_type(std::move(left), right->ValueType(), tokentype);
-    auto right_temp = change_type(std::move(right), left_type, tokentype);
+    if(tokentype == tokentypes::Assign) {
+      right->set_rvalue(true);
 
-    if(left_temp.second == nullptr && right_temp.second == nullptr) {
-      STOP_EXECUTION("bad types in expression\n");
-    }
+      auto right_temp = change_type(std::move(right), left_type, tokentype);
+      if(right_temp.second == nullptr) {
+        STOP_EXECUTION("incompatible type in assingment");
+      }
 
-    auto infix = std::make_unique<InfixExpression>();
-    if(left_temp.second != nullptr) {
-      infix->left_ = std::move(left_temp.second);
+      auto infix = std::make_unique<InfixExpression>();
+      infix->left_ = std::move(right_temp.second);
+      infix->right_ = std::move(left);
+
+      infix->v_type_ = infix->left_->ValueType();
+      infix->opr = tokentype;
+
+      left = std::move(infix);
     } else {
-      infix->left_ = std::move(left_temp.first);
+      left->set_rvalue(true);
+      right->set_rvalue(true);
+
+      auto left_temp
+          = change_type(std::move(left), right->ValueType(), tokentype);
+      auto right_temp = change_type(std::move(right), left_type, tokentype);
+
+      if(left_temp.second == nullptr && right_temp.second == nullptr) {
+        STOP_EXECUTION("bad types in expression\n");
+      }
+
+      auto infix = std::make_unique<InfixExpression>();
+      if(left_temp.second != nullptr) {
+        infix->left_ = std::move(left_temp.second);
+      } else {
+        infix->left_ = std::move(left_temp.first);
+      }
+
+      if(right_temp.second != nullptr) {
+        infix->right_ = std::move(right_temp.second);
+      } else {
+        infix->right_ = std::move(right_temp.first);
+      }
+
+      infix->v_type_ = infix->left_->ValueType();
+      infix->opr = tokentype;
+
+      left = std::move(infix);
     }
 
-    if(right_temp.second != nullptr) {
-      infix->right_ = std::move(right_temp.second);
-    } else {
-      infix->right_ = std::move(right_temp.first);
-    }
-
-    infix->v_type_ = infix->left_->ValueType();
-    infix->opr = tokentype;
-
-    left = std::move(infix);
     tokentype = current_.type;
     if(current_token_is(tokentypes::Semicolon)
        || current_token_is(tokentypes::RParen)) {
+      left->set_rvalue(true);
       return left;
     }
   }
 
+  left->set_rvalue(true);
   return left;
 }
 
