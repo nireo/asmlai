@@ -66,6 +66,8 @@ public:
 class Expression : public Node
 {
 public:
+  virtual void set_rvalue(bool) = 0;
+  virtual bool is_rvalue() = 0;
   virtual AstType Type() const noexcept = 0;
   virtual valuetype ValueType() const noexcept = 0;
 };
@@ -114,6 +116,16 @@ public:
 class Identifier : public Expression
 {
 public:
+  void set_rvalue(bool value) {
+    rvalue = value;
+  }
+
+  bool
+  is_rvalue()
+  {
+    return rvalue;
+  }
+
   AstType
   Type() const noexcept
   {
@@ -128,6 +140,7 @@ public:
 
   std::string value_;
   valuetype value_type;
+  bool rvalue = false;
 };
 
 class LetStatement : public Statement
@@ -137,11 +150,13 @@ public:
   statementNode()
   {
   }
+
   AstType
   Type() const noexcept
   {
     return AstType::LetStatement;
   }
+
   valuetype
   ValueType() const noexcept
   {
@@ -161,11 +176,13 @@ public:
   statementNode()
   {
   }
+
   AstType
   Type() const noexcept
   {
     return AstType::ReturnStatement;
   }
+
   valuetype
   ValueType() const noexcept
   {
@@ -180,11 +197,22 @@ public:
 class PrintStatement : public Expression
 {
 public:
+  bool
+  is_rvalue()
+  {
+    return rvalue;
+  }
+
+  void set_rvalue(bool value) {
+    rvalue = value;
+  }
+
   AstType
   Type() const noexcept
   {
     return AstType::PrintStatement;
   }
+
   valuetype
   ValueType() const noexcept
   {
@@ -192,6 +220,7 @@ public:
   }
 
   std::unique_ptr<Expression> print_value_;
+  bool rvalue = false;
 };
 
 class ExpressionStatement : public Statement
@@ -220,6 +249,16 @@ public:
 class IntegerLiteral : public Expression
 {
 public:
+  bool
+  is_rvalue()
+  {
+    return rvalue;
+  }
+
+  void set_rvalue(bool value) {
+    rvalue = value;
+  }
+
   AstType
   Type() const noexcept
   {
@@ -233,11 +272,22 @@ public:
   }
 
   std::int64_t value_;
+  bool rvalue = false;
 };
 
 class PrefixExpression : public Expression
 {
 public:
+  bool
+  is_rvalue()
+  {
+    return rvalue;
+  }
+
+  void set_rvalue(bool value) {
+    rvalue = value;
+  }
+
   AstType
   Type() const noexcept
   {
@@ -256,6 +306,7 @@ public:
     return right_->ValueType();
   }
 
+  bool rvalue = false;
   tokentypes opr;
   std::unique_ptr<Expression> right_;
 };
@@ -263,6 +314,16 @@ public:
 class InfixExpression : public Expression
 {
 public:
+  bool
+  is_rvalue()
+  {
+    return rvalue;
+  }
+
+  void set_rvalue(bool value) {
+    rvalue = value;
+  }
+
   AstType
   Type() const noexcept
   {
@@ -279,11 +340,22 @@ public:
   std::unique_ptr<Expression> right_;
   std::unique_ptr<Expression> left_;
   valuetype v_type_ = TYPE_VOID;
+  bool rvalue = false;
 };
 
 class BooleanExpression : public Expression
 {
 public:
+  bool
+  is_rvalue()
+  {
+    return rvalue;
+  }
+
+  void set_rvalue(bool value) {
+    rvalue = value;
+  }
+
   AstType
   Type() const noexcept
   {
@@ -296,8 +368,8 @@ public:
     return TYPE_VOID;
   }
 
-  Token token_;
   bool value_;
+  bool rvalue = false;
 };
 
 class BlockStatement : public Statement
@@ -307,6 +379,7 @@ public:
   statementNode()
   {
   }
+
   AstType
   Type() const noexcept
   {
@@ -326,6 +399,16 @@ public:
 class IfExpression : public Expression
 {
 public:
+  bool
+  is_rvalue()
+  {
+    return rvalue;
+  }
+
+  void set_rvalue(bool value) {
+    rvalue = value;
+  }
+
   AstType
   Type() const noexcept
   {
@@ -341,11 +424,22 @@ public:
   std::unique_ptr<Expression> cond_;
   std::unique_ptr<BlockStatement> after_;
   std::unique_ptr<BlockStatement> other_;
+  bool rvalue = false;
 };
 
 class WhileStatement : public Expression
 {
 public:
+  bool
+  is_rvalue()
+  {
+    return rvalue;
+  }
+
+  void set_rvalue(bool value) {
+    rvalue = value;
+  }
+
   AstType
   Type() const noexcept
   {
@@ -360,6 +454,7 @@ public:
 
   std::unique_ptr<Expression> cond_;
   std::unique_ptr<BlockStatement> body_;
+  bool rvalue = false;
 };
 
 class FunctionLiteral : public Statement
@@ -391,6 +486,16 @@ public:
 class CallExpression : public Expression
 {
 public:
+  bool
+  is_rvalue()
+  {
+    return rvalue;
+  }
+
+  void set_rvalue(bool value) {
+    rvalue = value;
+  }
+
   AstType
   Type() const noexcept
   {
@@ -405,11 +510,22 @@ public:
 
   std::vector<std::unique_ptr<Expression> > arguments_;
   std::unique_ptr<Expression> func_;
+  bool rvalue = false;
 };
 
 class StringLiteral : public Expression
 {
 public:
+  bool
+  is_rvalue()
+  {
+    return rvalue;
+  }
+
+  void set_rvalue(bool value) {
+    rvalue = value;
+  }
+
   AstType
   Type() const noexcept
   {
@@ -422,12 +538,23 @@ public:
     return TYPE_VOID;
   }
 
+  bool rvalue = false;
   std::string value_;
 };
 
 class ArrayLiteral : public Expression
 {
 public:
+  bool
+  is_rvalue()
+  {
+    return rvalue;
+  }
+
+  void set_rvalue(bool value) {
+    rvalue = value;
+  }
+
   AstType
   Type() const noexcept
   {
@@ -441,11 +568,22 @@ public:
   }
 
   std::vector<std::unique_ptr<Expression> > elements_;
+  bool rvalue = false;
 };
 
 class IndexExpression : public Expression
 {
 public:
+  bool
+  is_rvalue()
+  {
+    return rvalue;
+  }
+
+  void set_rvalue(bool value) {
+    rvalue = value;
+  }
+
   AstType
   Type() const noexcept
   {
@@ -460,11 +598,22 @@ public:
 
   std::unique_ptr<Expression> left_;
   std::unique_ptr<Expression> index_;
+  bool rvalue = false;
 };
 
 class ForStatement : public Expression
 {
 public:
+  bool
+  is_rvalue()
+  {
+    return rvalue;
+  }
+
+  void set_rvalue(bool value) {
+    rvalue = value;
+  }
+
   AstType
   Type() const noexcept
   {
@@ -481,6 +630,7 @@ public:
   std::unique_ptr<Expression> cond_;
   std::unique_ptr<Statement> after_every_;
   std::unique_ptr<BlockStatement> body_;
+  bool rvalue = false;
 };
 
 enum class TypeChange {
@@ -491,6 +641,16 @@ enum class TypeChange {
 class TypeChangeAction : public Expression
 {
 public:
+  bool
+  is_rvalue()
+  {
+    return rvalue;
+  }
+
+  void set_rvalue(bool value) {
+    rvalue = value;
+  }
+
   valuetype
   ValueType() const noexcept
   {
@@ -506,6 +666,7 @@ public:
   TypeChange action_ = TypeChange::Widen;
   std::unique_ptr<Expression> inner_ = nullptr;
   int size = 0;
+  bool rvalue = false;
 };
 
 class GlobalVariable : public Statement

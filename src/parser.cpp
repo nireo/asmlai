@@ -384,7 +384,9 @@ Parser::parse_expression_rec(Precedence prec)
 
   auto tokentype = current_.type;
 
-  while(prec < precedences[tokentype]) {
+  while(
+      (prec < precedences[tokentype])
+      || (tokentype == tokentypes::Assign && precedences[tokentype] == prec)) {
     next_token();
 
     auto right = parse_expression_rec(precedences[tokentype]);
