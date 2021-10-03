@@ -256,6 +256,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     const auto &expr_stmt = CAST(ExpressionStatement, node);
 
     compile_ast_node(*expr_stmt.expression_, -1, node.Type());
+    free_all_registers();
     return -1;
   }
   case AstType::InfixExpression: {
@@ -302,14 +303,8 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
 
         return store_global(left, get_symbol(identifier.value_));
       }
-      case AstType::PrefixExpression: {
-        const auto &pref = CAST(PrefixExpression, *infix_exp.right_);
-        if(pref.opr != tokentypes::Asterisk) {
-          std::fprintf(
-              stderr,
-              "cannot assign into prefix expression without the * symbol.");
-          std::exit(1);
-        }
+      case AstType::Dereference: {
+        const auto &deref = CAST(Dereference, *infix_exp.right_);
 
         return store_dereference(left, right, infix_exp.right_->ValueType());
       }
@@ -373,8 +368,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
       std::exit(1);
     }
 
-    // TODO: make sure the prefix expression is a dereference.
-    if(identifier.rvalue || node.Type() == AstType::PrefixExpression) {
+    if(identifier.rvalue || top_type == AstType::Dereference) {
       return load_global(get_symbol(identifier.value_));
     } else {
       return -1;
@@ -442,6 +436,16 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     const auto &int_lit = CAST(IntegerLiteral, node);
 
     return load_into_register(int_lit.value_);
+  }
+  case AstType::Dereference: {
+    const auto &deref = CAST(Dereference, node);
+    int compiled = compile_ast_node(*deref.to_dereference_, -1, node.Type());
+
+    if (deref.rvalue) {
+      return codegen_dereference(compiled, deref.to_dereference_->ValueType());
+    }
+
+    return compile_ast_node(*deref.to_dereference_, -1, node.Type());
   }
   default: {
     std::fprintf(stderr, "unknown node type %d\n", node.Type());

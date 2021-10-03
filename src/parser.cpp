@@ -339,7 +339,6 @@ std::unique_ptr<Expression>
 Parser::parse_prefix()
 {
   switch(current_.type) {
-  case tokentypes::Asterisk:
   case tokentypes::Amper: {
     auto tokentype = current_.type;
     next_token();
@@ -354,6 +353,19 @@ Parser::parse_prefix()
     prefix_exp->right_ = std::move(right);
 
     return prefix_exp;
+  }
+  case tokentypes::Asterisk: {
+    next_token();
+
+    auto right = parse_prefix();
+    if(right->Type() != AstType::Identifier)
+      STOP_EXECUTION(
+          "ampersand cannot be used for nothing but identifiers.\n");
+
+    auto deref_exp = std::make_unique<Dereference>();
+    deref_exp->to_dereference_ = std::move(right);
+
+    return deref_exp;
   }
   case tokentypes::Bang:
   case tokentypes::Minus: {

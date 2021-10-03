@@ -31,7 +31,8 @@ enum class AstType {
   ForStatement,
   AssingmentStatement,
   TypeChangeAction,
-  GlobalStatement
+  GlobalStatement,
+  Dereference,
 };
 
 enum valuetype {
@@ -116,7 +117,9 @@ public:
 class Identifier : public Expression
 {
 public:
-  void set_rvalue(bool value) {
+  void
+  set_rvalue(bool value)
+  {
     rvalue = value;
   }
 
@@ -203,7 +206,9 @@ public:
     return rvalue;
   }
 
-  void set_rvalue(bool value) {
+  void
+  set_rvalue(bool value)
+  {
     rvalue = value;
   }
 
@@ -255,7 +260,9 @@ public:
     return rvalue;
   }
 
-  void set_rvalue(bool value) {
+  void
+  set_rvalue(bool value)
+  {
     rvalue = value;
   }
 
@@ -284,7 +291,9 @@ public:
     return rvalue;
   }
 
-  void set_rvalue(bool value) {
+  void
+  set_rvalue(bool value)
+  {
     rvalue = value;
   }
 
@@ -320,7 +329,9 @@ public:
     return rvalue;
   }
 
-  void set_rvalue(bool value) {
+  void
+  set_rvalue(bool value)
+  {
     rvalue = value;
   }
 
@@ -352,7 +363,9 @@ public:
     return rvalue;
   }
 
-  void set_rvalue(bool value) {
+  void
+  set_rvalue(bool value)
+  {
     rvalue = value;
   }
 
@@ -405,7 +418,9 @@ public:
     return rvalue;
   }
 
-  void set_rvalue(bool value) {
+  void
+  set_rvalue(bool value)
+  {
     rvalue = value;
   }
 
@@ -436,7 +451,9 @@ public:
     return rvalue;
   }
 
-  void set_rvalue(bool value) {
+  void
+  set_rvalue(bool value)
+  {
     rvalue = value;
   }
 
@@ -492,7 +509,9 @@ public:
     return rvalue;
   }
 
-  void set_rvalue(bool value) {
+  void
+  set_rvalue(bool value)
+  {
     rvalue = value;
   }
 
@@ -522,7 +541,9 @@ public:
     return rvalue;
   }
 
-  void set_rvalue(bool value) {
+  void
+  set_rvalue(bool value)
+  {
     rvalue = value;
   }
 
@@ -551,7 +572,9 @@ public:
     return rvalue;
   }
 
-  void set_rvalue(bool value) {
+  void
+  set_rvalue(bool value)
+  {
     rvalue = value;
   }
 
@@ -580,7 +603,9 @@ public:
     return rvalue;
   }
 
-  void set_rvalue(bool value) {
+  void
+  set_rvalue(bool value)
+  {
     rvalue = value;
   }
 
@@ -610,7 +635,9 @@ public:
     return rvalue;
   }
 
-  void set_rvalue(bool value) {
+  void
+  set_rvalue(bool value)
+  {
     rvalue = value;
   }
 
@@ -647,7 +674,9 @@ public:
     return rvalue;
   }
 
-  void set_rvalue(bool value) {
+  void
+  set_rvalue(bool value)
+  {
     rvalue = value;
   }
 
@@ -691,6 +720,37 @@ public:
 
   valuetype type_;
   std::unique_ptr<Expression> identifier_;
+};
+
+class Dereference : public Expression
+{
+public:
+  AstType
+  Type() const noexcept
+  {
+    return AstType::Dereference;
+  }
+
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_INT;
+  }
+
+  bool
+  is_rvalue()
+  {
+    return rvalue;
+  }
+
+  void
+  set_rvalue(bool value)
+  {
+    rvalue = value;
+  }
+
+  std::unique_ptr<Expression> to_dereference_;
+  bool rvalue = false;
 };
 
 #endif
