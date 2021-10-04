@@ -340,7 +340,6 @@ Parser::parse_prefix()
 {
   switch(current_.type) {
   case tokentypes::Amper: {
-    auto tokentype = current_.type;
     next_token();
 
     auto right = parse_prefix();
@@ -348,11 +347,10 @@ Parser::parse_prefix()
       STOP_EXECUTION(
           "ampersand cannot be used for nothing but identifiers.\n");
 
-    auto prefix_exp = std::make_unique<PrefixExpression>();
-    prefix_exp->opr = tokentype;
-    prefix_exp->right_ = std::move(right);
+    auto addr_exp = std::make_unique<Addr>();
+    addr_exp->to_addr_ = std::move(right);
 
-    return prefix_exp;
+    return addr_exp;
   }
   case tokentypes::Asterisk: {
     next_token();

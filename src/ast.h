@@ -33,6 +33,7 @@ enum class AstType {
   TypeChangeAction,
   GlobalStatement,
   Dereference,
+  Addr,
 };
 
 enum valuetype {
@@ -750,6 +751,33 @@ public:
   }
 
   std::unique_ptr<Expression> to_dereference_;
+  bool rvalue = false;
+};
+
+class Addr : public Expression
+{
+public:
+  AstType
+  Type() const noexcept
+  {
+    return AstType::Addr;
+  }
+
+  valuetype
+  ValueType() const noexcept
+  {
+    return TYPE_PTR_INT;
+  }
+
+  bool is_rvalue() {
+    return rvalue;
+  }
+
+  void set_rvalue(bool value) {
+    rvalue = value;
+  }
+
+  std::unique_ptr<Expression> to_addr_;
   bool rvalue = false;
 };
 

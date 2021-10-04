@@ -437,6 +437,12 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
 
     return load_into_register(int_lit.value_);
   }
+  case AstType::Addr: {
+    const auto &addr_exp = CAST(Addr, node);
+    const auto &identifier = CAST(Identifier, *addr_exp.to_addr_);
+
+    return codegen_addr(get_symbol(identifier.value_));
+  }
   case AstType::Dereference: {
     const auto &deref = CAST(Dereference, node);
     int compiled = compile_ast_node(*deref.to_dereference_, -1, node.Type());
