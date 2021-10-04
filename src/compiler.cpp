@@ -447,7 +447,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     const auto &deref = CAST(Dereference, node);
     int compiled = compile_ast_node(*deref.to_dereference_, -1, node.Type());
 
-    if (deref.rvalue) {
+    if(deref.rvalue) {
       return codegen_dereference(compiled, deref.to_dereference_->ValueType());
     }
 

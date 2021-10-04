@@ -389,6 +389,7 @@ Parser::parse_expression_rec(Precedence prec)
 
   if(current_token_is(tokentypes::Semicolon)
      || current_token_is(tokentypes::RParen)) {
+    left->set_rvalue(true);
     return left;
   }
 
