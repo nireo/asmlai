@@ -1,6 +1,7 @@
 #include "lexer.h"
 #include "token.h"
 #include <cctype>
+#include <string.h>
 
 Lexer::Lexer(const std::string &input)
 {
@@ -197,7 +198,7 @@ void
 Lexer::skip_whitespace()
 {
   while(ch_ == ' ' || ch_ == '\t' || ch_ == '\n' || ch_ == '\r') {
-    if (ch_ == '\n')
+    if(ch_ == '\n')
       ++line;
 
     read_char();
@@ -233,4 +234,96 @@ Lexer::peek_char()
     return 0;
   else
     return input_[read_pos_];
+}
+
+bool
+CLexer::is_at_end()
+{
+  return *current == '\0';
+}
+
+char
+CLexer::advance()
+{
+  current++;
+  return current[-1];
+}
+
+bool
+CLexer::match(char expected)
+{
+  if(is_at_end())
+    return false;
+  if(*current != expected)
+    return false;
+  current++;
+  return true;
+}
+
+LToken
+CLexer::make_token(tokentypes type)
+{
+  LToken token;
+  token.type = type;
+  token.start = start;
+  token.length = (int)(current - start);
+  token.line = line;
+
+  return token;
+}
+
+LToken
+CLexer::error_token(const char *msg)
+{
+  LToken token;
+  token.type = tokentypes::Eof;
+  token.start = msg;
+  token.length = (int)strlen(msg);
+  token.line = line;
+
+  return token;
+}
+
+char
+CLexer::peek(void)
+{
+  return *current;
+}
+
+char
+CLexer::peek_next(void)
+{
+  if(is_at_end())
+    return '\0';
+  return current[1];
+}
+
+void
+CLexer::skip_whitespace(void)
+{
+  for(;;) {
+    char c = peek();
+    switch(c) {
+    case ' ':
+    case '\r':
+    case '\t':
+      advance();
+      break;
+    case '/':
+      if(peek_next() == '/') {
+        // A comment goes until the end of the line.
+        while(peek() != '\n' && !is_at_end())
+          advance();
+      } else {
+        return;
+      }
+      break;
+    case '\n':
+      line++;
+      advance();
+      break;
+    default:
+      return;
+    }
+  }
 }
