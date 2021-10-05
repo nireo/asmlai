@@ -406,8 +406,16 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
       return compile_ast_node(*tca.inner_, -1, node.Type());
     case TypeChange::Scale: {
       int left = compile_ast_node(*tca.inner_, -1, node.Type());
-      int right = codegen_load_int(tca.size);
+      switch (tca.size) {
+      case 2:
+        return shift_left(left, 1);
+      case 4:
+        return shift_left(left, 2);
+      case 8:
+        return shift_left(left, 3);
+      }
 
+      int right = codegen_load_int(tca.size);
       return mul_registers(left, right);
     }
     }

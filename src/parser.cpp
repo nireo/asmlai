@@ -418,6 +418,24 @@ Parser::parse_prefix()
 
     return print_stmt;
   }
+  case tokentypes::While: {
+    auto while_stmt = std::make_unique<WhileStatement>();
+    if(!expect_peek(tokentypes::LParen))
+      return nullptr;
+
+    next_token();
+    while_stmt->cond_ = parse_expression_rec(LOWEST);
+
+    if(!expect_peek(tokentypes::RParen))
+      return nullptr;
+
+    if(!expect_peek(tokentypes::LBrace))
+      return nullptr;
+
+    while_stmt->body_ = parse_block_statement();
+
+    return while_stmt;
+  }
   default:
     return parse_primary();
   }
