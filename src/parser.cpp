@@ -28,6 +28,7 @@ Parser::parse_program()
 
   while(current_.type != tokentypes::Eof) {
     auto stmt = parse_statement();
+    std::cout << "parsing statement" << '\n';
     if(stmt != nullptr) {
       program->statements_.push_back(std::move(stmt));
     } else {
@@ -94,8 +95,6 @@ Parser::parse_statement()
     return parse_function_literal();
   } else if(current_.type == tokentypes::Return) {
     return parse_return_statement();
-  } else if(current_.type == tokentypes::Ident) {
-    return parse_assingment();
   } else if(current_.type == tokentypes::Global) {
     return parse_global_decl();
   } else {
@@ -312,18 +311,60 @@ Parser::parse_primary()
   case tokentypes::Ident: {
     auto identifier = parse_identifier();
 
-    if(peek_token_is(tokentypes::LParen)) {
-      next_token();
-      result = parse_call_expression(std::move(identifier));
-      break;
-    }
-
     const auto &ident = static_cast<const Identifier &>(*identifier);
     if(!symbol_exists(ident.value_))
       STOP_EXECUTION("cannot find variable: '%s'\n", ident.value_.c_str());
 
+    if(peek_token_is(tokentypes::LParen)) {
+      next_token();
+      result = parse_call_expression(std::move(identifier));
+      break;
+    } else if(peek_token_is(tokentypes::LBracket)) {
+      next_token(); // skip [
+      next_token(); // go to start of index expression
+      // array
+      auto arr = std::make_unique<Addr>();
+      arr->to_addr_ = std::move(identifier);
+
+      auto indx = parse_expression_rec(LOWEST);
+      if(!current_token_is(tokentypes::RBracket))
+        STOP_EXECUTION("array index operation needs to end in a ]\n");
+
+      if(indx->ValueType() != TYPE_INT && indx->ValueType() != TYPE_CHAR
+         && indx->ValueType() != TYPE_LONG)
+        STOP_EXECUTION("the index expression needs to be an integer.");
+
+      auto index_modified
+          = change_type(std::move(indx), arr->ValueType(), tokentypes::Plus);
+
+      // We build multiple nodes such that we don't need to worry about
+      // creating extra nodes.
+      auto infix = std::make_unique<InfixExpression>();
+      infix->opr = tokentypes::Plus;
+      infix->v_type_ = arr->ValueType();
+      infix->left_ = std::move(arr);
+      if(index_modified.second == nullptr)
+        STOP_EXECUTION("right type cannot be changed.");
+      infix->right_ = std::move(index_modified.second);
+
+      auto deref = std::make_unique<Dereference>();
+      deref->to_dereference_ = std::move(infix);
+
+      result = std::move(deref);
+      break;
+    }
+
     result = std::move(identifier);
     break;
+  }
+  case tokentypes::LParen: {
+    next_token();
+
+    auto expr = parse_expression_rec(LOWEST);
+    if(!current_token_is(tokentypes::RParen))
+      STOP_EXECUTION("expected right paren after");
+
+    return expr;
   }
   default:
     STOP_EXECUTION(
@@ -452,7 +493,8 @@ Parser::parse_expression_rec(Precedence prec)
 
     tokentype = current_.type;
     if(current_token_is(tokentypes::Semicolon)
-       || current_token_is(tokentypes::RParen)) {
+       || current_token_is(tokentypes::RParen)
+       || tokentype == tokentypes::RBracket) {
       left->set_rvalue(true);
       return left;
     }
@@ -898,7 +940,20 @@ Parser::parse_global_decl()
     return nullptr;
   }
 
-  add_new_symbol(name, TYPE_VARIABLE, globl->type_);
+  if(peek_token_is(tokentypes::LBracket)) {
+    next_token();
+    if(!expect_peek(tokentypes::Int))
+      STOP_EXECUTION("array declaration needs size.");
+
+    int size = std::stoi(current_.literal);
+    add_new_symbol(name, TYPE_ARRAY, convert_type_to_pointer(globl->type_), 0,
+                   size);
+
+    if(!expect_peek(tokentypes::RBracket))
+      STOP_EXECUTION("array declration must end in ]");
+  } else {
+    add_new_symbol(name, TYPE_VARIABLE, globl->type_, 0, 1);
+  }
 
   if(!expect_peek(tokentypes::Semicolon))
     return nullptr;

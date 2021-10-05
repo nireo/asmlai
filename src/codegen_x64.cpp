@@ -238,21 +238,24 @@ generate_sym(const Symbol &sym)
   int size = get_bytesize_of_type(sym.value_type_);
   std::fprintf(fp,
                "\t.data\n"
-               "\t.globl\t%s\n",
-               sym.name_.c_str());
-  switch(size) {
-  case 1:
-    std::fprintf(fp, "%s:\t.byte\t0\n", sym.name_.c_str());
-    break;
-  case 4:
-    std::fprintf(fp, "%s:\t.long\t0\n", sym.name_.c_str());
-    break;
-  case 8:
-    std::fprintf(fp, "%s:\t.quad\t0\n", sym.name_.c_str());
-    break;
-  default:
-    std::fprintf(stderr, "unrecognized byte size.");
-    std::exit(1);
+               "\t.globl\t%s\n%s:",
+               sym.name_.c_str(), sym.name_.c_str());
+
+  for(int i = 0; i < sym.size; ++i) {
+    switch(size) {
+    case 1:
+      std::fprintf(fp, "\t.byte\t0\n");
+      break;
+    case 4:
+      std::fprintf(fp, "\t.long\t0\n");
+      break;
+    case 8:
+      std::fprintf(fp, "\t.quad\t0\n");
+      break;
+    default:
+      std::fprintf(stderr, "unrecognized byte size.");
+      std::exit(1);
+    }
   }
 }
 
@@ -448,13 +451,16 @@ store_dereference(int reg1, int reg2, valuetype type)
 {
   switch(type) {
   case TYPE_CHAR:
-    std::fprintf(fp, "\tmovb\t%s, (%s)\n", b_registers[reg1].c_str(), registers[reg2].c_str());
+    std::fprintf(fp, "\tmovb\t%s, (%s)\n", b_registers[reg1].c_str(),
+                 registers[reg2].c_str());
     break;
   case TYPE_INT:
-    std::fprintf(fp, "\tmovq\t%s, (%s)\n", registers[reg1].c_str(), registers[reg2].c_str());
+    std::fprintf(fp, "\tmovq\t%s, (%s)\n", registers[reg1].c_str(),
+                 registers[reg2].c_str());
     break;
   case TYPE_LONG:
-    std::fprintf(fp, "\tmovq\t%s, (%s)\n", registers[reg1].c_str(), registers[reg2].c_str());
+    std::fprintf(fp, "\tmovq\t%s, (%s)\n", registers[reg1].c_str(),
+                 registers[reg2].c_str());
     break;
   default:
     std::fprintf(stderr, "uncompatible type for deference storing.");

@@ -36,6 +36,19 @@ add_new_symbol(const std::string &name, const symboltype stype,
   };
 }
 
+void
+add_new_symbol(const std::string &name, const symboltype stype,
+               const valuetype vtype, int label, int size)
+{
+  global_symbols[name] = Symbol{
+    .name_ = name,
+    .type_ = stype,
+    .value_type_ = vtype,
+    .label = label,
+    .size = size
+  };
+}
+
 const Symbol &
 get_symbol(const std::string &name)
 {
@@ -177,14 +190,14 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
 {
   switch(node.Type()) {
   case AstType::Program: {
-    int last = -1;
     const auto &program = CAST(Program, node);
 
     for(const auto &stmt : program.statements_) {
-      last = compile_ast_node(*stmt, -1, AstType::Program);
+      compile_ast_node(*stmt, -1, AstType::Program);
+      free_all_registers();
     }
 
-    return last;
+    return -1;
   }
   case AstType::BlockStatement: {
     const auto &block = CAST(BlockStatement, node);
@@ -426,7 +439,6 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     const auto &globl = CAST(GlobalVariable, node);
     const auto &ident = CAST(Identifier, *globl.identifier_);
 
-    // parser has already generated symbol
     const auto &sym = get_symbol(ident.value_);
     generate_sym(sym);
 

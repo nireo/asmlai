@@ -15,11 +15,12 @@ test_print_integer:
 	leave
 	ret
 	.data
-	.globl	i
-i:	.long	0
-	.data
-	.globl	ptr
-ptr:	.quad	0
+	.globl	arr
+arr:	.quad	0
+	.quad	0
+	.quad	0
+	.quad	0
+	.quad	0
 	.text
 	.globl	main
 	.type	main, @function
@@ -27,19 +28,10 @@ main:
 	pushq	%rbp
 	movq	%rsp, %rbp
 	movq	$10, %r8
-	movq	%r8, i(%rip)
-	leaq	i(%rip), %r8
-	movq	%r8, ptr(%rip)
-	movq	$15, %r8
-	movq	ptr(%rip), %r9
-	movq	ptr(%rip), %r10
-	movq	%r8, (%r10)
-	movzbq	i(%rip), %r8
-	movq	%r8, %rdi
-	call	test_print_integer
-	movq	$0, %r8
-	movl	%r8d, %eax
-	jmp	L1
-L1:
-	popq	%rbp
-	ret
+	leaq	arr(%rip), %r9
+	movq	$0, %r10
+	movq	$4, %r11
+	imulq	%r10, %r11
+	addq	%r9, %r11
+	leaq	arr(%rip), %r9
+	movq	$0, %r10
