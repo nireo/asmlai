@@ -1,9 +1,10 @@
-#include "codegen_x64.h"
-#include "ast.h"
-#include "compiler.h"
 #include <cstdio>
 #include <cstdlib>
 #include <string>
+
+#include "codegen_x64.h"
+#include "ast.h"
+#include "compiler.h"
 
 static std::FILE *fp = nullptr;
 static bool free_registers[4];

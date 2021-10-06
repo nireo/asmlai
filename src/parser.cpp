@@ -320,6 +320,7 @@ Parser::parse_primary()
       result = parse_call_expression(std::move(identifier));
       break;
     } else if(peek_token_is(tokentypes::LBracket)) {
+      std::cout << "in array" << '\n';
       next_token(); // skip [
       next_token(); // go to start of index expression
       // array
