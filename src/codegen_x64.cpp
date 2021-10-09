@@ -483,11 +483,11 @@ global_str(int l, char *value)
 }
 
 int
-load_global_str(const Symbol &sym)
+load_global_str(int l)
 {
   int r = get_register();
 
-  std::fprintf(fp, "\tleaq\tL%d(\%%rip), %s\n", sym.label, registers[r].c_str());
+  std::fprintf(fp, "\tleaq\tL%d(\%%rip), %s\n", l, registers[r].c_str());
 
   return r;
 }

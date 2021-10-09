@@ -40,13 +40,11 @@ void
 add_new_symbol(const std::string &name, const symboltype stype,
                const valuetype vtype, int label, int size)
 {
-  global_symbols[name] = Symbol{
-    .name_ = name,
-    .type_ = stype,
-    .value_type_ = vtype,
-    .label = label,
-    .size = size
-  };
+  global_symbols[name] = Symbol{ .name_ = name,
+                                 .type_ = stype,
+                                 .value_type_ = vtype,
+                                 .label = label,
+                                 .size = size };
 }
 
 const Symbol &
@@ -177,6 +175,8 @@ change_type(std::unique_ptr<Expression> exp, valuetype change_type,
         wrapper->action_ = TypeChange::Scale;
 
         return { nullptr, std::move(wrapper) };
+      } else {
+        return { std::move(exp), nullptr };
       }
     }
   }
@@ -227,6 +227,11 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     gen_label(end_label);
 
     return -1;
+  }
+  case AstType::StringLiteral: {
+    const auto &str_lit = CAST(StringLiteral, node);
+
+    return load_global_str(str_lit.id_);
   }
   case AstType::IfExpression: {
     const auto &if_stmt = CAST(IfExpression, node);
@@ -406,7 +411,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
       return compile_ast_node(*tca.inner_, -1, node.Type());
     case TypeChange::Scale: {
       int left = compile_ast_node(*tca.inner_, -1, node.Type());
-      switch (tca.size) {
+      switch(tca.size) {
       case 2:
         return shift_left(left, 1);
       case 4:

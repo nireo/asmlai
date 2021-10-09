@@ -8,6 +8,7 @@
 #include <string>
 
 #include "ast.h"
+#include "codegen_x64.h"
 #include "compiler.h"
 #include "parser.h"
 #include "token.h"
@@ -830,7 +831,13 @@ std::unique_ptr<Expression>
 Parser::parse_string_literal()
 {
   auto strlit = std::make_unique<StringLiteral>();
-  strlit->value_ = current_.literal;
+  auto value = current_.literal;
+
+  int label = get_next_label();
+  global_str(label, (char *)value.c_str());
+
+  strlit->value_ = value;
+  strlit->id_ = label;
 
   return strlit;
 }

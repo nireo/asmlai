@@ -562,6 +562,7 @@ public:
 
   bool rvalue = false;
   std::string value_;
+  int id_;
 };
 
 class ArrayLiteral : public Expression
