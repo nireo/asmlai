@@ -308,6 +308,10 @@ Parser::parse_primary()
     result = parse_integer_literal();
     break;
   }
+  case tokentypes::String: {
+    result = parse_string_literal();
+    break;
+  }
   case tokentypes::Ident: {
     auto identifier = parse_identifier();
 

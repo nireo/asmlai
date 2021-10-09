@@ -2,8 +2,8 @@
 #include <cstdlib>
 #include <string>
 
-#include "codegen_x64.h"
 #include "ast.h"
+#include "codegen_x64.h"
 #include "compiler.h"
 
 static std::FILE *fp = nullptr;
@@ -469,4 +469,25 @@ store_dereference(int reg1, int reg2, valuetype type)
   }
 
   return reg1;
+}
+
+void
+global_str(int l, char *value)
+{
+  char *cptr;
+  for(cptr = value; *cptr; cptr++) {
+    std::fprintf(fp, "\t.byte\t%d\n", *cptr);
+  }
+
+  std::fprintf(fp, "\t.byte\t0\n");
+}
+
+int
+load_global_str(const Symbol &sym)
+{
+  int r = get_register();
+
+  std::fprintf(fp, "\tleaq\tL%d(\%%rip), %s\n", sym.label, registers[r].c_str());
+
+  return r;
 }
