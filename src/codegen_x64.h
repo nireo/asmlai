@@ -32,7 +32,7 @@ int codegen_dereference(int, const valuetype);
 int shift_left(int, int);
 int codegen_load_int(int);
 int store_dereference(int, int, valuetype);
-void global_str(int, char *);
+void global_str(int, std::string);
 int load_global_str(int);
 
 #endif

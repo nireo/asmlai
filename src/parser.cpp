@@ -24,6 +24,8 @@ static std::stack<std::string> latest_function_identifers;
 std::unique_ptr<Program>
 Parser::parse_program()
 {
+  add_new_symbol("print_num", TYPE_FUNCTION, TYPE_CHAR);
+
   auto program = std::make_unique<Program>();
   program->statements_ = std::vector<std::unique_ptr<Statement> >();
 
@@ -110,6 +112,9 @@ convert_type_to_pointer(const valuetype type)
   case TYPE_VOID: {
     return TYPE_PTR_VOID;
   }
+  case TYPE_CHAR: {
+    return TYPE_PTR_CHAR;
+  }
   case TYPE_INT: {
     return TYPE_PTR_INT;
   }
@@ -133,6 +138,10 @@ Parser::parse_type()
   }
   case tokentypes::Void: {
     type = TYPE_VOID;
+    break;
+  }
+  case tokentypes::CharType: {
+    type = TYPE_CHAR;
     break;
   }
   default:
@@ -317,17 +326,11 @@ Parser::parse_primary()
     auto identifier = parse_identifier();
 
     const auto &ident = static_cast<const Identifier &>(*identifier);
-    if(!symbol_exists(ident.value_))
-      STOP_EXECUTION("cannot find variable: '%s'\n", ident.value_.c_str());
+    auto sym = get_symbol(ident.value_);
 
     if(peek_token_is(tokentypes::LParen)) {
       next_token();
       next_token();
-
-      auto sym = get_symbol(ident.value_);
-      if(sym.type_ != TYPE_FUNCTION) {
-        STOP_EXECUTION("cannot call a non-function.");
-      }
 
       auto argument = parse_expression_rec(LOWEST);
       if(!current_token_is(tokentypes::RParen))
@@ -336,12 +339,14 @@ Parser::parse_primary()
 
       auto call_exp = std::make_unique<CallExpression>();
       call_exp->func_ = std::move(identifier);
-      call_exp->arguments_ = { std::move(argument) };
+      std::vector<std::unique_ptr<Expression> > arguments_;
+      arguments_.push_back(std::move(argument));
+
+      call_exp->arguments_ = std::move(arguments_);
 
       result = std::move(call_exp);
       break;
     } else if(peek_token_is(tokentypes::LBracket)) {
-      std::cout << "in array" << '\n';
       next_token(); // skip [
       next_token(); // go to start of index expression
       // array
@@ -574,7 +579,7 @@ Parser::parse_expression(Precedence prec)
 
       type = inf.left_->ValueType();
     } else if(left->Type() == AstType::CallExpression) {
-      const auto &cexp = static_cast<const CallExpression &>(*left);
+      const auto &cexp = static_cast<const CallExpression &>(*left); //
       switch(cexp.func_->Type()) {
       case AstType::Identifier: {
         const auto &ident = static_cast<const Identifier &>(*cexp.func_);
@@ -850,7 +855,7 @@ Parser::parse_string_literal()
   auto value = current_.literal;
 
   int label = get_next_label();
-  global_str(label, (char *)value.c_str());
+  global_str(label, value);
 
   strlit->value_ = value;
   strlit->id_ = label;

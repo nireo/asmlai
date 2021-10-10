@@ -1,5 +1,16 @@
+fn print_num(XDD) => char {
+}
+fn print_char(XDD) => char {
+}
+
+global char* str;
+
 fn main() => int {
-  print_int(10);
+  let str: char* = "hello world";
+  while (*str != 0) {
+    print_char(*str);
+    str = str + 1;
+  }
 
   return 0;
 }

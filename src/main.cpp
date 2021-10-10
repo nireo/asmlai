@@ -28,8 +28,6 @@ main(int argc, char *argv[])
   gen_start();
 
   // init some libc functions.
-  add_new_symbol("print_int", TYPE_FUNCTION, TYPE_CHAR);
-
   compile_ast_node(*program, -1, AstType::Program);
 
   return EXIT_SUCCESS;

@@ -557,7 +557,7 @@ public:
   valuetype
   ValueType() const noexcept
   {
-    return TYPE_VOID;
+    return TYPE_PTR_CHAR;
   }
 
   bool rvalue = false;

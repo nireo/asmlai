@@ -51,7 +51,7 @@ const Symbol &
 get_symbol(const std::string &name)
 {
   if(global_symbols.find(name) == global_symbols.end()) {
-    std::fprintf(stderr, "symbol with name '%s' not found", name.c_str());
+    std::fprintf(stderr, "symbol with name '%s' not found\n", name.c_str());
     std::exit(1);
   }
 

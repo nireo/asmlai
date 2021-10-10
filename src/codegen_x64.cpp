@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string>
+#include <iostream>
 
 #include "ast.h"
 #include "codegen_x64.h"
@@ -455,11 +456,12 @@ store_dereference(int reg1, int reg2, valuetype type)
 }
 
 void
-global_str(int l, char *value)
+global_str(int l, std::string value)
 {
-  char *cptr;
-  for(cptr = value; *cptr; cptr++) {
-    std::fprintf(fp, "\t.byte\t%d\n", *cptr);
+  gen_label(l);
+  for (int i = 0; i < value.length(); i++) {
+    std::cout << value[i] << '\n';
+    std::fprintf(fp, "\t.byte\t%d\n", value[i]);
   }
 
   std::fprintf(fp, "\t.byte\t0\n");
