@@ -322,7 +322,23 @@ Parser::parse_primary()
 
     if(peek_token_is(tokentypes::LParen)) {
       next_token();
-      result = parse_call_expression(std::move(identifier));
+      next_token();
+
+      auto sym = get_symbol(ident.value_);
+      if(sym.type_ != TYPE_FUNCTION) {
+        STOP_EXECUTION("cannot call a non-function.");
+      }
+
+      auto argument = parse_expression_rec(LOWEST);
+      if(!current_token_is(tokentypes::RParen))
+        STOP_EXECUTION(
+            "function call arguments need to wrapped in parenthesies.");
+
+      auto call_exp = std::make_unique<CallExpression>();
+      call_exp->func_ = std::move(identifier);
+      call_exp->arguments_ = { std::move(argument) };
+
+      result = std::move(call_exp);
       break;
     } else if(peek_token_is(tokentypes::LBracket)) {
       std::cout << "in array" << '\n';

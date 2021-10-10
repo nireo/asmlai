@@ -10,7 +10,7 @@
 
 #define CAST(type, node) static_cast<const type &>(node);
 
-static std::unordered_map<std::string, Symbol> global_symbols;
+std::unordered_map<std::string, Symbol> global_symbols;
 
 void
 add_new_symbol(const std::string &name, const symboltype stype,

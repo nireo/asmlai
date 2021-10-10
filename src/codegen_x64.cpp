@@ -108,24 +108,7 @@ void
 gen_start()
 {
   free_all_registers();
-
-  fputs("\t.text\n"
-        ".LC0:\n"
-        "\t.string\t\"%d\\n\"\n"
-        "test_print_integer:\n"
-        "\tpushq\t%rbp\n"
-        "\tmovq\t%rsp, %rbp\n"
-        "\tsubq\t$16, %rsp\n"
-        "\tmovl\t%edi, -4(%rbp)\n"
-        "\tmovl\t-4(%rbp), %eax\n"
-        "\tmovl\t%eax, %esi\n"
-        "\tleaq	.LC0(%rip), %rdi\n"
-        "\tmovl	$0, %eax\n"
-        "\tcall	printf@PLT\n"
-        "\tnop\n"
-        "\tleave\n"
-        "\tret\n",
-        fp);
+  std::fprintf(fp, "\t.text\n");
 }
 
 int

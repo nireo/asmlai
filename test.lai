@@ -1,9 +1,5 @@
-global int arr[5];
-
 fn main() => int {
-  arr[0] = 15;
-
-  print arr[0];
+  print_int(10);
 
   return 0;
 }
