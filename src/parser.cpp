@@ -61,7 +61,6 @@ Parser::Parser(std::unique_ptr<Lexer> lx)
   add_prefix_parse(tokentypes::If, &Parser::parse_if_expression);
   add_prefix_parse(tokentypes::While, &Parser::parse_while_expression);
   add_prefix_parse(tokentypes::String, &Parser::parse_string_literal);
-  add_prefix_parse(tokentypes::LBracket, &Parser::parse_array_literal);
   add_prefix_parse(tokentypes::For, &Parser::parse_for_expression);
 
   m_infix_parse_fns = std::unordered_map<tokentypes, InfixParseFn>();
@@ -73,8 +72,6 @@ Parser::Parser(std::unique_ptr<Lexer> lx)
   add_infix_parse(tokentypes::Neq, &Parser::parse_infix_expression);
   add_infix_parse(tokentypes::LT, &Parser::parse_infix_expression);
   add_infix_parse(tokentypes::GT, &Parser::parse_infix_expression);
-  add_infix_parse(tokentypes::LParen, &Parser::parse_call_expression);
-  add_infix_parse(tokentypes::LBracket, &Parser::parse_index_expression);
 
   next_token();
   next_token();
@@ -820,16 +817,6 @@ Parser::parse_function_params()
 }
 
 std::unique_ptr<Expression>
-Parser::parse_call_expression(std::unique_ptr<Expression> func)
-{
-  auto exp = std::make_unique<CallExpression>();
-  exp->func_ = std::move(func);
-  exp->arguments_ = std::move(parse_expression_list(tokentypes::RParen));
-
-  return exp;
-}
-
-std::unique_ptr<Expression>
 Parser::parse_string_literal()
 {
   auto strlit = std::make_unique<StringLiteral>();
@@ -842,15 +829,6 @@ Parser::parse_string_literal()
   strlit->id_ = label;
 
   return strlit;
-}
-
-std::unique_ptr<Expression>
-Parser::parse_array_literal()
-{
-  auto arr = std::make_unique<ArrayLiteral>();
-  arr->elements_ = std::move(parse_expression_list(tokentypes::RBracket));
-
-  return arr;
 }
 
 std::unique_ptr<Expression>
@@ -882,70 +860,6 @@ Parser::parse_for_expression()
   for_stmt->body_ = parse_block_statement();
 
   return for_stmt;
-}
-
-std::vector<std::unique_ptr<Expression> >
-Parser::parse_expression_list(tokentypes end)
-{
-  std::vector<std::unique_ptr<Expression> > expressions;
-  if(peek_token_is(end)) {
-    next_token();
-    return expressions;
-  }
-
-  next_token();
-  expressions.push_back(std::move(parse_expression(LOWEST).first));
-  while(peek_token_is(tokentypes::Comma)) {
-    next_token();
-    next_token();
-
-    expressions.push_back(std::move(parse_expression(LOWEST).first));
-  }
-
-  if(!expect_peek(end))
-    return std::vector<std::unique_ptr<Expression> >();
-
-  return expressions;
-}
-
-std::vector<std::unique_ptr<Expression> >
-Parser::parse_call_arguments()
-{
-  std::vector<std::unique_ptr<Expression> > args;
-
-  if(peek_token_is(tokentypes::RParen)) {
-    next_token();
-    return args;
-  }
-
-  next_token();
-  args.push_back(std::move(parse_expression(LOWEST).first));
-
-  while(peek_token_is(tokentypes::Comma)) {
-    next_token();
-    next_token();
-
-    args.push_back(std::move(parse_expression(LOWEST).first));
-  }
-
-  if(!expect_peek(tokentypes::RParen))
-    return std::vector<std::unique_ptr<Expression> >();
-
-  return args;
-}
-
-std::unique_ptr<Expression>
-Parser::parse_index_expression(std::unique_ptr<Expression> left)
-{
-  auto exp = std::make_unique<IndexExpression>();
-  exp->left_ = std::move(left);
-
-  next_token();
-  exp->index_ = parse_expression(LOWEST).first;
-  if(!expect_peek(tokentypes::RBracket))
-    return nullptr;
-
-  return exp;
 }
 
 std::unique_ptr<Statement>

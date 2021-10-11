@@ -14,11 +14,8 @@ enum class AstType {
   LetStatement,
   ReturnStatement,
   ExpressionStatement,
-  HashLiteral,
-  ArrayLiteral,
   CallExpression,
   StringLiteral,
-  IndexExpression,
   PrefixExpression,
   InfixExpression,
   BlockStatement,
@@ -531,69 +528,6 @@ public:
   bool rvalue = false;
   std::string value_;
   int id_;
-};
-
-class ArrayLiteral : public Expression
-{
-public:
-  bool
-  is_rvalue()
-  {
-    return rvalue;
-  }
-
-  void
-  set_rvalue(bool value)
-  {
-    rvalue = value;
-  }
-
-  AstType
-  Type() const noexcept
-  {
-    return AstType::ArrayLiteral;
-  }
-
-  valuetype
-  ValueType() const noexcept
-  {
-    return TYPE_VOID;
-  }
-
-  std::vector<std::unique_ptr<Expression> > elements_;
-  bool rvalue = false;
-};
-
-class IndexExpression : public Expression
-{
-public:
-  bool
-  is_rvalue()
-  {
-    return rvalue;
-  }
-
-  void
-  set_rvalue(bool value)
-  {
-    rvalue = value;
-  }
-
-  AstType
-  Type() const noexcept
-  {
-    return AstType::IndexExpression;
-  }
-
-  valuetype
-  ValueType() const noexcept
-  {
-    return TYPE_VOID;
-  }
-
-  std::unique_ptr<Expression> left_;
-  std::unique_ptr<Expression> index_;
-  bool rvalue = false;
 };
 
 class ForStatement : public Expression
