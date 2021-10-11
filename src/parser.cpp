@@ -62,7 +62,6 @@ Parser::Parser(std::unique_ptr<Lexer> lx)
   add_prefix_parse(tokentypes::While, &Parser::parse_while_expression);
   add_prefix_parse(tokentypes::String, &Parser::parse_string_literal);
   add_prefix_parse(tokentypes::LBracket, &Parser::parse_array_literal);
-  add_prefix_parse(tokentypes::Print, &Parser::parse_print_statement);
   add_prefix_parse(tokentypes::For, &Parser::parse_for_expression);
 
   m_infix_parse_fns = std::unordered_map<tokentypes, InfixParseFn>();
@@ -290,16 +289,6 @@ Parser::parse_return_statement()
   return returnstmt;
 }
 
-std::unique_ptr<Expression>
-Parser::parse_print_statement()
-{
-  auto print_stmt = std::make_unique<PrintStatement>();
-  next_token();
-  print_stmt->print_value_ = parse_expression_rec(LOWEST);
-
-  return print_stmt;
-}
-
 std::unique_ptr<Statement>
 Parser::parse_expression_statement()
 {
@@ -436,14 +425,6 @@ Parser::parse_prefix()
   case tokentypes::Bang:
   case tokentypes::Minus: {
     return parse_prefix_expression();
-  }
-  case tokentypes::Print: {
-    auto print_stmt = std::make_unique<PrintStatement>();
-    next_token();
-
-    print_stmt->print_value_ = parse_expression_rec(LOWEST);
-
-    return print_stmt;
   }
   case tokentypes::While: {
     auto while_stmt = std::make_unique<WhileStatement>();

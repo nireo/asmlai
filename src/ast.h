@@ -26,7 +26,6 @@ enum class AstType {
   IntegerLiteral,
   BooleanExpression,
   FunctionLiteral,
-  PrintStatement,
   WhileStatement,
   ForStatement,
   AssingmentStatement,
@@ -196,37 +195,6 @@ public:
   std::unique_ptr<Expression> return_value_;
   std::string function_identifier_;
   valuetype types_;
-};
-
-class PrintStatement : public Expression
-{
-public:
-  bool
-  is_rvalue()
-  {
-    return rvalue;
-  }
-
-  void
-  set_rvalue(bool value)
-  {
-    rvalue = value;
-  }
-
-  AstType
-  Type() const noexcept
-  {
-    return AstType::PrintStatement;
-  }
-
-  valuetype
-  ValueType() const noexcept
-  {
-    return TYPE_VOID;
-  }
-
-  std::unique_ptr<Expression> print_value_;
-  bool rvalue = false;
 };
 
 class ExpressionStatement : public Statement
