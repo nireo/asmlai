@@ -34,5 +34,13 @@ int codegen_load_int(int);
 int store_dereference(int, int, valuetype);
 void global_str(int, std::string);
 int load_global_str(int);
+int shift_right_from_reg(int, int);
+int shift_left_from_reg(int, int);
+int codegen_and(int, int);
+int codegen_or(int, int);
+int codegen_xor(int, int);
+int codegen_invert(int);
+int codegen_neg(int);
+int codegen_not(int);
 
 #endif

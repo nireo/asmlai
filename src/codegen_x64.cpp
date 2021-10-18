@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
-#include <string>
 #include <iostream>
+#include <string>
 
 #include "ast.h"
 #include "codegen_x64.h"
@@ -423,12 +423,93 @@ shift_left(int reg, int value)
 }
 
 int
+shift_left_from_reg(int r1, int r2)
+{
+  std::fprintf(fp, "\tmovb\t%s, %%cl\n", b_registers[r2].c_str());
+  std::fprintf(fp, "\tshlq\t%%cl, %s\n", registers[r1].c_str());
+
+  free_register(r2);
+  return r1;
+}
+
+int
+shift_right_from_reg(int r1, int r2)
+{
+  std::fprintf(fp, "\tmovb\t%s, %%cl\n", b_registers[r2].c_str());
+  std::fprintf(fp, "\tshrq\t%%cl, %s\n", registers[r1].c_str());
+  free_register(r2);
+
+  return r1;
+}
+
+int
+codegen_and(int r1, int r2)
+{
+  std::fprintf(fp, "\tandq\t%s, %s\n", registers[r1].c_str(),
+               registers[r2].c_str());
+
+  free_register(r1);
+  return r2;
+}
+
+int
+codegen_or(int r1, int r2)
+{
+  std::fprintf(fp, "\torq\t%s, %s\n", registers[r1].c_str(),
+               registers[r2].c_str());
+
+  free_register(r1);
+  return r2;
+}
+
+int
 codegen_load_int(int value)
 {
   int free_reg = get_register();
 
   std::fprintf(fp, "\tmovq\t$%d, %s\n", value, registers[free_reg].c_str());
   return free_reg;
+}
+
+int
+convert_into_bool(int r, AstType node_type, int label)
+{
+  if(node_type == AstType::IfExpression
+     || node_type == AstType::WhileStatement) {
+    std::fprintf(fp, "\tje\tL%d\n", label);
+  } else {
+    std::fprintf(fp, "\tsetnz\t%s\n", b_registers[r].c_str());
+    std::fprintf(fp, "\tmovzbq\t%s, %s\n", b_registers[r].c_str(),
+                 registers[r].c_str());
+  }
+
+  return r;
+}
+
+int
+codegen_invert(int r)
+{
+  std::fprintf(fp, "\tnotq\t%s\n", registers[r].c_str());
+  return r;
+}
+
+int
+codegen_neg(int r)
+{
+  std::fprintf(fp, "\tnegq\t%s\n", registers[r].c_str());
+  return r;
+}
+
+int
+codegen_not(int r)
+{
+  std::fprintf(fp, "\ttest\t%s, %s\n", registers[r].c_str(),
+               registers[r].c_str());
+  std::fprintf(fp, "\tsete\t%s\n", b_registers[r].c_str());
+  std::fprintf(fp, "\tmovzbq\t%s, %s\n", b_registers[r].c_str(),
+               registers[r].c_str());
+
+  return r;
 }
 
 int
@@ -459,7 +540,7 @@ void
 global_str(int l, std::string value)
 {
   gen_label(l);
-  for (int i = 0; i < value.length(); i++) {
+  for(int i = 0; i < value.length(); i++) {
     std::fprintf(fp, "\t.byte\t%d\n", value[i]);
   }
 
