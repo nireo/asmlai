@@ -460,7 +460,6 @@ global_str(int l, std::string value)
 {
   gen_label(l);
   for (int i = 0; i < value.length(); i++) {
-    std::cout << value[i] << '\n';
     std::fprintf(fp, "\t.byte\t%d\n", value[i]);
   }
 

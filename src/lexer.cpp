@@ -1,6 +1,7 @@
 #include "lexer.h"
 #include "token.h"
 #include <cctype>
+#include <stdlib.h>
 #include <string.h>
 
 Lexer::Lexer(const std::string &input)
@@ -99,11 +100,21 @@ Lexer::next_token()
     read_char();
     break;
   case '+':
-    tok = new_token(tokentypes::Plus, ch_);
+    if(peek_char() == '+') {
+      tok = Token{ .type = tokentypes::Inc, .literal = "++" };
+      read_char();
+    } else {
+      tok = new_token(tokentypes::Plus, ch_);
+    }
     read_char();
     break;
   case '-':
-    tok = new_token(tokentypes::Minus, ch_);
+    if(peek_char() == '-') {
+      tok = Token{ .type = tokentypes::Minus, .literal = "--" };
+      read_char();
+    } else {
+      tok = new_token(tokentypes::Minus, ch_);
+    }
     read_char();
     break;
   case '!':
@@ -127,6 +138,9 @@ Lexer::next_token()
     if(peek_char() == '=') {
       tok = Token{ .type = tokentypes::ELT, .literal = "<=" };
       read_char();
+    } else if(peek_char() == '<') {
+      tok = Token{ .type = tokentypes::LShift, .literal = "<<" };
+      read_char();
     } else {
       tok = new_token(tokentypes::LT, ch_);
     }
@@ -135,6 +149,9 @@ Lexer::next_token()
   case '>':
     if(peek_char() == '=') {
       tok = Token{ .type = tokentypes::EGT, .literal = ">=" };
+      read_char();
+    } else if(peek_char() == '>') {
+      tok = Token{ .type = tokentypes::RShift, .literal = ">>" };
       read_char();
     } else {
       tok = new_token(tokentypes::GT, ch_);
@@ -149,8 +166,30 @@ Lexer::next_token()
     tok = new_token(tokentypes::RBrace, ch_);
     read_char();
     break;
+  case '^':
+    tok = new_token(tokentypes::Xor, ch_);
+    read_char();
+    break;
+  case '~':
+    tok = new_token(tokentypes::Invert, ch_);
+    read_char();
+    break;
   case '&':
-    tok = new_token(tokentypes::Amper, ch_);
+    if(peek_char() == '&') {
+      tok = Token{ .type = tokentypes::LogAnd, .literal = "&&" };
+      read_char();
+    } else {
+      tok = new_token(tokentypes::Amper, ch_);
+    }
+    read_char();
+    break;
+  case '|':
+    if(peek_char() == '|') {
+      tok = Token{ .type = tokentypes::LogOr, .literal = "||" };
+      read_char();
+    } else {
+      tok = new_token(tokentypes::Or, ch_);
+    }
     read_char();
     break;
   case '"':
@@ -326,4 +365,25 @@ CLexer::skip_whitespace(void)
       return;
     }
   }
+}
+
+tokentypes
+CLexer::identifier_type()
+{
+  // case 'a':
+  //   return check_keyword(1, 2, "nd", TOKEN_AND);
+  // case 'c':
+  //   if(scanner.current - scanner.start > 1) {
+  //     switch(scanner.start[1]) {
+  //     case 'l':
+  //       return check_keyword(2, 3, "ass", TOKEN_CLASS);
+  //     case 'o':
+  //       return check_keyword(2, 6, "ntinue", TOKEN_CONTINUE);
+  //     case 'a':
+  //       return check_keyword(2, 2, "se", TOKEN_CASE);
+  //     }
+  //   }
+  //   break;
+
+  return tokentypes::Ident;
 }

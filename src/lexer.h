@@ -48,7 +48,7 @@ struct CLexer {
   char peek_next();
   void skip_whitespace();
   LToken check_keyword(int, int, const char *, tokentypes);
-  LToken identifier_type();
+  tokentypes identifier_type();
   LToken number();
   LToken identifier();
   LToken string();

@@ -14,8 +14,10 @@ typedef std::unique_ptr<Expression> (Parser::*InfixParseFn)(
 
 enum Precedence {
   LOWEST,
+  SINGLE,
   EQUALS,
   LESSGREATER,
+  SHIFT,
   SUM,
   PRODUCT,
   PREFIX,
@@ -29,6 +31,9 @@ static std::unordered_map<tokentypes, Precedence> precedences = {
   { tokentypes::Plus, SUM },       { tokentypes::Minus, SUM },
   { tokentypes::Slash, PRODUCT },  { tokentypes::Asterisk, PRODUCT },
   { tokentypes::LParen, CALL },    { tokentypes::LBracket, INDEX },
+  { tokentypes::Xor, SINGLE },     { tokentypes::Or, SINGLE },
+  { tokentypes::Amper, SINGLE },   { tokentypes::LShift, SHIFT },
+  { tokentypes::RShift, SHIFT },
 };
 
 class Parser
@@ -61,6 +66,9 @@ private:
   std::unique_ptr<Expression> parse_primary();
   std::unique_ptr<Expression> parse_prefix();
   std::unique_ptr<Expression> parse_expression_rec(Precedence prec);
+  std::unique_ptr<Expression> parse_postfix();
+  std::unique_ptr<Expression> parse_array();
+  std::unique_ptr<Expression> parse_call();
   std::pair<std::unique_ptr<Expression>, valuetype>
   parse_expression(Precedence prec);
   std::unique_ptr<Expression> parse_identifier();

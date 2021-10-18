@@ -194,6 +194,26 @@ v_from_token(const tokentypes type)
   }
 }
 
+std::unique_ptr<Expression>
+Parser::parse_postfix()
+{
+  next_token();
+
+  if (current_token_is(tokentypes::LParen)) {
+    return parse_call();
+  } else if (current_token_is(tokentypes::LBracket)) {
+    return parse_array();
+  }
+
+  // now we now that the current token is an identifier.
+  auto sym = get_symbol(current_.literal);
+  if (sym.type_ != TYPE_VARIABLE) {
+    STOP_EXECUTION("postfix expression on only");
+  }
+
+  return nullptr;
+}
+
 std::unique_ptr<Statement>
 Parser::parse_let_statement()
 {

@@ -44,6 +44,18 @@ enum class tokentypes {
   Arrow,
   Amper,
 
+  LogOr,
+  LogAnd,
+  LogNot,
+  Or,
+  Xor,
+  LShift,
+  RShift,
+  Inc,
+  Dec,
+  Invert,
+
+
   IntType,
   CharType,
   StringType,
