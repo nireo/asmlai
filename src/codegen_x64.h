@@ -17,7 +17,7 @@ void gen_start();
 void end_codegen();
 int store_global(int, const Symbol &);
 void generate_sym(const Symbol &);
-int load_global(const Symbol &);
+int load_global(const Symbol &, tokentypes);
 void free_all_registers();
 int codegen_compare_no_jump(int, int, const tokentypes);
 int codegen_compare_jump(int, int, int, const tokentypes);

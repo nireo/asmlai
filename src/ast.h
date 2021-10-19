@@ -30,6 +30,7 @@ enum class AstType {
   GlobalStatement,
   Dereference,
   Addr,
+  IdentifierAction
 };
 
 enum valuetype {
@@ -672,15 +673,51 @@ public:
     return TYPE_PTR_INT;
   }
 
-  bool is_rvalue() {
+  bool
+  is_rvalue()
+  {
     return rvalue;
   }
 
-  void set_rvalue(bool value) {
+  void
+  set_rvalue(bool value)
+  {
     rvalue = value;
   }
 
   std::unique_ptr<Expression> to_addr_;
+  bool rvalue = false;
+};
+
+class IdentifierAction : public Expression
+{
+public:
+  AstType
+  Type() const noexcept
+  {
+    return AstType::IdentifierAction;
+  }
+
+  valuetype
+  ValueType() const noexcept
+  {
+    return identifier_->ValueType();
+  }
+
+  bool
+  is_rvalue()
+  {
+    return rvalue;
+  }
+
+  void
+  set_rvalue(bool value)
+  {
+    rvalue = value;
+  }
+
+  tokentypes action_;
+  std::unique_ptr<Expression> identifier_;
   bool rvalue = false;
 };
 

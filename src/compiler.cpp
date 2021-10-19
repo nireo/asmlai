@@ -378,7 +378,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     }
 
     if(identifier.rvalue || top_type == AstType::Dereference) {
-      return load_global(get_symbol(identifier.value_));
+      return load_global(get_symbol(identifier.value_), tokentypes::Eof);
     } else {
       return -1;
     }
@@ -468,6 +468,25 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     }
 
     return compile_ast_node(*deref.to_dereference_, -1, node.Type());
+  }
+  case AstType::IdentifierAction: {
+    const auto &ident_action = CAST(IdentifierAction, node);
+    const auto &identifier = CAST(Identifier, *ident_action.identifier_);
+
+    switch(ident_action.action_) {
+    case tokentypes::Inc: {
+      return load_global(get_symbol(identifier.value_), tokentypes::Inc);
+    }
+    case tokentypes::Dec: {
+      return load_global(get_symbol(identifier.value_), tokentypes::Dec);
+    }
+    default:
+      // parser will detect, if the action is possible so no need for error
+      // message
+      return -1;
+    }
+
+    return -1;
   }
   default: {
     std::fprintf(stderr, "unknown node type %d\n", node.Type());

@@ -1,6 +1,8 @@
 global int x;
 
 fn main() => int {
-  x = 69;
+  let x: int = 69;
+  x++;
+
   print_num(x);
 }

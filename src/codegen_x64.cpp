@@ -245,7 +245,7 @@ generate_sym(const Symbol &sym)
 }
 
 int
-load_global(const Symbol &sym)
+load_global(const Symbol &sym, tokentypes opr)
 {
   int free_reg = get_register();
 
@@ -253,23 +253,37 @@ load_global(const Symbol &sym)
   case TYPE_CHAR: {
     std::fprintf(fp, "\tmovzbq\t%s(\%%rip), %s\n", sym.name_.c_str(),
                  registers[free_reg].c_str());
+    if(opr == tokentypes::Inc) {
+      std::fprintf(fp, "\tincb\t%s(\%%rip)\n", sym.name_.c_str());
+    }
+
+    if(opr == tokentypes::Dec) {
+      std::fprintf(fp, "\tdecb\t%s(\%%rip)\n", sym.name_.c_str());
+    }
+
     break;
   }
   case TYPE_INT: {
     std::fprintf(fp, "\tmovzbq\t%s(\%%rip), %s\n", sym.name_.c_str(),
                  registers[free_reg].c_str());
+    if(opr == tokentypes::Inc)
+      fprintf(fp, "\tincl\t%s(\%%rip)\n", sym.name_.c_str());
+    if(opr == tokentypes::Dec)
+      fprintf(fp, "\tdecl\t%s(\%%rip)\n", sym.name_.c_str());
+
     break;
   }
-  case TYPE_LONG: {
-    std::fprintf(fp, "\tmovq\t%s(\%%rip), %s\n", sym.name_.c_str(),
-                 registers[free_reg].c_str());
-    break;
-  }
+  case TYPE_LONG:
   case TYPE_PTR_CHAR:
   case TYPE_PTR_LONG:
   case TYPE_PTR_INT: {
     std::fprintf(fp, "\tmovq\t%s(\%%rip), %s\n", sym.name_.c_str(),
                  registers[free_reg].c_str());
+    if(opr == tokentypes::Inc)
+      fprintf(fp, "\tincq\t%s(\%%rip)\n", sym.name_.c_str());
+    if(opr == tokentypes::Dec)
+      fprintf(fp, "\tdecq\t%s(\%%rip)\n", sym.name_.c_str());
+
     break;
   }
   default: {
