@@ -67,8 +67,8 @@ private:
   std::unique_ptr<Expression> parse_prefix();
   std::unique_ptr<Expression> parse_expression_rec(Precedence prec);
   std::unique_ptr<Expression> parse_postfix();
-  std::unique_ptr<Expression> parse_array();
-  std::unique_ptr<Expression> parse_call();
+  std::unique_ptr<Expression> parse_array(std::unique_ptr<Expression> ident);
+  std::unique_ptr<Expression> parse_call(std::unique_ptr<Expression> ident);
   std::pair<std::unique_ptr<Expression>, valuetype>
   parse_expression(Precedence prec);
   std::unique_ptr<Expression> parse_identifier();

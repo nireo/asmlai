@@ -195,22 +195,90 @@ v_from_token(const tokentypes type)
 }
 
 std::unique_ptr<Expression>
+Parser::parse_call(std::unique_ptr<Expression> ident)
+{
+  next_token();
+  next_token();
+
+  auto argument = parse_expression_rec(LOWEST);
+  if(!current_token_is(tokentypes::RParen))
+    STOP_EXECUTION(
+        "function call arguments needs to be wrapped in parenthesies.");
+
+  auto call_exp = std::make_unique<CallExpression>();
+
+  call_exp->func_ = std::move(ident);
+
+  std::vector<std::unique_ptr<Expression> > arguments_;
+  arguments_.push_back(std::move(argument));
+
+  return call_exp;
+}
+
+std::unique_ptr<Expression>
+Parser::parse_array(std::unique_ptr<Expression> ident)
+{
+
+  next_token();
+  next_token();
+  auto arr = std::make_unique<Addr>();
+  arr->to_addr_ = std::move(ident);
+
+  auto indx = parse_expression_rec(LOWEST);
+  if(!current_token_is(tokentypes::RBracket))
+    STOP_EXECUTION("array index operation needs to end in a ]\n");
+
+  if(indx->ValueType() != TYPE_INT && indx->ValueType() != TYPE_CHAR
+     && indx->ValueType() != TYPE_LONG)
+    STOP_EXECUTION("the index expression needs to be an integer.");
+
+  auto index_modified
+      = change_type(std::move(indx), arr->ValueType(), tokentypes::Plus);
+
+  auto infix = std::make_unique<InfixExpression>();
+  infix->opr = tokentypes::Plus;
+  infix->v_type_ = arr->ValueType();
+  infix->left_ = std::move(arr);
+  if(index_modified.second == nullptr)
+    STOP_EXECUTION("right type cannot be changed.");
+  infix->right_ = std::move(index_modified.second);
+
+  auto deref = std::make_unique<Dereference>();
+  deref->to_dereference_ = std::move(infix);
+
+  return deref;
+}
+
+std::unique_ptr<Expression>
 Parser::parse_postfix()
 {
-  auto sym = get_symbol(current_.literal);
-  if (sym.type_ != TYPE_VARIABLE) {
-    STOP_EXECUTION("postfix expression only on identifiers that are variables");
+
+  auto identifier = parse_identifier();
+
+  if(peek_token_is(tokentypes::LParen)) {
+    return parse_call(std::move(identifier));
+  } else if(peek_token_is(tokentypes::LBracket)) {
+    return parse_array(std::move(identifier));
   }
 
   next_token();
 
-  if (current_token_is(tokentypes::LParen)) {
-    return parse_call();
-  } else if (current_token_is(tokentypes::LBracket)) {
-    return parse_array();
+  // TODO: support increment and decrement '++' '--' operations, by adding a IdentifierAction
+  // ast-node type
+  switch(current_.type) {
+  case tokentypes::Inc: {
+    next_token();
+    return identifier;
+  }
+  case tokentypes::Dec: {
+    next_token();
+    return identifier;
+  }
+  default:
+    STOP_EXECUTION("unrecognized postfix token type");
   }
 
-  return nullptr;
+  return identifier;
 }
 
 std::unique_ptr<Statement>
@@ -329,9 +397,6 @@ Parser::parse_primary()
   }
   case tokentypes::Ident: {
     auto identifier = parse_identifier();
-
-    const auto &ident = static_cast<const Identifier &>(*identifier);
-    auto sym = get_symbol(ident.value_);
 
     if(peek_token_is(tokentypes::LParen)) {
       next_token();
