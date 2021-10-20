@@ -4,30 +4,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-Lexer::Lexer(const std::string &input)
-{
+Lexer::Lexer(const std::string &input) {
   input_ = input;
   line = 0;
   read_pos_ = 0;
   read_char();
 }
 
-static bool
-is_letter(char ch)
-{
+static bool is_letter(char ch) {
   return ('a' <= ch && ch <= 'z') || ('A' <= ch && ch <= 'Z') || ch == '_';
 }
 
-static bool
-is_digit(char ch)
-{
-  return '0' <= ch && ch <= '9';
-}
+static bool is_digit(char ch) { return '0' <= ch && ch <= '9'; }
 
-void
-Lexer::read_char()
-{
-  if(read_pos_ >= (int)input_.size())
+void Lexer::read_char() {
+  if (read_pos_ >= (int)input_.size())
     ch_ = 0;
   else
     ch_ = input_[read_pos_];
@@ -36,35 +27,29 @@ Lexer::read_char()
   read_pos_++;
 }
 
-Token
-new_token(tokentypes type, char ch)
-{
-  return Token{ type, std::string(1, ch) };
+Token new_token(tokentypes type, char ch) {
+  return Token{type, std::string(1, ch)};
 }
 
-tokentypes
-lookup_ident(const std::string &str)
-{
+tokentypes lookup_ident(const std::string &str) {
   auto keyword = TokenKeywords.find(str);
-  if(keyword == TokenKeywords.end())
+  if (keyword == TokenKeywords.end())
     return tokentypes::Ident;
   return keyword->second;
 }
 
-Token
-Lexer::next_token()
-{
+Token Lexer::next_token() {
   Token tok;
 
   skip_whitespace();
 
-  switch(ch_) {
+  switch (ch_) {
   case '=':
-    if(peek_char() == '=') {
-      tok = Token{ .type = tokentypes::Eq, .literal = "==" };
+    if (peek_char() == '=') {
+      tok = Token{.type = tokentypes::Eq, .literal = "=="};
       read_char();
-    } else if(peek_char() == '>') {
-      tok = Token{ .type = tokentypes::Arrow, .literal = "=>" };
+    } else if (peek_char() == '>') {
+      tok = Token{.type = tokentypes::Arrow, .literal = "=>"};
       read_char();
     } else {
       tok = new_token(tokentypes::Assign, ch_);
@@ -100,8 +85,8 @@ Lexer::next_token()
     read_char();
     break;
   case '+':
-    if(peek_char() == '+') {
-      tok = Token{ .type = tokentypes::Inc, .literal = "++" };
+    if (peek_char() == '+') {
+      tok = Token{.type = tokentypes::Inc, .literal = "++"};
       read_char();
     } else {
       tok = new_token(tokentypes::Plus, ch_);
@@ -109,8 +94,8 @@ Lexer::next_token()
     read_char();
     break;
   case '-':
-    if(peek_char() == '-') {
-      tok = Token{ .type = tokentypes::Minus, .literal = "--" };
+    if (peek_char() == '-') {
+      tok = Token{.type = tokentypes::Minus, .literal = "--"};
       read_char();
     } else {
       tok = new_token(tokentypes::Minus, ch_);
@@ -118,8 +103,8 @@ Lexer::next_token()
     read_char();
     break;
   case '!':
-    if(peek_char() == '=') {
-      tok = Token{ .type = tokentypes::Neq, .literal = "!=" };
+    if (peek_char() == '=') {
+      tok = Token{.type = tokentypes::Neq, .literal = "!="};
       read_char();
     } else {
       tok = new_token(tokentypes::Bang, ch_);
@@ -135,11 +120,11 @@ Lexer::next_token()
     read_char();
     break;
   case '<':
-    if(peek_char() == '=') {
-      tok = Token{ .type = tokentypes::ELT, .literal = "<=" };
+    if (peek_char() == '=') {
+      tok = Token{.type = tokentypes::ELT, .literal = "<="};
       read_char();
-    } else if(peek_char() == '<') {
-      tok = Token{ .type = tokentypes::LShift, .literal = "<<" };
+    } else if (peek_char() == '<') {
+      tok = Token{.type = tokentypes::LShift, .literal = "<<"};
       read_char();
     } else {
       tok = new_token(tokentypes::LT, ch_);
@@ -147,11 +132,11 @@ Lexer::next_token()
     read_char();
     break;
   case '>':
-    if(peek_char() == '=') {
-      tok = Token{ .type = tokentypes::EGT, .literal = ">=" };
+    if (peek_char() == '=') {
+      tok = Token{.type = tokentypes::EGT, .literal = ">="};
       read_char();
-    } else if(peek_char() == '>') {
-      tok = Token{ .type = tokentypes::RShift, .literal = ">>" };
+    } else if (peek_char() == '>') {
+      tok = Token{.type = tokentypes::RShift, .literal = ">>"};
       read_char();
     } else {
       tok = new_token(tokentypes::GT, ch_);
@@ -175,8 +160,8 @@ Lexer::next_token()
     read_char();
     break;
   case '&':
-    if(peek_char() == '&') {
-      tok = Token{ .type = tokentypes::LogAnd, .literal = "&&" };
+    if (peek_char() == '&') {
+      tok = Token{.type = tokentypes::LogAnd, .literal = "&&"};
       read_char();
     } else {
       tok = new_token(tokentypes::Amper, ch_);
@@ -184,8 +169,8 @@ Lexer::next_token()
     read_char();
     break;
   case '|':
-    if(peek_char() == '|') {
-      tok = Token{ .type = tokentypes::LogOr, .literal = "||" };
+    if (peek_char() == '|') {
+      tok = Token{.type = tokentypes::LogOr, .literal = "||"};
       read_char();
     } else {
       tok = new_token(tokentypes::Or, ch_);
@@ -203,10 +188,10 @@ Lexer::next_token()
     read_char();
     break;
   default:
-    if(is_letter(ch_)) {
+    if (is_letter(ch_)) {
       tok.literal = read_ident();
       tok.type = lookup_ident(tok.literal);
-    } else if(is_digit(ch_)) {
+    } else if (is_digit(ch_)) {
       tok.type = tokentypes::Int;
       tok.literal = read_number();
     } else {
@@ -219,13 +204,11 @@ Lexer::next_token()
   return tok;
 }
 
-std::string
-Lexer::read_string()
-{
+std::string Lexer::read_string() {
   int start_pos = pos_ + 1;
-  for(;;) {
+  for (;;) {
     read_char();
-    if(ch_ == '"' || ch_ == 0) {
+    if (ch_ == '"' || ch_ == 0) {
       break;
     }
   }
@@ -233,75 +216,57 @@ Lexer::read_string()
   return input_.substr(start_pos, pos_ - start_pos);
 }
 
-void
-Lexer::skip_whitespace()
-{
-  while(ch_ == ' ' || ch_ == '\t' || ch_ == '\n' || ch_ == '\r') {
-    if(ch_ == '\n')
+void Lexer::skip_whitespace() {
+  while (ch_ == ' ' || ch_ == '\t' || ch_ == '\n' || ch_ == '\r') {
+    if (ch_ == '\n')
       ++line;
 
     read_char();
   }
 }
 
-std::string
-Lexer::read_ident()
-{
+std::string Lexer::read_ident() {
   int start_pos = pos_;
-  while(is_letter(ch_)) {
+  while (is_letter(ch_)) {
     read_char();
   }
 
   return input_.substr(start_pos, pos_ - start_pos);
 }
 
-std::string
-Lexer::read_number()
-{
+std::string Lexer::read_number() {
   int start_pos = pos_;
-  while(is_digit(ch_)) {
+  while (is_digit(ch_)) {
     read_char();
   }
 
   return input_.substr(start_pos, pos_ - start_pos);
 }
 
-char
-Lexer::peek_char()
-{
-  if(read_pos_ >= (int)input_.size())
+char Lexer::peek_char() {
+  if (read_pos_ >= (int)input_.size())
     return 0;
   else
     return input_[read_pos_];
 }
 
-bool
-CLexer::is_at_end()
-{
-  return *current == '\0';
-}
+bool CLexer::is_at_end() { return *current == '\0'; }
 
-char
-CLexer::advance()
-{
+char CLexer::advance() {
   current++;
   return current[-1];
 }
 
-bool
-CLexer::match(char expected)
-{
-  if(is_at_end())
+bool CLexer::match(char expected) {
+  if (is_at_end())
     return false;
-  if(*current != expected)
+  if (*current != expected)
     return false;
   current++;
   return true;
 }
 
-LToken
-CLexer::make_token(tokentypes type)
-{
+LToken CLexer::make_token(tokentypes type) {
   LToken token;
   token.type = type;
   token.start = start;
@@ -311,9 +276,7 @@ CLexer::make_token(tokentypes type)
   return token;
 }
 
-LToken
-CLexer::error_token(const char *msg)
-{
+LToken CLexer::error_token(const char *msg) {
   LToken token;
   token.type = tokentypes::Eof;
   token.start = msg;
@@ -323,35 +286,27 @@ CLexer::error_token(const char *msg)
   return token;
 }
 
-char
-CLexer::peek(void)
-{
-  return *current;
-}
+char CLexer::peek(void) { return *current; }
 
-char
-CLexer::peek_next(void)
-{
-  if(is_at_end())
+char CLexer::peek_next(void) {
+  if (is_at_end())
     return '\0';
   return current[1];
 }
 
-void
-CLexer::skip_whitespace(void)
-{
-  for(;;) {
+void CLexer::skip_whitespace(void) {
+  for (;;) {
     char c = peek();
-    switch(c) {
+    switch (c) {
     case ' ':
     case '\r':
     case '\t':
       advance();
       break;
     case '/':
-      if(peek_next() == '/') {
+      if (peek_next() == '/') {
         // A comment goes until the end of the line.
-        while(peek() != '\n' && !is_at_end())
+        while (peek() != '\n' && !is_at_end())
           advance();
       } else {
         return;
@@ -367,9 +322,7 @@ CLexer::skip_whitespace(void)
   }
 }
 
-tokentypes
-CLexer::identifier_type()
-{
+tokentypes CLexer::identifier_type() {
   // case 'a':
   //   return check_keyword(1, 2, "nd", TOKEN_AND);
   // case 'c':

@@ -9,18 +9,15 @@
 
 static std::FILE *fp = nullptr;
 static bool free_registers[4];
-static const std::string registers[4] = { "%r8", "%r9", "%r10", "%r11" };
-static const std::string b_registers[4] = { "%r8b", "%r9b", "%r10b", "%r11b" };
-static const std::string d_registers[4] = { "%r8d", "%r9d", "%r10d", "%r11d" };
-static const std::string jump_insts[]
-    = { "jne", "je", "jge", "jle", "jg", "jl" };
-static const std::string compare_instructions[]
-    = { "sete", "setne", "setl", "setg", "setle", "setge" };
+static const std::string registers[4] = {"%r8", "%r9", "%r10", "%r11"};
+static const std::string b_registers[4] = {"%r8b", "%r9b", "%r10b", "%r11b"};
+static const std::string d_registers[4] = {"%r8d", "%r9d", "%r10d", "%r11d"};
+static const std::string jump_insts[] = {"jne", "je", "jge", "jle", "jg", "jl"};
+static const std::string compare_instructions[] = {"sete", "setne", "setl",
+                                                   "setg", "setle", "setge"};
 
-static int
-get_corresponding_inst_index(const tokentypes type)
-{
-  switch(type) {
+static int get_corresponding_inst_index(const tokentypes type) {
+  switch (type) {
   case tokentypes::Eq:
     return 0;
   case tokentypes::Neq:
@@ -39,10 +36,8 @@ get_corresponding_inst_index(const tokentypes type)
   }
 }
 
-int
-get_bytesize_of_type(valuetype type)
-{
-  switch(type) {
+int get_bytesize_of_type(valuetype type) {
+  switch (type) {
   case TYPE_VOID:
     return 0;
   case TYPE_CHAR:
@@ -62,20 +57,16 @@ get_bytesize_of_type(valuetype type)
   }
 }
 
-void
-free_all_registers()
-{
+void free_all_registers() {
   free_registers[0] = true;
   free_registers[1] = true;
   free_registers[2] = true;
   free_registers[3] = true;
 }
 
-static int
-get_register()
-{
-  for(int i = 0; i < 4; ++i) {
-    if(free_registers[i]) {
+static int get_register() {
+  for (int i = 0; i < 4; ++i) {
+    if (free_registers[i]) {
       free_registers[i] = false;
       return i;
     }
@@ -85,10 +76,8 @@ get_register()
   std::exit(1);
 }
 
-static void
-free_register(int reg)
-{
-  if(free_registers[reg] != 0) {
+static void free_register(int reg) {
+  if (free_registers[reg] != 0) {
     std::fprintf(stderr, "register is already free");
     std::exit(1);
   }
@@ -96,34 +85,26 @@ free_register(int reg)
   free_registers[reg] = true;
 }
 
-void
-init_out_file()
-{
-  if((fp = fopen("out.s", "w")) == NULL) {
+void init_out_file() {
+  if ((fp = fopen("out.s", "w")) == NULL) {
     std::fprintf(stderr, "unable to create out file\n");
     std::exit(1);
   }
 }
 
-void
-gen_start()
-{
+void gen_start() {
   free_all_registers();
   std::fprintf(fp, "\t.text\n");
 }
 
-int
-load_into_register(int val)
-{
+int load_into_register(int val) {
   int reg = get_register();
   fprintf(fp, "\tmovq\t$%d, %s\n", val, registers[reg].c_str());
 
   return reg;
 }
 
-int
-mul_registers(int r1, int r2)
-{
+int mul_registers(int r1, int r2) {
   fprintf(fp, "\timulq\t%s, %s\n", registers[r1].c_str(),
           registers[r2].c_str());
   free_register(r1);
@@ -131,9 +112,7 @@ mul_registers(int r1, int r2)
   return r2;
 }
 
-int
-div_registers(int r1, int r2)
-{
+int div_registers(int r1, int r2) {
   fprintf(fp, "\tmovq\t%s,%%rax\n\tcqo\n", registers[r1].c_str());
   fprintf(fp, "\tidivq\t%s\n", registers[r2].c_str());
   fprintf(fp, "\tmovq\t%%rax,%s\n", registers[r1].c_str());
@@ -143,18 +122,14 @@ div_registers(int r1, int r2)
   return r1;
 }
 
-int
-add_registers(int reg1, int reg2)
-{
+int add_registers(int reg1, int reg2) {
   fprintf(fp, "\taddq\t%s, %s\n", registers[reg1].c_str(),
           registers[reg2].c_str());
   free_register(reg1);
   return reg2;
 }
 
-int
-sub_registers(int reg1, int reg2)
-{
+int sub_registers(int reg1, int reg2) {
   fprintf(fp, "\tsubq\t%s, %s\n", registers[reg2].c_str(),
           registers[reg1].c_str());
   free_register(reg2);
@@ -162,9 +137,7 @@ sub_registers(int reg1, int reg2)
   return reg1;
 }
 
-void
-print_register(int r)
-{
+void print_register(int r) {
   fprintf(fp,
           "\tmovq\t%s, %%rdi\n"
           "\tcall\ttest_print_integer\n",
@@ -172,9 +145,7 @@ print_register(int r)
   free_register(r);
 }
 
-void
-end_codegen()
-{
+void end_codegen() {
   fputs("\tmovl $0, %eax\n"
         "\tpopq %rbp\n"
         "\tret\n",
@@ -182,10 +153,8 @@ end_codegen()
   fclose(fp);
 }
 
-int
-store_global(int r, const Symbol &sym)
-{
-  switch(sym.value_type_) {
+int store_global(int r, const Symbol &sym) {
+  switch (sym.value_type_) {
   case TYPE_CHAR: {
     std::fprintf(fp, "\tmovb\t%s, %s(\%%rip)\n", b_registers[r].c_str(),
                  sym.name_.c_str());
@@ -217,17 +186,15 @@ store_global(int r, const Symbol &sym)
   return r;
 }
 
-void
-generate_sym(const Symbol &sym)
-{
+void generate_sym(const Symbol &sym) {
   int size = get_bytesize_of_type(sym.value_type_);
   std::fprintf(fp,
                "\t.data\n"
                "\t.globl\t%s\n%s:",
                sym.name_.c_str(), sym.name_.c_str());
 
-  for(int i = 0; i < sym.size; ++i) {
-    switch(size) {
+  for (int i = 0; i < sym.size; ++i) {
+    switch (size) {
     case 1:
       std::fprintf(fp, "\t.byte\t0\n");
       break;
@@ -244,19 +211,17 @@ generate_sym(const Symbol &sym)
   }
 }
 
-int
-load_global(const Symbol &sym, tokentypes opr, bool post)
-{
+int load_global(const Symbol &sym, tokentypes opr, bool post) {
   int free_reg = get_register();
 
-  switch(sym.value_type_) {
+  switch (sym.value_type_) {
   case TYPE_CHAR: {
-    if(!post) {
-      if(opr == tokentypes::Inc) {
+    if (!post) {
+      if (opr == tokentypes::Inc) {
         std::fprintf(fp, "\tincb\t%s(\%%rip)\n", sym.name_.c_str());
       }
 
-      if(opr == tokentypes::Dec) {
+      if (opr == tokentypes::Dec) {
         std::fprintf(fp, "\tdecb\t%s(\%%rip)\n", sym.name_.c_str());
       }
     }
@@ -264,12 +229,12 @@ load_global(const Symbol &sym, tokentypes opr, bool post)
     std::fprintf(fp, "\tmovzbq\t%s(\%%rip), %s\n", sym.name_.c_str(),
                  registers[free_reg].c_str());
 
-    if(post) {
-      if(opr == tokentypes::Inc) {
+    if (post) {
+      if (opr == tokentypes::Inc) {
         std::fprintf(fp, "\tincb\t%s(\%%rip)\n", sym.name_.c_str());
       }
 
-      if(opr == tokentypes::Dec) {
+      if (opr == tokentypes::Dec) {
         std::fprintf(fp, "\tdecb\t%s(\%%rip)\n", sym.name_.c_str());
       }
     }
@@ -277,20 +242,20 @@ load_global(const Symbol &sym, tokentypes opr, bool post)
     break;
   }
   case TYPE_INT: {
-    if(!post) {
-      if(opr == tokentypes::Inc)
+    if (!post) {
+      if (opr == tokentypes::Inc)
         fprintf(fp, "\tincl\t%s(\%%rip)\n", sym.name_.c_str());
-      if(opr == tokentypes::Dec)
+      if (opr == tokentypes::Dec)
         fprintf(fp, "\tdecl\t%s(\%%rip)\n", sym.name_.c_str());
     }
 
     std::fprintf(fp, "\tmovzbq\t%s(\%%rip), %s\n", sym.name_.c_str(),
                  registers[free_reg].c_str());
 
-    if(post) {
-      if(opr == tokentypes::Inc)
+    if (post) {
+      if (opr == tokentypes::Inc)
         fprintf(fp, "\tincl\t%s(\%%rip)\n", sym.name_.c_str());
-      if(opr == tokentypes::Dec)
+      if (opr == tokentypes::Dec)
         fprintf(fp, "\tdecl\t%s(\%%rip)\n", sym.name_.c_str());
     }
 
@@ -300,20 +265,20 @@ load_global(const Symbol &sym, tokentypes opr, bool post)
   case TYPE_PTR_CHAR:
   case TYPE_PTR_LONG:
   case TYPE_PTR_INT: {
-    if(!post) {
-      if(opr == tokentypes::Inc)
+    if (!post) {
+      if (opr == tokentypes::Inc)
         fprintf(fp, "\tincq\t%s(\%%rip)\n", sym.name_.c_str());
-      if(opr == tokentypes::Dec)
+      if (opr == tokentypes::Dec)
         fprintf(fp, "\tdecq\t%s(\%%rip)\n", sym.name_.c_str());
     }
 
     std::fprintf(fp, "\tmovq\t%s(\%%rip), %s\n", sym.name_.c_str(),
                  registers[free_reg].c_str());
 
-    if(post) {
-      if(opr == tokentypes::Inc)
+    if (post) {
+      if (opr == tokentypes::Inc)
         fprintf(fp, "\tincq\t%s(\%%rip)\n", sym.name_.c_str());
-      if(opr == tokentypes::Dec)
+      if (opr == tokentypes::Dec)
         fprintf(fp, "\tdecq\t%s(\%%rip)\n", sym.name_.c_str());
     }
 
@@ -328,9 +293,7 @@ load_global(const Symbol &sym, tokentypes opr, bool post)
   return free_reg;
 }
 
-int
-codegen_compare_no_jump(int reg1, int reg2, const tokentypes type)
-{
+int codegen_compare_no_jump(int reg1, int reg2, const tokentypes type) {
   auto index = get_corresponding_inst_index(type);
 
   std::fprintf(fp, "\tcmpq\t%s, %s\n", registers[reg2].c_str(),
@@ -345,9 +308,7 @@ codegen_compare_no_jump(int reg1, int reg2, const tokentypes type)
   return reg2;
 }
 
-int
-codegen_compare_jump(int reg1, int reg2, int label, const tokentypes type)
-{
+int codegen_compare_jump(int reg1, int reg2, int label, const tokentypes type) {
   auto index = get_corresponding_inst_index(type);
 
   std::fprintf(fp, "\tcmpq\t%s, %s\n", registers[reg2].c_str(),
@@ -358,21 +319,11 @@ codegen_compare_jump(int reg1, int reg2, int label, const tokentypes type)
   return -1;
 }
 
-void
-gen_label(int label)
-{
-  std::fprintf(fp, "L%d:\n", label);
-}
+void gen_label(int label) { std::fprintf(fp, "L%d:\n", label); }
 
-void
-gen_jmp(int label)
-{
-  std::fprintf(fp, "\tjmp\tL%d\n", label);
-}
+void gen_jmp(int label) { std::fprintf(fp, "\tjmp\tL%d\n", label); }
 
-void
-function_start(const std::string &name)
-{
+void function_start(const std::string &name) {
   std::fprintf(fp,
                "\t.text\n"
                "\t.globl\t%s\n"
@@ -383,10 +334,8 @@ function_start(const std::string &name)
                name.c_str(), name.c_str(), name.c_str());
 }
 
-void
-codegen_return(int reg, const Symbol &sym)
-{
-  switch(sym.value_type_) {
+void codegen_return(int reg, const Symbol &sym) {
+  switch (sym.value_type_) {
   case TYPE_CHAR:
     fprintf(fp, "\tmovzbl\t%s, %%eax\n", b_registers[reg].c_str());
     break;
@@ -405,9 +354,7 @@ codegen_return(int reg, const Symbol &sym)
   gen_jmp(sym.label);
 }
 
-int
-codegen_call(int reg, const std::string &name)
-{
+int codegen_call(int reg, const std::string &name) {
   int outer = get_register();
   std::fprintf(fp, "\tmovq\t%s, %%rdi\n", registers[reg].c_str());
   std::fprintf(fp, "\tcall\t%s\n", name.c_str());
@@ -418,18 +365,14 @@ codegen_call(int reg, const std::string &name)
   return outer;
 }
 
-void
-function_end(int label)
-{
+void function_end(int label) {
   gen_label(label);
   std::fputs("\tpopq	%rbp\n"
              "\tret\n",
              fp);
 }
 
-int
-codegen_addr(const Symbol &sym)
-{
+int codegen_addr(const Symbol &sym) {
   int r = get_register();
 
   std::fprintf(fp, "\tleaq\t%s(%%rip), %s\n", sym.name_.c_str(),
@@ -438,10 +381,8 @@ codegen_addr(const Symbol &sym)
   return r;
 }
 
-int
-codegen_dereference(int reg, const valuetype type)
-{
-  switch(type) {
+int codegen_dereference(int reg, const valuetype type) {
+  switch (type) {
   case TYPE_PTR_CHAR: {
     std::fprintf(fp, "\tmovzbq\t(%s), %s\n", registers[reg].c_str(),
                  registers[reg].c_str());
@@ -462,16 +403,12 @@ codegen_dereference(int reg, const valuetype type)
   return reg;
 }
 
-int
-shift_left(int reg, int value)
-{
+int shift_left(int reg, int value) {
   std::fprintf(fp, "\tsalq\t$%d, %s\n", value, registers[reg].c_str());
   return reg;
 }
 
-int
-shift_left_from_reg(int r1, int r2)
-{
+int shift_left_from_reg(int r1, int r2) {
   std::fprintf(fp, "\tmovb\t%s, %%cl\n", b_registers[r2].c_str());
   std::fprintf(fp, "\tshlq\t%%cl, %s\n", registers[r1].c_str());
 
@@ -479,9 +416,7 @@ shift_left_from_reg(int r1, int r2)
   return r1;
 }
 
-int
-shift_right_from_reg(int r1, int r2)
-{
+int shift_right_from_reg(int r1, int r2) {
   std::fprintf(fp, "\tmovb\t%s, %%cl\n", b_registers[r2].c_str());
   std::fprintf(fp, "\tshrq\t%%cl, %s\n", registers[r1].c_str());
   free_register(r2);
@@ -489,9 +424,7 @@ shift_right_from_reg(int r1, int r2)
   return r1;
 }
 
-int
-codegen_and(int r1, int r2)
-{
+int codegen_and(int r1, int r2) {
   std::fprintf(fp, "\tandq\t%s, %s\n", registers[r1].c_str(),
                registers[r2].c_str());
 
@@ -499,9 +432,7 @@ codegen_and(int r1, int r2)
   return r2;
 }
 
-int
-codegen_or(int r1, int r2)
-{
+int codegen_or(int r1, int r2) {
   std::fprintf(fp, "\torq\t%s, %s\n", registers[r1].c_str(),
                registers[r2].c_str());
 
@@ -509,20 +440,16 @@ codegen_or(int r1, int r2)
   return r2;
 }
 
-int
-codegen_load_int(int value)
-{
+int codegen_load_int(int value) {
   int free_reg = get_register();
 
   std::fprintf(fp, "\tmovq\t$%d, %s\n", value, registers[free_reg].c_str());
   return free_reg;
 }
 
-int
-convert_into_bool(int r, AstType node_type, int label)
-{
-  if(node_type == AstType::IfExpression
-     || node_type == AstType::WhileStatement) {
+int convert_into_bool(int r, AstType node_type, int label) {
+  if (node_type == AstType::IfExpression ||
+      node_type == AstType::WhileStatement) {
     std::fprintf(fp, "\tje\tL%d\n", label);
   } else {
     std::fprintf(fp, "\tsetnz\t%s\n", b_registers[r].c_str());
@@ -533,23 +460,17 @@ convert_into_bool(int r, AstType node_type, int label)
   return r;
 }
 
-int
-codegen_invert(int r)
-{
+int codegen_invert(int r) {
   std::fprintf(fp, "\tnotq\t%s\n", registers[r].c_str());
   return r;
 }
 
-int
-codegen_neg(int r)
-{
+int codegen_neg(int r) {
   std::fprintf(fp, "\tnegq\t%s\n", registers[r].c_str());
   return r;
 }
 
-int
-codegen_not(int r)
-{
+int codegen_not(int r) {
   std::fprintf(fp, "\ttest\t%s, %s\n", registers[r].c_str(),
                registers[r].c_str());
   std::fprintf(fp, "\tsete\t%s\n", b_registers[r].c_str());
@@ -559,10 +480,8 @@ codegen_not(int r)
   return r;
 }
 
-int
-store_dereference(int reg1, int reg2, valuetype type)
-{
-  switch(type) {
+int store_dereference(int reg1, int reg2, valuetype type) {
+  switch (type) {
   case TYPE_CHAR:
     std::fprintf(fp, "\tmovb\t%s, (%s)\n", b_registers[reg1].c_str(),
                  registers[reg2].c_str());
@@ -583,22 +502,17 @@ store_dereference(int reg1, int reg2, valuetype type)
   return reg1;
 }
 
-void
-global_str(int l, std::string value)
-{
+void global_str(int l, std::string value) {
   gen_label(l);
-  for(int i = 0; i < value.length(); i++) {
+  for (int i = 0; i < value.length(); i++) {
     std::fprintf(fp, "\t.byte\t%d\n", value[i]);
   }
 
   std::fprintf(fp, "\t.byte\t0\n");
 }
 
-int
-load_global_str(int l)
-{
+int load_global_str(int l) {
   int r = get_register();
-
   std::fprintf(fp, "\tleaq\tL%d(\%%rip), %s\n", l, registers[r].c_str());
 
   return r;

@@ -26,18 +26,17 @@ enum Precedence {
 };
 
 static std::unordered_map<tokentypes, Precedence> precedences = {
-  { tokentypes::Eq, EQUALS },      { tokentypes::Neq, EQUALS },
-  { tokentypes::LT, LESSGREATER }, { tokentypes::GT, LESSGREATER },
-  { tokentypes::Plus, SUM },       { tokentypes::Minus, SUM },
-  { tokentypes::Slash, PRODUCT },  { tokentypes::Asterisk, PRODUCT },
-  { tokentypes::LParen, CALL },    { tokentypes::LBracket, INDEX },
-  { tokentypes::Xor, SINGLE },     { tokentypes::Or, SINGLE },
-  { tokentypes::Amper, SINGLE },   { tokentypes::LShift, SHIFT },
-  { tokentypes::RShift, SHIFT },
+    {tokentypes::Eq, EQUALS},      {tokentypes::Neq, EQUALS},
+    {tokentypes::LT, LESSGREATER}, {tokentypes::GT, LESSGREATER},
+    {tokentypes::Plus, SUM},       {tokentypes::Minus, SUM},
+    {tokentypes::Slash, PRODUCT},  {tokentypes::Asterisk, PRODUCT},
+    {tokentypes::LParen, CALL},    {tokentypes::LBracket, INDEX},
+    {tokentypes::Xor, SINGLE},     {tokentypes::Or, SINGLE},
+    {tokentypes::Amper, SINGLE},   {tokentypes::LShift, SHIFT},
+    {tokentypes::RShift, SHIFT},
 };
 
-class Parser
-{
+class Parser {
 public:
   Parser(std::unique_ptr<Lexer> lx);
   std::unique_ptr<Program> parse_program();
@@ -83,7 +82,7 @@ private:
   std::unique_ptr<Statement> parse_function_literal();
   std::unique_ptr<Expression> parse_string_literal();
 
-  std::vector<std::unique_ptr<Identifier> > parse_function_params();
+  std::vector<std::unique_ptr<Identifier>> parse_function_params();
   valuetype parse_type();
 
   Precedence peek_precedence();

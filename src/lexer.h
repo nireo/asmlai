@@ -4,8 +4,7 @@
 #include "token.h"
 #include <string>
 
-class Lexer
-{
+class Lexer {
 public:
   Lexer(const std::string &input);
   Token next_token();

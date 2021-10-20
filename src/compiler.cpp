@@ -12,45 +12,37 @@
 
 std::unordered_map<std::string, Symbol> global_symbols;
 
-void
-add_new_symbol(const std::string &name, const symboltype stype,
-               const valuetype vtype)
-{
+void add_new_symbol(const std::string &name, const symboltype stype,
+                    const valuetype vtype) {
   global_symbols[name] = Symbol{
-    .name_ = name,
-    .type_ = stype,
-    .value_type_ = vtype,
-    .label = 0,
+      .name_ = name,
+      .type_ = stype,
+      .value_type_ = vtype,
+      .label = 0,
   };
 }
 
-void
-add_new_symbol(const std::string &name, const symboltype stype,
-               const valuetype vtype, int label)
-{
+void add_new_symbol(const std::string &name, const symboltype stype,
+                    const valuetype vtype, int label) {
   global_symbols[name] = Symbol{
-    .name_ = name,
-    .type_ = stype,
-    .value_type_ = vtype,
-    .label = label,
+      .name_ = name,
+      .type_ = stype,
+      .value_type_ = vtype,
+      .label = label,
   };
 }
 
-void
-add_new_symbol(const std::string &name, const symboltype stype,
-               const valuetype vtype, int label, int size)
-{
-  global_symbols[name] = Symbol{ .name_ = name,
-                                 .type_ = stype,
-                                 .value_type_ = vtype,
-                                 .label = label,
-                                 .size = size };
+void add_new_symbol(const std::string &name, const symboltype stype,
+                    const valuetype vtype, int label, int size) {
+  global_symbols[name] = Symbol{.name_ = name,
+                                .type_ = stype,
+                                .value_type_ = vtype,
+                                .label = label,
+                                .size = size};
 }
 
-const Symbol &
-get_symbol(const std::string &name)
-{
-  if(global_symbols.find(name) == global_symbols.end()) {
+const Symbol &get_symbol(const std::string &name) {
+  if (global_symbols.find(name) == global_symbols.end()) {
     std::fprintf(stderr, "symbol with name '%s' not found\n", name.c_str());
     std::exit(1);
   }
@@ -58,41 +50,34 @@ get_symbol(const std::string &name)
   return global_symbols[name];
 }
 
-Symbol &
-get_symbol_ref(const std::string &name)
-{
+Symbol &get_symbol_ref(const std::string &name) {
   auto &symbol = global_symbols[name];
   return symbol;
 }
 
-bool
-symbol_exists(const std::string &name)
-{
+bool symbol_exists(const std::string &name) {
   return global_symbols.find(name) != global_symbols.end();
 }
 
-int
-get_next_label()
-{
+int get_next_label() {
   static int id = 1;
   return id++;
 }
 
-bool
-check_type_compatible(const valuetype left, const valuetype right, bool noleft)
-{
-  if(left == TYPE_VOID || right == TYPE_VOID)
+bool check_type_compatible(const valuetype left, const valuetype right,
+                           bool noleft) {
+  if (left == TYPE_VOID || right == TYPE_VOID)
     return false;
 
-  if(left == right)
+  if (left == right)
     return true;
 
-  if(left == TYPE_CHAR && right == TYPE_INT) {
+  if (left == TYPE_CHAR && right == TYPE_INT) {
     return true;
   }
 
-  if(left == TYPE_INT && right == TYPE_CHAR) {
-    if(noleft)
+  if (left == TYPE_INT && right == TYPE_CHAR) {
+    if (noleft)
       return false;
     return true;
   }
@@ -100,31 +85,25 @@ check_type_compatible(const valuetype left, const valuetype right, bool noleft)
   return false;
 }
 
-static bool
-number_type(const valuetype type)
-{
-  if(type == TYPE_CHAR || type == TYPE_INT || type == TYPE_LONG)
+static bool number_type(const valuetype type) {
+  if (type == TYPE_CHAR || type == TYPE_INT || type == TYPE_LONG)
     return true;
 
   return false;
 }
 
-static bool
-is_ptr_type(const valuetype type)
-{
+static bool is_ptr_type(const valuetype type) {
 
-  if(type == TYPE_PTR_CHAR || type == TYPE_PTR_INT || type == TYPE_PTR_LONG
-     || type == TYPE_PTR_VOID) {
+  if (type == TYPE_PTR_CHAR || type == TYPE_PTR_INT || type == TYPE_PTR_LONG ||
+      type == TYPE_PTR_VOID) {
     return true;
   }
 
   return false;
 }
 
-static const valuetype
-convert_pointer_to_normal(const valuetype type)
-{
-  switch(type) {
+static const valuetype convert_pointer_to_normal(const valuetype type) {
+  switch (type) {
   case TYPE_PTR_VOID:
     return TYPE_VOID;
   case TYPE_PTR_CHAR:
@@ -140,59 +119,56 @@ convert_pointer_to_normal(const valuetype type)
   }
 }
 
-std::pair<std::unique_ptr<Expression>, std::unique_ptr<Expression> >
+std::pair<std::unique_ptr<Expression>, std::unique_ptr<Expression>>
 change_type(std::unique_ptr<Expression> exp, valuetype change_type,
-            tokentypes infix_opr)
-{
+            tokentypes infix_opr) {
   auto exp_type = exp->ValueType();
-  if(number_type(change_type) && number_type(exp_type)) {
-    if(change_type == exp->ValueType())
-      return { nullptr, std::move(exp) };
+  if (number_type(change_type) && number_type(exp_type)) {
+    if (change_type == exp->ValueType())
+      return {nullptr, std::move(exp)};
 
     int size_1 = get_bytesize_of_type(exp_type);
     int size_2 = get_bytesize_of_type(change_type);
 
-    if(size_1 > size_2)
-      return { std::move(exp), nullptr };
+    if (size_1 > size_2)
+      return {std::move(exp), nullptr};
 
-    if(size_2 > size_1) {
-      return { nullptr, std::move(exp) };
+    if (size_2 > size_1) {
+      return {nullptr, std::move(exp)};
     }
   }
 
-  if(is_ptr_type(exp_type)) {
-    if(exp->Type() != AstType::InfixExpression && exp_type == change_type)
-      return { nullptr, std::move(exp) };
+  if (is_ptr_type(exp_type)) {
+    if (exp->Type() != AstType::InfixExpression && exp_type == change_type)
+      return {nullptr, std::move(exp)};
   }
 
-  if(infix_opr == tokentypes::Plus || infix_opr == tokentypes::Minus) {
-    if(number_type(exp_type) && is_ptr_type(change_type)) {
+  if (infix_opr == tokentypes::Plus || infix_opr == tokentypes::Minus) {
+    if (number_type(exp_type) && is_ptr_type(change_type)) {
       int size = get_bytesize_of_type(convert_pointer_to_normal(change_type));
-      if(size > 1) {
+      if (size > 1) {
         auto wrapper = std::make_unique<TypeChangeAction>();
         wrapper->size = size;
         wrapper->inner_ = std::move(exp);
         wrapper->action_ = TypeChange::Scale;
 
-        return { nullptr, std::move(wrapper) };
+        return {nullptr, std::move(wrapper)};
       } else {
-        return { std::move(exp), nullptr };
+        return {std::move(exp), nullptr};
       }
     }
   }
 
   // type cannot be change, and thus is not compatible
-  return { std::move(exp), nullptr };
+  return {std::move(exp), nullptr};
 }
 
-int
-compile_ast_node(const Node &node, int reg, const AstType top_type)
-{
-  switch(node.Type()) {
+int compile_ast_node(const Node &node, int reg, const AstType top_type) {
+  switch (node.Type()) {
   case AstType::Program: {
     const auto &program = CAST(Program, node);
 
-    for(const auto &stmt : program.statements_) {
+    for (const auto &stmt : program.statements_) {
       compile_ast_node(*stmt, -1, AstType::Program);
       free_all_registers();
     }
@@ -203,7 +179,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     const auto &block = CAST(BlockStatement, node);
 
     int last = -1;
-    for(const auto &stmt : block.statements_) {
+    for (const auto &stmt : block.statements_) {
       last = compile_ast_node(*stmt, -1, AstType::BlockStatement);
     }
 
@@ -237,7 +213,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     const auto &if_stmt = CAST(IfExpression, node);
     int false_label = get_next_label();
     int end_label;
-    if(if_stmt.other_ != nullptr) {
+    if (if_stmt.other_ != nullptr) {
       end_label = get_next_label();
     }
 
@@ -247,13 +223,13 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     compile_ast_node(*if_stmt.after_, -1, node.Type());
     free_all_registers();
 
-    if(if_stmt.other_ != nullptr) {
+    if (if_stmt.other_ != nullptr) {
       gen_jmp(end_label);
     }
 
     gen_label(false_label);
 
-    if(if_stmt.other_ != nullptr) {
+    if (if_stmt.other_ != nullptr) {
       compile_ast_node(*if_stmt.other_, -1, node.Type());
       free_all_registers();
       gen_label(end_label);
@@ -271,20 +247,20 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
   case AstType::InfixExpression: {
     const auto &infix_exp = CAST(InfixExpression, node);
 
-    if(infix_exp.left_ != nullptr && infix_exp.right_ == nullptr) {
+    if (infix_exp.left_ != nullptr && infix_exp.right_ == nullptr) {
       return compile_ast_node(*infix_exp.left_, -1, node.Type());
     }
 
     int left = 0, right = 0;
-    if(infix_exp.left_ != nullptr) {
+    if (infix_exp.left_ != nullptr) {
       left = compile_ast_node(*infix_exp.left_, -1, node.Type());
     }
 
-    if(infix_exp.right_ != nullptr) {
+    if (infix_exp.right_ != nullptr) {
       right = compile_ast_node(*infix_exp.right_, left, node.Type());
     }
 
-    switch(infix_exp.opr) {
+    switch (infix_exp.opr) {
     case tokentypes::Plus:
       return add_registers(left, right);
     case tokentypes::Minus:
@@ -299,14 +275,29 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     case tokentypes::GT:
     case tokentypes::Eq:
     case tokentypes::Neq: {
-      if(top_type == AstType::IfExpression
-         || top_type == AstType::WhileStatement) {
+      if (top_type == AstType::IfExpression ||
+          top_type == AstType::WhileStatement) {
         return codegen_compare_jump(left, right, reg, infix_exp.opr);
       }
       return codegen_compare_no_jump(left, right, infix_exp.opr);
     }
+    case tokentypes::RShift: {
+      return shift_right_from_reg(left, right);
+    }
+    case tokentypes::LShift: {
+      return shift_left_from_reg(left, right);
+    }
+    case tokentypes::LogOr: {
+      return codegen_or(left, right);
+    }
+    case tokentypes::LogAnd: {
+      return codegen_and(left, right);
+    }
+    case tokentypes::Xor: {
+      return codegen_xor(left, right);
+    }
     case tokentypes::Assign: {
-      switch(infix_exp.right_->Type()) {
+      switch (infix_exp.right_->Type()) {
       case AstType::Identifier: {
         const auto &identifier = CAST(Identifier, *infix_exp.right_);
 
@@ -333,7 +324,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     const auto &assigment = CAST(LetStatement, node);
     const auto &identifier = CAST(Identifier, *assigment.name_);
 
-    if(!symbol_exists(identifier.value_)) {
+    if (!symbol_exists(identifier.value_)) {
       const auto &sym = get_symbol(identifier.value_);
       generate_sym(sym);
     }
@@ -347,8 +338,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
   case AstType::ReturnStatement: {
     const auto &returnstmt = CAST(ReturnStatement, node);
 
-    int left_reg
-        = compile_ast_node(*returnstmt.return_value_, -1, node.Type());
+    int left_reg = compile_ast_node(*returnstmt.return_value_, -1, node.Type());
     codegen_return(left_reg, get_symbol(returnstmt.function_identifier_));
 
     return -1;
@@ -371,15 +361,14 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
   case AstType::Identifier: {
     const auto &identifier = CAST(Identifier, node);
 
-    if(global_symbols.find(identifier.value_) == global_symbols.end()) {
+    if (global_symbols.find(identifier.value_) == global_symbols.end()) {
       std::fprintf(stderr, "identifier '%s' not found\n",
                    identifier.value_.c_str());
       std::exit(1);
     }
 
-    if(identifier.rvalue || top_type == AstType::Dereference) {
-      return load_global(get_symbol(identifier.value_), tokentypes::Eof,
-                         false);
+    if (identifier.rvalue || top_type == AstType::Dereference) {
+      return load_global(get_symbol(identifier.value_), tokentypes::Eof, false);
     } else {
       return -1;
     }
@@ -398,12 +387,12 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
   }
   case AstType::TypeChangeAction: {
     const auto &tca = CAST(TypeChangeAction, node);
-    switch(tca.action_) {
+    switch (tca.action_) {
     case TypeChange::Widen:
       return compile_ast_node(*tca.inner_, -1, node.Type());
     case TypeChange::Scale: {
       int left = compile_ast_node(*tca.inner_, -1, node.Type());
-      switch(tca.size) {
+      switch (tca.size) {
       case 2:
         return shift_left(left, 1);
       case 4:
@@ -421,18 +410,28 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
   }
   case AstType::PrefixExpression: {
     const auto &pref = CAST(PrefixExpression, node);
-    switch(pref.opr) {
+    switch (pref.opr) {
     case tokentypes::Amper: {
       const auto &identifier = CAST(Identifier, *pref.right_);
       return codegen_addr(get_symbol(identifier.value_));
     }
     case tokentypes::Asterisk: {
       int right = compile_ast_node(*pref.right_, -1, node.Type());
-      if(pref.right_->is_rvalue()) {
+      if (pref.right_->is_rvalue()) {
         return codegen_dereference(right, pref.right_->ValueType());
       }
 
       return right;
+    }
+    case tokentypes::Minus: {
+      int right = compile_ast_node(*pref.right_, -1, node.Type());
+
+      return codegen_neg(right);
+    }
+    case tokentypes::Bang: {
+      int right = compile_ast_node(*pref.right_, -1, node.Type());
+
+      return codegen_not(right);
     }
     default: {
       std::fprintf(stderr, "cannot codegen for given operation.\n");
@@ -464,7 +463,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     const auto &deref = CAST(Dereference, node);
     int compiled = compile_ast_node(*deref.to_dereference_, -1, node.Type());
 
-    if(deref.rvalue) {
+    if (deref.rvalue) {
       return codegen_dereference(compiled, deref.to_dereference_->ValueType());
     }
 
@@ -474,7 +473,7 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     const auto &ident_action = CAST(IdentifierAction, node);
     const auto &identifier = CAST(Identifier, *ident_action.identifier_);
 
-    switch(ident_action.action_) {
+    switch (ident_action.action_) {
     case tokentypes::Inc: {
       return load_global(get_symbol(identifier.value_), tokentypes::Inc,
                          ident_action.post_);
