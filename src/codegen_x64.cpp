@@ -245,31 +245,54 @@ generate_sym(const Symbol &sym)
 }
 
 int
-load_global(const Symbol &sym, tokentypes opr)
+load_global(const Symbol &sym, tokentypes opr, bool post)
 {
   int free_reg = get_register();
 
   switch(sym.value_type_) {
   case TYPE_CHAR: {
-    std::fprintf(fp, "\tmovzbq\t%s(\%%rip), %s\n", sym.name_.c_str(),
-                 registers[free_reg].c_str());
-    if(opr == tokentypes::Inc) {
-      std::fprintf(fp, "\tincb\t%s(\%%rip)\n", sym.name_.c_str());
+    if(!post) {
+      if(opr == tokentypes::Inc) {
+        std::fprintf(fp, "\tincb\t%s(\%%rip)\n", sym.name_.c_str());
+      }
+
+      if(opr == tokentypes::Dec) {
+        std::fprintf(fp, "\tdecb\t%s(\%%rip)\n", sym.name_.c_str());
+      }
     }
 
-    if(opr == tokentypes::Dec) {
-      std::fprintf(fp, "\tdecb\t%s(\%%rip)\n", sym.name_.c_str());
+    std::fprintf(fp, "\tmovzbq\t%s(\%%rip), %s\n", sym.name_.c_str(),
+                 registers[free_reg].c_str());
+
+    if(post) {
+      if(opr == tokentypes::Inc) {
+        std::fprintf(fp, "\tincb\t%s(\%%rip)\n", sym.name_.c_str());
+      }
+
+      if(opr == tokentypes::Dec) {
+        std::fprintf(fp, "\tdecb\t%s(\%%rip)\n", sym.name_.c_str());
+      }
     }
 
     break;
   }
   case TYPE_INT: {
+    if(!post) {
+      if(opr == tokentypes::Inc)
+        fprintf(fp, "\tincl\t%s(\%%rip)\n", sym.name_.c_str());
+      if(opr == tokentypes::Dec)
+        fprintf(fp, "\tdecl\t%s(\%%rip)\n", sym.name_.c_str());
+    }
+
     std::fprintf(fp, "\tmovzbq\t%s(\%%rip), %s\n", sym.name_.c_str(),
                  registers[free_reg].c_str());
-    if(opr == tokentypes::Inc)
-      fprintf(fp, "\tincl\t%s(\%%rip)\n", sym.name_.c_str());
-    if(opr == tokentypes::Dec)
-      fprintf(fp, "\tdecl\t%s(\%%rip)\n", sym.name_.c_str());
+
+    if(post) {
+      if(opr == tokentypes::Inc)
+        fprintf(fp, "\tincl\t%s(\%%rip)\n", sym.name_.c_str());
+      if(opr == tokentypes::Dec)
+        fprintf(fp, "\tdecl\t%s(\%%rip)\n", sym.name_.c_str());
+    }
 
     break;
   }
@@ -277,12 +300,22 @@ load_global(const Symbol &sym, tokentypes opr)
   case TYPE_PTR_CHAR:
   case TYPE_PTR_LONG:
   case TYPE_PTR_INT: {
+    if(!post) {
+      if(opr == tokentypes::Inc)
+        fprintf(fp, "\tincq\t%s(\%%rip)\n", sym.name_.c_str());
+      if(opr == tokentypes::Dec)
+        fprintf(fp, "\tdecq\t%s(\%%rip)\n", sym.name_.c_str());
+    }
+
     std::fprintf(fp, "\tmovq\t%s(\%%rip), %s\n", sym.name_.c_str(),
                  registers[free_reg].c_str());
-    if(opr == tokentypes::Inc)
-      fprintf(fp, "\tincq\t%s(\%%rip)\n", sym.name_.c_str());
-    if(opr == tokentypes::Dec)
-      fprintf(fp, "\tdecq\t%s(\%%rip)\n", sym.name_.c_str());
+
+    if(post) {
+      if(opr == tokentypes::Inc)
+        fprintf(fp, "\tincq\t%s(\%%rip)\n", sym.name_.c_str());
+      if(opr == tokentypes::Dec)
+        fprintf(fp, "\tdecq\t%s(\%%rip)\n", sym.name_.c_str());
+    }
 
     break;
   }

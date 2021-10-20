@@ -401,61 +401,79 @@ Parser::parse_primary()
     break;
   }
   case tokentypes::Ident: {
-    result = parse_postfix();
+    auto identifier = parse_identifier();
+
+    if(peek_token_is(tokentypes::LParen)) {
+      next_token();
+      next_token();
+
+      auto argument = parse_expression_rec(LOWEST);
+      if(!current_token_is(tokentypes::RParen))
+        STOP_EXECUTION(
+            "function call arguments need to wrapped in parenthesies.");
+
+      auto call_exp = std::make_unique<CallExpression>();
+      call_exp->func_ = std::move(identifier);
+      std::vector<std::unique_ptr<Expression> > arguments_;
+      arguments_.push_back(std::move(argument));
+
+      call_exp->arguments_ = std::move(arguments_);
+
+      result = std::move(call_exp);
+      break;
+    } else if(peek_token_is(tokentypes::LBracket)) {
+      next_token(); // skip [
+      next_token(); // go to start of index expression
+      // array
+      auto arr = std::make_unique<Addr>();
+      arr->to_addr_ = std::move(identifier);
+
+      auto indx = parse_expression_rec(LOWEST);
+      if(!current_token_is(tokentypes::RBracket))
+        STOP_EXECUTION("array index operation needs to end in a ]\n");
+
+      if(indx->ValueType() != TYPE_INT && indx->ValueType() != TYPE_CHAR
+         && indx->ValueType() != TYPE_LONG)
+        STOP_EXECUTION("the index expression needs to be an integer.");
+
+      auto index_modified
+          = change_type(std::move(indx), arr->ValueType(), tokentypes::Plus);
+
+      // We build multiple nodes such that we don't need to worry about
+      // creating extra nodes.
+      auto infix = std::make_unique<InfixExpression>();
+      infix->opr = tokentypes::Plus;
+      infix->v_type_ = arr->ValueType();
+      infix->left_ = std::move(arr);
+      if(index_modified.second == nullptr)
+        STOP_EXECUTION("right type cannot be changed.");
+      infix->right_ = std::move(index_modified.second);
+
+      auto deref = std::make_unique<Dereference>();
+      deref->to_dereference_ = std::move(infix);
+
+      result = std::move(deref);
+      break;
+    } else if(peek_token_is(tokentypes::Inc)) {
+      next_token();
+      next_token();
+      auto action = std::make_unique<IdentifierAction>();
+      action->action_ = tokentypes::Inc;
+      action->identifier_ = std::move(identifier);
+
+      return action;
+    } else if(peek_token_is(tokentypes::Dec)) {
+      next_token();
+      next_token();
+      auto action = std::make_unique<IdentifierAction>();
+      action->action_ = tokentypes::Inc;
+      action->identifier_ = std::move(identifier);
+
+      return action;
+    }
+
+    result = std::move(identifier);
     break;
-    // auto identifier = parse_identifier();
-    // if(peek_token_is(tokentypes::LParen)) {
-    //   next_token();
-    //   next_token();
-
-    //   auto argument = parse_expression_rec(LOWEST);
-    //   if(!current_token_is(tokentypes::RParen))
-    //     STOP_EXECUTION(
-    //         "function call arguments need to wrapped in parenthesies.");
-
-    //   auto call_exp = std::make_unique<CallExpression>();
-    //   call_exp->func_ = std::move(identifier);
-    //   std::vector<std::unique_ptr<Expression> > arguments_;
-    //   arguments_.push_back(std::move(argument));
-
-    //   call_exp->arguments_ = std::move(arguments_);
-
-    //   result = std::move(call_exp);
-    //   break;
-    // } else if(peek_token_is(tokentypes::LBracket)) {
-    //   next_token(); // skip [
-    //   next_token(); // go to start of index expression
-    //   // array
-    //   auto arr = std::make_unique<Addr>();
-    //   arr->to_addr_ = std::move(identifier);
-
-    //   auto indx = parse_expression_rec(LOWEST);
-    //   if(!current_token_is(tokentypes::RBracket))
-    //     STOP_EXECUTION("array index operation needs to end in a ]\n");
-
-    //   if(indx->ValueType() != TYPE_INT && indx->ValueType() != TYPE_CHAR
-    //      && indx->ValueType() != TYPE_LONG)
-    //     STOP_EXECUTION("the index expression needs to be an integer.");
-
-    //   auto index_modified
-    //       = change_type(std::move(indx), arr->ValueType(),
-    //       tokentypes::Plus);
-
-    //   // We build multiple nodes such that we don't need to worry about
-    //   // creating extra nodes.
-    //   auto infix = std::make_unique<InfixExpression>();
-    //   infix->opr = tokentypes::Plus;
-    //   infix->v_type_ = arr->ValueType();
-    //   infix->left_ = std::move(arr);
-    //   if(index_modified.second == nullptr)
-    //     STOP_EXECUTION("right type cannot be changed.");
-    //   infix->right_ = std::move(index_modified.second);
-
-    //   auto deref = std::make_unique<Dereference>();
-    //   deref->to_dereference_ = std::move(infix);
-
-    //   result = std::move(deref);
-    //   break;
   }
   case tokentypes::LParen: {
     next_token();
@@ -505,6 +523,22 @@ Parser::parse_prefix()
     deref_exp->to_dereference_ = std::move(right);
 
     return deref_exp;
+  }
+  case tokentypes::Dec:
+  case tokentypes::Inc: {
+    auto type = current_.type;
+    next_token();
+
+    auto right = parse_prefix();
+    if(right->Type() != AstType::Identifier)
+      STOP_EXECUTION("cannot increment/decrement a non-identifier.");
+
+    auto identifier_action = std::make_unique<IdentifierAction>();
+    identifier_action->identifier_ = std::move(right);
+    identifier_action->post_ = false;
+    identifier_action->action_ = type;
+
+    return identifier_action;
   }
   case tokentypes::Bang:
   case tokentypes::Minus: {

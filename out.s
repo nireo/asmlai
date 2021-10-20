@@ -11,6 +11,8 @@ main:
 	movq	$69, %r8
 	movq	%r8, x(%rip)
 	movzbq	x(%rip), %r8
+	incl	x(%rip)
+	movzbq	x(%rip), %r8
 	movq	%r8, %rdi
 	call	print_num
 	movq	%rax, %r9

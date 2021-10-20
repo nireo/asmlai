@@ -378,7 +378,8 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
     }
 
     if(identifier.rvalue || top_type == AstType::Dereference) {
-      return load_global(get_symbol(identifier.value_), tokentypes::Eof);
+      return load_global(get_symbol(identifier.value_), tokentypes::Eof,
+                         false);
     } else {
       return -1;
     }
@@ -475,15 +476,16 @@ compile_ast_node(const Node &node, int reg, const AstType top_type)
 
     switch(ident_action.action_) {
     case tokentypes::Inc: {
-      return load_global(get_symbol(identifier.value_), tokentypes::Inc);
+      return load_global(get_symbol(identifier.value_), tokentypes::Inc,
+                         ident_action.post_);
     }
     case tokentypes::Dec: {
-      return load_global(get_symbol(identifier.value_), tokentypes::Dec);
+      return load_global(get_symbol(identifier.value_), tokentypes::Dec,
+                         ident_action.post_);
     }
     default:
-      // parser will detect, if the action is possible so no need for error
-      // message
-      return -1;
+      std::fprintf(stderr, "unknown identifier action");
+      std::exit(1);
     }
 
     return -1;

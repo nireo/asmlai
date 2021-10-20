@@ -719,6 +719,7 @@ public:
   tokentypes action_;
   std::unique_ptr<Expression> identifier_;
   bool rvalue = false;
+  bool post_ = false;
 };
 
 #endif
