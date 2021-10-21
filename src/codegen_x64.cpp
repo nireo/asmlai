@@ -16,6 +16,32 @@ static const std::string jump_insts[] = {"jne", "je", "jge", "jle", "jg", "jl"};
 static const std::string compare_instructions[] = {"sete", "setne", "setl",
                                                    "setg", "setle", "setge"};
 
+enum { no_seg, text_seg, data_seg } curr_seg = no_seg;
+
+void textseg() {
+  if (curr_seg != data_seg) {
+    std::fputs("\t.text\n", fp);
+    curr_seg = text_seg;
+  }
+}
+
+void dataseg() {
+  if (curr_seg != data_seg) {
+    std::fputs("\t.data\n", fp);
+    curr_seg = data_seg;
+  }
+}
+
+static int local_offset;
+static int stack_offset;
+void reset_local_offset() { local_offset = 0; }
+
+int get_local_offset(valuetype type, bool param) {
+  local_offset +=
+      (get_bytesize_of_type(type) > 4) ? get_bytesize_of_type(type) : 4;
+  return (-local_offset);
+}
+
 static int get_corresponding_inst_index(const tokentypes type) {
   switch (type) {
   case tokentypes::Eq:
@@ -324,6 +350,9 @@ void gen_label(int label) { std::fprintf(fp, "L%d:\n", label); }
 void gen_jmp(int label) { std::fprintf(fp, "\tjmp\tL%d\n", label); }
 
 void function_start(const std::string &name) {
+  textseg();
+  stack_offset = (local_offset + 15) & ~15;
+
   std::fprintf(fp,
                "\t.text\n"
                "\t.globl\t%s\n"
@@ -367,6 +396,8 @@ int codegen_call(int reg, const std::string &name) {
 
 void function_end(int label) {
   gen_label(label);
+  std::fprintf(fp, "\taddq\t$%d,%%rsp\n", stack_offset);
+
   std::fputs("\tpopq	%rbp\n"
              "\tret\n",
              fp);
