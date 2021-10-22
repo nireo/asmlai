@@ -1,8 +1,9 @@
-global int x;
+global char* s;
 
 fn main() => int {
-  let x: int = 69;
-  x++;
-
-  print_num(x);
+  s = "hello world";
+  while (*s != 0) {
+    print_char(*s);
+    s = s + 1;
+  }
 }

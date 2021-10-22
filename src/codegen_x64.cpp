@@ -171,13 +171,7 @@ void print_register(int r) {
   free_register(r);
 }
 
-void end_codegen() {
-  fputs("\tmovl $0, %eax\n"
-        "\tpopq %rbp\n"
-        "\tret\n",
-        fp);
-  fclose(fp);
-}
+void end_codegen() { fclose(fp); }
 
 int store_global(int r, const Symbol &sym) {
   switch (sym.value_type_) {
@@ -345,7 +339,17 @@ int codegen_compare_jump(int reg1, int reg2, int label, const tokentypes type) {
   return -1;
 }
 
-void gen_label(int label) { std::fprintf(fp, "L%d:\n", label); }
+void gen_label(int label) {
+  std::cout << "label: " << label << '\n';
+  if (fp == nullptr) {
+    if ((fp = fopen("out.s", "a")) == NULL) {
+      std::fprintf(stderr, "unable to reopen out file\n");
+      std::exit(1);
+    }
+  }
+
+  std::fprintf(fp, "L%d:\n", label);
+}
 
 void gen_jmp(int label) { std::fprintf(fp, "\tjmp\tL%d\n", label); }
 
@@ -533,13 +537,20 @@ int store_dereference(int reg1, int reg2, valuetype type) {
   return reg1;
 }
 
-void global_str(int l, std::string value) {
+void global_str(int l, const std::string &value) {
   gen_label(l);
   for (int i = 0; i < value.length(); i++) {
     std::fprintf(fp, "\t.byte\t%d\n", value[i]);
   }
 
   std::fprintf(fp, "\t.byte\t0\n");
+}
+
+int codegen_xor(int r1, int r2) {
+  std::fprintf(fp, "\txorq\t%s, %s\n", registers[r1].c_str(),
+               registers[r2].c_str());
+  free_register(r1);
+  return r2;
 }
 
 int load_global_str(int l) {

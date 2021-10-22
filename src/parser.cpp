@@ -360,7 +360,20 @@ std::unique_ptr<Expression> Parser::parse_primary() {
     break;
   }
   case tokentypes::String: {
-    result = parse_string_literal();
+
+    auto strlit = std::make_unique<StringLiteral>();
+    auto value = current_.literal;
+
+    int label = get_next_label();
+    std::cout << "creating string at label: " << label << '\n';
+    std::cout << "string value: " << value << '\n';
+
+    global_str(label, value);
+
+    strlit->value_ = value;
+    strlit->id_ = label;
+    result = std::move(strlit);
+
     break;
   }
   case tokentypes::Ident: {
