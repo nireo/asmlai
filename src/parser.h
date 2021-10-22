@@ -8,9 +8,6 @@
 #include <unordered_map>
 
 class Parser;
-typedef std::unique_ptr<Expression> (Parser::*PrefixParseFn)();
-typedef std::unique_ptr<Expression> (Parser::*InfixParseFn)(
-    std::unique_ptr<Expression>);
 
 enum Precedence {
   LOWEST,
@@ -47,11 +44,6 @@ private:
   Token current_;
   Token peek_;
 
-  std::unordered_map<tokentypes, PrefixParseFn> m_prefix_parse_fns;
-  std::unordered_map<tokentypes, InfixParseFn> m_infix_parse_fns;
-  void add_prefix_parse(tokentypes tt, PrefixParseFn fn);
-  void add_infix_parse(tokentypes tt, InfixParseFn fn);
-
   void next_token();
 
   std::unique_ptr<Statement> parse_statement();
@@ -60,7 +52,6 @@ private:
   std::unique_ptr<Statement> parse_expression_statement();
   std::unique_ptr<Expression> parse_for_expression();
   std::unique_ptr<Expression> parse_while_expression();
-  std::unique_ptr<Statement> parse_assingment();
   std::unique_ptr<Statement> parse_global_decl();
   std::unique_ptr<Expression> parse_primary();
   std::unique_ptr<Expression> parse_prefix();
@@ -68,15 +59,8 @@ private:
   std::unique_ptr<Expression> parse_postfix();
   std::unique_ptr<Expression> parse_array(std::unique_ptr<Expression> ident);
   std::unique_ptr<Expression> parse_call(std::unique_ptr<Expression> ident);
-  std::pair<std::unique_ptr<Expression>, valuetype>
-  parse_expression(Precedence prec);
   std::unique_ptr<Expression> parse_identifier();
   std::unique_ptr<Expression> parse_integer_literal();
-  std::unique_ptr<Expression> parse_prefix_expression();
-  std::unique_ptr<Expression>
-  parse_infix_expression(std::unique_ptr<Expression> left);
-  std::unique_ptr<Expression> parse_boolean();
-  std::unique_ptr<Expression> parse_grouped_expression();
   std::unique_ptr<Expression> parse_if_expression();
   std::unique_ptr<BlockStatement> parse_block_statement();
   std::unique_ptr<Statement> parse_function_literal();

@@ -142,7 +142,6 @@ int div_registers(int r1, int r2) {
   fprintf(fp, "\tmovq\t%s,%%rax\n\tcqo\n", registers[r1].c_str());
   fprintf(fp, "\tidivq\t%s\n", registers[r2].c_str());
   fprintf(fp, "\tmovq\t%%rax,%s\n", registers[r1].c_str());
-
   free_register(r2);
 
   return r1;
@@ -152,6 +151,7 @@ int add_registers(int reg1, int reg2) {
   fprintf(fp, "\taddq\t%s, %s\n", registers[reg1].c_str(),
           registers[reg2].c_str());
   free_register(reg1);
+
   return reg2;
 }
 
@@ -550,6 +550,7 @@ int codegen_xor(int r1, int r2) {
   std::fprintf(fp, "\txorq\t%s, %s\n", registers[r1].c_str(),
                registers[r2].c_str());
   free_register(r1);
+
   return r2;
 }
 
