@@ -4,10 +4,9 @@
 #include "ast.h"
 #include "token.h"
 
-enum class StorageType {
+enum class Scope {
   Global,
   Local,
-
 };
 
 enum symboltype {
@@ -18,7 +17,7 @@ enum symboltype {
 
 struct Symbol {
   std::string name_;
-  StorageType st_type;
+  Scope st_type;
   symboltype type_;
   valuetype value_type_;
   int label;
@@ -26,6 +25,8 @@ struct Symbol {
   int position;
 };
 
+void add_new_local_var(const std::string&, valuetype, int, int);
+void reset_local_variables();
 int compile_ast_node(const Node &, int, const AstType);
 const Symbol &get_symbol(const std::string &);
 Symbol &get_symbol_ref(const std::string &);

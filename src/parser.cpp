@@ -63,6 +63,8 @@ std::unique_ptr<Statement> Parser::parse_statement() {
     return parse_return_statement();
   } else if (current_.type == tokentypes::Global) {
     return parse_global_decl();
+  } else if (current_.type == tokentypes::Var) {
+    return parse_var_decl();
   } else {
     return parse_expression_statement();
   }
@@ -769,6 +771,46 @@ std::unique_ptr<Expression> Parser::parse_string_literal() {
 
 //   return for_stmt;
 // }
+
+std::unique_ptr<Statement> Parser::parse_var_decl() {
+  // cannot use var keyword out of function
+  if (latest_function_identifers.empty()) {
+    return nullptr;
+  }
+
+  auto var_decl = std::make_unique<VarDecl>();
+  var_decl->type_ = parse_type();
+
+  if (!expect_peek(tokentypes::Ident))
+    return nullptr;
+
+  auto ident = std::make_unique<Identifier>();
+  const std::string name = current_.literal;
+  ident->value_ = name;
+  var_decl->identifier_ = std::move(ident);
+
+  add_new_local_var(name, var_decl->type_, 0, 0);
+
+  if (peek_token_is(tokentypes::LBracket)) {
+    next_token();
+    if (!expect_peek(tokentypes::Int))
+      STOP_EXECUTION("array declaration needs size.");
+
+    int size = std::stoi(current_.literal);
+    add_new_symbol(name, TYPE_ARRAY, convert_type_to_pointer(var_decl->type_), 0,
+                   size);
+
+    if (!expect_peek(tokentypes::RBracket))
+      STOP_EXECUTION("array declration must end in ]");
+  } else {
+    add_new_symbol(name, TYPE_VARIABLE, var_decl->type_, 0, 1);
+  }
+
+  if (!expect_peek(tokentypes::Semicolon))
+    return nullptr;
+
+  return var_decl;
+}
 
 std::unique_ptr<Statement> Parser::parse_global_decl() {
   // cannot use global keyword inside function

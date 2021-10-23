@@ -50,6 +50,7 @@ private:
   std::unique_ptr<Statement> parse_let_statement();
   std::unique_ptr<Statement> parse_return_statement();
   std::unique_ptr<Statement> parse_expression_statement();
+  std::unique_ptr<Statement> parse_var_decl();
   std::unique_ptr<Expression> parse_for_expression();
   std::unique_ptr<Expression> parse_while_expression();
   std::unique_ptr<Statement> parse_global_decl();

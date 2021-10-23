@@ -42,5 +42,6 @@ int codegen_xor(int, int);
 int codegen_invert(int);
 int codegen_neg(int);
 int codegen_not(int);
+void reset_local_offset();
 
 #endif

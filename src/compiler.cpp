@@ -11,6 +11,25 @@
 #define CAST(type, node) static_cast<const type &>(node);
 
 std::unordered_map<std::string, Symbol> global_symbols;
+std::unordered_map<std::string, Symbol> local_symbols;
+
+void reset_local_variables() {
+  local_symbols = std::unordered_map<std::string, Symbol>();
+  reset_local_offset();
+}
+
+void add_new_local_var(const std::string &name, valuetype vtype, int position,
+                       int size) {
+  local_symbols[name] = {
+      .name_ = name,
+      .st_type = Scope::Local,
+      .type_ = TYPE_VARIABLE, // cannot be function
+      .value_type_ = vtype,
+      .label = 0,
+      .size = 0,
+      .position = position,
+  };
+}
 
 void add_new_symbol(const std::string &name, const symboltype stype,
                     const valuetype vtype) {

@@ -30,7 +30,8 @@ enum class AstType {
   GlobalStatement,
   Dereference,
   Addr,
-  IdentifierAction
+  IdentifierAction,
+  VarDecl
 };
 
 enum valuetype {
@@ -337,9 +338,17 @@ public:
 class GlobalVariable : public Statement {
 public:
   void statementNode() {}
-
   AstType Type() const noexcept { return AstType::GlobalStatement; }
+  valuetype ValueType() const noexcept { return type_; }
 
+  valuetype type_;
+  std::unique_ptr<Expression> identifier_;
+};
+
+class VarDecl : public Statement {
+public:
+  void statementNode() {}
+  AstType Type() const noexcept { return AstType::VarDecl; }
   valuetype ValueType() const noexcept { return type_; }
 
   valuetype type_;
@@ -349,11 +358,8 @@ public:
 class Dereference : public Expression {
 public:
   AstType Type() const noexcept { return AstType::Dereference; }
-
   valuetype ValueType() const noexcept { return TYPE_INT; }
-
   bool is_rvalue() { return rvalue; }
-
   void set_rvalue(bool value) { rvalue = value; }
 
   std::unique_ptr<Expression> to_dereference_;
@@ -363,11 +369,8 @@ public:
 class Addr : public Expression {
 public:
   AstType Type() const noexcept { return AstType::Addr; }
-
   valuetype ValueType() const noexcept { return TYPE_PTR_INT; }
-
   bool is_rvalue() { return rvalue; }
-
   void set_rvalue(bool value) { rvalue = value; }
 
   std::unique_ptr<Expression> to_addr_;
