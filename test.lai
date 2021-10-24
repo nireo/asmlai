@@ -1,9 +1,8 @@
-global char* s;
+global int i;
 
 fn main() => int {
-  s = "hello world";
-  while (*s != 0) {
-    print_char(*s);
-    s = s + 1;
-  }
+  var int i;
+  i = 10;
+
+  return 0;
 }

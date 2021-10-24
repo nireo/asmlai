@@ -501,6 +501,9 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
 
     return compile_ast_node(*deref.to_dereference_, -1, node.Type());
   }
+  case AstType::VarDecl: {
+    return -1;
+  }
   case AstType::IdentifierAction: {
     const auto &ident_action = CAST(IdentifierAction, node);
     const auto &identifier = CAST(Identifier, *ident_action.identifier_);

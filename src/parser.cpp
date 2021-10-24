@@ -789,7 +789,7 @@ std::unique_ptr<Statement> Parser::parse_var_decl() {
   ident->value_ = name;
   var_decl->identifier_ = std::move(ident);
 
-  add_new_local_var(name, var_decl->type_, 0, 0);
+  add_new_local_var(name, var_decl->type_, 0, 1);
 
   if (peek_token_is(tokentypes::LBracket)) {
     next_token();

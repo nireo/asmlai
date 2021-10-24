@@ -6,7 +6,7 @@ This project contains a parser for the `lai` language. Currently it only compile
 ```
 // pointers
 fn swap(a: int*, b: int*) => void {
-   let temp: int;
+   var int temp;
    temp = *a;
    *a = *b;
    *b = temp;
@@ -23,10 +23,11 @@ fn fib(n: int) => int {
 
 // other
 fn main() => void {
-    let i: int = 0;
+    let int i;
+    i = 0;
     while (i != 5) {
         print i;
-        i = i + 1;
+        i++;
     }
 }
 ```

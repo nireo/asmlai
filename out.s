@@ -1,30 +1,20 @@
 	.text
 	.data
-	.globl	s
-s:	.quad	0
-	.text
+	.globl	i
+i:	.long	0
 	.text
 	.globl	main
 	.type	main, @function
 main:
 	pushq	%rbp
 	movq	%rsp, %rbp
-	leaq	L2(%rip), %r8
-	movq	%r8, s(%rip)
+	addq	$-16,%rsp
+	movq	$10, %r8
+	movl	%r8d, -4(%rbp)
+	movq	$0, %r8
+	movl	%r8d, %eax
+	jmp	L1
 L1:
-	addq	$0,%rsp
+	addq	$16,%rsp
 	popq	%rbp
 	ret
-L2:
-	.byte	104
-	.byte	101
-	.byte	108
-	.byte	108
-	.byte	111
-	.byte	32
-	.byte	119
-	.byte	111
-	.byte	114
-	.byte	108
-	.byte	100
-	.byte	0

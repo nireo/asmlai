@@ -358,13 +358,13 @@ void function_start(const std::string &name) {
   stack_offset = (local_offset + 15) & ~15;
 
   std::fprintf(fp,
-               "\t.text\n"
                "\t.globl\t%s\n"
                "\t.type\t%s, @function\n"
                "%s:\n"
                "\tpushq\t%%rbp\n"
-               "\tmovq\t%%rsp, %%rbp\n",
-               name.c_str(), name.c_str(), name.c_str());
+               "\tmovq\t%%rsp, %%rbp\n"
+               "\taddq\t$%d,%%rsp\n",
+               name.c_str(), name.c_str(), name.c_str(), -stack_offset);
 }
 
 void codegen_return(int reg, const Symbol &sym) {
