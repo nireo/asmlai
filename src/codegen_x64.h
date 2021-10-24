@@ -43,5 +43,7 @@ int codegen_invert(int);
 int codegen_neg(int);
 int codegen_not(int);
 void reset_local_offset();
+int get_local_offset(valuetype, bool);
+int load_local(const Symbol&, tokentypes, bool);
 
 #endif

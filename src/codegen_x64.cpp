@@ -560,3 +560,85 @@ int load_global_str(int l) {
 
   return r;
 }
+
+int load_local(const Symbol &sym, tokentypes opr, bool post) {
+  int free_reg = get_register();
+
+  switch (sym.value_type_) {
+  case TYPE_CHAR: {
+    if (!post) {
+      if (opr == tokentypes::Inc) {
+        std::fprintf(fp, "\tincb\t%d(\%%rip)\n", sym.position);
+      }
+
+      if (opr == tokentypes::Dec) {
+        std::fprintf(fp, "\tdecb\t%d(\%%rip)\n", sym.position);
+      }
+    }
+
+    std::fprintf(fp, "\tmovzbq\t%d(\%%rip), %s\n", sym.position,
+                 registers[free_reg].c_str());
+
+    if (post) {
+      if (opr == tokentypes::Inc) {
+        std::fprintf(fp, "\tincb\t%d(\%%rip)\n", sym.position);
+      }
+
+      if (opr == tokentypes::Dec) {
+        std::fprintf(fp, "\tdecb\t%d(\%%rip)\n", sym.position);
+      }
+    }
+
+    break;
+  }
+  case TYPE_INT: {
+    if (!post) {
+      if (opr == tokentypes::Inc)
+        fprintf(fp, "\tincl\t%d(\%%rip)\n", sym.position);
+      if (opr == tokentypes::Dec)
+        fprintf(fp, "\tdecl\t%d(\%%rip)\n", sym.position);
+    }
+
+    std::fprintf(fp, "\tmovzbq\t%d(\%%rip), %s\n", sym.position,
+                 registers[free_reg].c_str());
+
+    if (post) {
+      if (opr == tokentypes::Inc)
+        fprintf(fp, "\tincl\t%d(\%%rip)\n", sym.position);
+      if (opr == tokentypes::Dec)
+        fprintf(fp, "\tdecl\t%d(\%%rip)\n", sym.position);
+    }
+
+    break;
+  }
+  case TYPE_LONG:
+  case TYPE_PTR_CHAR:
+  case TYPE_PTR_LONG:
+  case TYPE_PTR_INT: {
+    if (!post) {
+      if (opr == tokentypes::Inc)
+        fprintf(fp, "\tincq\t%d(\%%rip)\n", sym.position);
+      if (opr == tokentypes::Dec)
+        fprintf(fp, "\tdecq\t%d(\%%rip)\n", sym.position);
+    }
+
+    std::fprintf(fp, "\tmovq\t%d(\%%rip), %s\n", sym.position,
+                 registers[free_reg].c_str());
+
+    if (post) {
+      if (opr == tokentypes::Inc)
+        fprintf(fp, "\tincq\t%d(\%%rip)\n", sym.position);
+      if (opr == tokentypes::Dec)
+        fprintf(fp, "\tdecq\t%d(\%%rip)\n", sym.position);
+    }
+
+    break;
+  }
+  default: {
+    std::fprintf(stderr, "cannot load local.\n");
+    std::exit(1);
+  }
+  }
+
+  return free_reg;
+}

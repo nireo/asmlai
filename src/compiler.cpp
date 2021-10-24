@@ -18,15 +18,16 @@ void reset_local_variables() {
   reset_local_offset();
 }
 
-void add_new_local_var(const std::string &name, valuetype vtype, int position,
+void add_new_local_var(const std::string &name, valuetype vtype, int label,
                        int size) {
+  int position = get_local_offset(vtype, false);
   local_symbols[name] = {
       .name_ = name,
       .st_type = Scope::Local,
       .type_ = TYPE_VARIABLE, // cannot be function
       .value_type_ = vtype,
-      .label = 0,
-      .size = 0,
+      .label = label,
+      .size = size,
       .position = position,
   };
 }
@@ -320,7 +321,13 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
       case AstType::Identifier: {
         const auto &identifier = CAST(Identifier, *infix_exp.right_);
 
-        return store_global(left, get_symbol(identifier.value_));
+        if (local_symbols.find(identifier.value_) == local_symbols.end()) {
+          const auto &sym = local_symbols.at(identifier.value_);
+
+          return store_global(left, get_symbol(identifier.value_));
+        } else {
+          const auto &sym = local_symbols.at(identifier.value_);
+        }
       }
       case AstType::Dereference: {
         const auto &deref = CAST(Dereference, *infix_exp.right_);
@@ -385,8 +392,13 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
                    identifier.value_.c_str());
       std::exit(1);
     }
-
     if (identifier.rvalue || top_type == AstType::Dereference) {
+      if (local_symbols.find(identifier.value_) != local_symbols.end()) {
+        const auto &sym = local_symbols[identifier.value_];
+
+        return load_local(sym, tokentypes::Eof, false);
+      }
+
       return load_global(get_symbol(identifier.value_), tokentypes::Eof, false);
     } else {
       return -1;
