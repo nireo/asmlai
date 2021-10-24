@@ -642,3 +642,29 @@ int load_local(const Symbol &sym, tokentypes opr, bool post) {
 
   return free_reg;
 }
+
+int store_local(const Symbol &sym, int r) {
+  switch (sym.value_type_) {
+  case TYPE_CHAR:
+    std::fprintf(fp, "\tmovb\t%s, %d(%%rbp)\n", b_registers[r].c_str(),
+                 sym.position);
+    break;
+  case TYPE_INT:
+    std::fprintf(fp, "\tmovl\t%s, %d(%%rbp)\n", d_registers[r].c_str(),
+                 sym.position);
+    break;
+  case TYPE_LONG:
+  case TYPE_PTR_CHAR:
+  case TYPE_PTR_INT:
+  case TYPE_PTR_LONG:
+    std::fprintf(fp, "\tmovq\t%s, %d(%%rbp)\n", registers[r].c_str(),
+                 sym.position);
+    break;
+  default: {
+    std::fprintf(stderr, "cannot store local");
+    std::exit(1);
+  }
+  }
+
+  return r;
+}

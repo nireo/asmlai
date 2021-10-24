@@ -45,5 +45,6 @@ int codegen_not(int);
 void reset_local_offset();
 int get_local_offset(valuetype, bool);
 int load_local(const Symbol&, tokentypes, bool);
+int store_local(const Symbol&, int);
 
 #endif

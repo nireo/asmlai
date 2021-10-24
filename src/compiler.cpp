@@ -327,6 +327,7 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
           return store_global(left, get_symbol(identifier.value_));
         } else {
           const auto &sym = local_symbols.at(identifier.value_);
+          return store_local(sym, left);
         }
       }
       case AstType::Dereference: {
