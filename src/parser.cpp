@@ -476,6 +476,9 @@ std::unique_ptr<Expression> Parser::parse_prefix() {
 
     return prefix;
   }
+  case tokentypes::If: {
+    return parse_if_expression();
+  }
   case tokentypes::While: {
     auto while_stmt = std::make_unique<WhileStatement>();
     if (!expect_peek(tokentypes::LParen))
@@ -483,9 +486,6 @@ std::unique_ptr<Expression> Parser::parse_prefix() {
 
     next_token();
     while_stmt->cond_ = parse_expression_rec(LOWEST);
-
-    if (!expect_peek(tokentypes::RParen))
-      return nullptr;
 
     if (!expect_peek(tokentypes::LBrace))
       return nullptr;
@@ -612,35 +612,32 @@ Precedence Parser::current_precedence() {
   return LOWEST;
 }
 
-// std::unique_ptr<Expression> Parser::parse_if_expression() {
-//   auto exp = std::make_unique<IfExpression>();
+std::unique_ptr<Expression> Parser::parse_if_expression() {
+  auto exp = std::make_unique<IfExpression>();
 
-//   if (!expect_peek(tokentypes::LParen))
-//     return nullptr;
+  if (!expect_peek(tokentypes::LParen))
+    return nullptr;
 
-//   next_token();
-//   exp->cond_ = parse_expression(LOWEST).first;
+  next_token();
+  exp->cond_ = parse_expression_rec(LOWEST);
 
-//   if (!expect_peek(tokentypes::RParen))
-//     return nullptr;
+  if (!expect_peek(tokentypes::LBrace))
+    return nullptr;
 
-//   if (!expect_peek(tokentypes::LBrace))
-//     return nullptr;
+  exp->after_ = parse_block_statement();
 
-//   exp->after_ = parse_block_statement();
+  if (peek_token_is(tokentypes::Else)) {
+    next_token();
 
-//   if (peek_token_is(tokentypes::Else)) {
-//     next_token();
+    if (!expect_peek(tokentypes::LBrace)) {
+      return nullptr;
+    }
 
-//     if (!expect_peek(tokentypes::LBrace)) {
-//       return nullptr;
-//     }
+    exp->other_ = parse_block_statement();
+  }
 
-//     exp->other_ = parse_block_statement();
-//   }
-
-//   return exp;
-// }
+  return exp;
+}
 
 std::unique_ptr<BlockStatement> Parser::parse_block_statement() {
   auto block = std::make_unique<BlockStatement>();
@@ -800,8 +797,8 @@ std::unique_ptr<Statement> Parser::parse_var_decl() {
       STOP_EXECUTION("array declaration needs size.");
 
     int size = std::stoi(current_.literal);
-    add_new_symbol(name, TYPE_ARRAY, convert_type_to_pointer(var_decl->type_), 0,
-                   size);
+    add_new_symbol(name, TYPE_ARRAY, convert_type_to_pointer(var_decl->type_),
+                   0, size);
 
     if (!expect_peek(tokentypes::RBracket))
       STOP_EXECUTION("array declration must end in ]");

@@ -599,8 +599,6 @@ int load_local(const Symbol &sym, tokentypes opr, bool post) {
         fprintf(fp, "\tdecl\t%d(\%%rip)\n", sym.position);
     }
 
-    // std::fprintf(fp, "\tmovzbq\t%d(\%%rip), %s\n", sym.position,
-    //              registers[free_reg].c_str());
     std::fprintf(fp, "\tmovslq\t%d(\%%rbp), %s\n", sym.position,
                  registers[free_reg].c_str());
 

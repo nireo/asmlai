@@ -1,7 +1,10 @@
 fn main() => int {
-  var int a;
-  a = 1000;
-  print_num(a);
+  var int i;
+  i = 10;
+
+  if (i == 10) {
+    print_num(i);
+  }
 
   return 0;
 }
