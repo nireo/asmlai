@@ -713,6 +713,13 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
 
   auto ident = std::make_unique<Identifier>();
   ident->value_ = current_.literal;
+
+  if (!expect_peek(tokentypes::Colon)) {
+    return {};
+  }
+
+  auto type = parse_type();
+  next_token();
   params.push_back(std::move(ident));
 
   while (peek_token_is(tokentypes::Comma)) {
@@ -721,6 +728,14 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
 
     auto ident = std::make_unique<Identifier>();
     ident->value_ = current_.literal;
+
+    if (!expect_peek(tokentypes::Colon)) {
+      return {};
+    }
+
+    auto type = parse_type();
+    next_token();
+
     params.push_back(std::move(ident));
   }
 
