@@ -673,6 +673,9 @@ std::unique_ptr<Statement> Parser::parse_function_literal() {
   ident->value_ = name;
   lit->name_ = std::move(ident);
 
+  // reset local variables, since we are inside a new function.
+  reset_local_variables();
+
   if (!expect_peek(tokentypes::LParen))
     return nullptr;
 

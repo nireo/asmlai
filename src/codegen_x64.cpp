@@ -181,7 +181,7 @@ int store_global(int r, const Symbol &sym) {
     break;
   }
   case TYPE_INT: {
-    std::fprintf(fp, "\tmovq\t%s, %s(\%%rip)\n", registers[r].c_str(),
+    std::fprintf(fp, "\tmovl\t%s, %s(\%%rip)\n", d_registers[r].c_str(),
                  sym.name_.c_str());
     break;
   }
@@ -269,7 +269,7 @@ int load_global(const Symbol &sym, tokentypes opr, bool post) {
         fprintf(fp, "\tdecl\t%s(\%%rip)\n", sym.name_.c_str());
     }
 
-    std::fprintf(fp, "\tmovzbq\t%s(\%%rip), %s\n", sym.name_.c_str(),
+    std::fprintf(fp, "\tmovslq\t%s(\%%rip), %s\n", sym.name_.c_str(),
                  registers[free_reg].c_str());
 
     if (post) {
@@ -363,7 +363,7 @@ void function_start(const std::string &name) {
                "%s:\n"
                "\tpushq\t%%rbp\n"
                "\tmovq\t%%rsp, %%rbp\n"
-               "\taddq\t$%d,%%rsp\n",
+               "\taddq\t$%d, %%rsp\n",
                name.c_str(), name.c_str(), name.c_str(), -stack_offset);
 }
 
@@ -599,7 +599,9 @@ int load_local(const Symbol &sym, tokentypes opr, bool post) {
         fprintf(fp, "\tdecl\t%d(\%%rip)\n", sym.position);
     }
 
-    std::fprintf(fp, "\tmovzbq\t%d(\%%rip), %s\n", sym.position,
+    // std::fprintf(fp, "\tmovzbq\t%d(\%%rip), %s\n", sym.position,
+    //              registers[free_reg].c_str());
+    std::fprintf(fp, "\tmovslq\t%d(\%%rbp), %s\n", sym.position,
                  registers[free_reg].c_str());
 
     if (post) {

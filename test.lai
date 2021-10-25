@@ -1,8 +1,7 @@
-global int i;
-
 fn main() => int {
-  var int i;
-  i = 10;
+  var int a;
+  a = 1000;
+  print_num(a);
 
   return 0;
 }

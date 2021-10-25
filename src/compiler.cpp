@@ -322,8 +322,6 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
         const auto &identifier = CAST(Identifier, *infix_exp.right_);
 
         if (local_symbols.find(identifier.value_) == local_symbols.end()) {
-          const auto &sym = local_symbols.at(identifier.value_);
-
           return store_global(left, get_symbol(identifier.value_));
         } else {
           const auto &sym = local_symbols.at(identifier.value_);
