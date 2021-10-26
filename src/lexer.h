@@ -28,9 +28,41 @@ private:
 };
 
 struct LToken {
-  tokentypes type;
-  size_t line;
-  std::string_view literal;
+  tokentypes type_;
+  size_t line_ = 1;
+  std::string_view literal_;
+
+  constexpr LToken() noexcept : type_(tokentypes::Eof){};
+  constexpr LToken(tokentypes t, std::string_view s, size_t ln) noexcept
+      : type_(t), line_(ln), literal_(s){};
+};
+
+struct LLexer {
+  size_t line_ = 1;
+  size_t start_ = 0;
+  size_t curr_ = 0;
+  std::string_view src;
+
+  constexpr explicit LLexer(std::string_view src) noexcept : src(src) {}
+  LToken next_token();
+
+private:
+  LToken ident();
+  LToken num();
+  LToken str();
+  void skip();
+
+  tokentypes ident_type() const;
+  tokentypes check_keyword(size_t begin, size_t length, std::string_view rest,
+                           tokentypes type) const;
+  LToken error_token(std::string_view message) const noexcept;
+  LToken make_token(tokentypes type) const noexcept;
+
+  char advance();
+  bool is_at_end() const noexcept;
+  bool match(char expected);
+  char peek() const;
+  char peek_next() const;
 };
 
 #endif
