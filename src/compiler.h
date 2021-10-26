@@ -7,6 +7,7 @@
 enum class Scope {
   Global,
   Local,
+  Parameter,
 };
 
 enum symboltype {
@@ -25,8 +26,9 @@ struct Symbol {
   int position;
 };
 
-void add_new_local_var(const std::string&, valuetype, int, int);
+void add_new_local_var(const std::string &, valuetype, int, int);
 void reset_local_variables();
+void add_new_param(const std::string &, valuetype, int, int);
 int compile_ast_node(const Node &, int, const AstType);
 const Symbol &get_symbol(const std::string &);
 Symbol &get_symbol_ref(const std::string &);

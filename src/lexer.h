@@ -3,6 +3,7 @@
 
 #include "token.h"
 #include <string>
+#include <string_view>
 
 class Lexer {
 public:
@@ -27,31 +28,9 @@ private:
 };
 
 struct LToken {
-  int line;
-  int length;
-  const char *start;
   tokentypes type;
-};
-
-struct CLexer {
-  int line;
-  const char *start;
-  const char *current;
-
-  char advance();
-  bool is_at_end();
-  bool match(char expected);
-  LToken make_token(tokentypes);
-  LToken error_token(const char *);
-  char peek();
-  char peek_next();
-  void skip_whitespace();
-  LToken check_keyword(int, int, const char *, tokentypes);
-  tokentypes identifier_type();
-  LToken number();
-  LToken identifier();
-  LToken string();
-  LToken scan_token();
+  size_t line;
+  std::string_view literal;
 };
 
 #endif

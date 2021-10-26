@@ -32,6 +32,20 @@ void add_new_local_var(const std::string &name, valuetype vtype, int label,
   };
 }
 
+void add_new_param(const std::string &name, valuetype vtype, int label,
+                   int size) {
+  int position = get_local_offset(vtype, false);
+  local_symbols[name] = {
+      .name_ = name,
+      .st_type = Scope::Parameter,
+      .type_ = TYPE_VARIABLE, // cannot be function
+      .value_type_ = vtype,
+      .label = label,
+      .size = size,
+      .position = position,
+  };
+}
+
 void add_new_symbol(const std::string &name, const symboltype stype,
                     const valuetype vtype) {
   global_symbols[name] = Symbol{
