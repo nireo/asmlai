@@ -65,7 +65,6 @@ private:
   std::unique_ptr<Expression> parse_if_expression();
   std::unique_ptr<BlockStatement> parse_block_statement();
   std::unique_ptr<Statement> parse_function_literal();
-  std::unique_ptr<Expression> parse_string_literal();
 
   std::vector<std::unique_ptr<Identifier>> parse_function_params();
   valuetype parse_type();

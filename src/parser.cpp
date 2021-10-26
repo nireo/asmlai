@@ -29,7 +29,6 @@ std::unique_ptr<Program> Parser::parse_program() {
 
   while (current_.type != tokentypes::Eof) {
     auto stmt = parse_statement();
-    std::cout << "parsing statement" << '\n';
     if (stmt != nullptr) {
       program->statements_.push_back(std::move(stmt));
     } else {
@@ -163,8 +162,6 @@ Parser::parse_call(std::unique_ptr<Expression> ident) {
 
   std::vector<std::unique_ptr<Expression>> arguments_;
   arguments_.push_back(std::move(argument));
-
-  next_token();
 
   return call_exp;
 }
@@ -311,13 +308,10 @@ std::unique_ptr<Expression> Parser::parse_primary() {
     break;
   }
   case tokentypes::String: {
-
     auto strlit = std::make_unique<StringLiteral>();
     auto value = current_.literal;
 
     int label = get_next_label();
-    std::cout << "creating string at label: " << label << '\n';
-    std::cout << "string value: " << value << '\n';
 
     global_str(label, value);
 
@@ -331,55 +325,10 @@ std::unique_ptr<Expression> Parser::parse_primary() {
     auto identifier = parse_identifier();
 
     if (peek_token_is(tokentypes::LParen)) {
-      next_token();
-      next_token();
-
-      auto argument = parse_expression_rec(LOWEST);
-      if (!current_token_is(tokentypes::RParen))
-        STOP_EXECUTION(
-            "function call arguments need to wrapped in parenthesies.");
-
-      auto call_exp = std::make_unique<CallExpression>();
-      call_exp->func_ = std::move(identifier);
-      std::vector<std::unique_ptr<Expression>> arguments_;
-      arguments_.push_back(std::move(argument));
-
-      call_exp->arguments_ = std::move(arguments_);
-
-      result = std::move(call_exp);
+      result = parse_call(std::move(identifier));
       break;
     } else if (peek_token_is(tokentypes::LBracket)) {
-      next_token(); // skip [
-      next_token(); // go to start of index expression
-      // array
-      auto arr = std::make_unique<Addr>();
-      arr->to_addr_ = std::move(identifier);
-
-      auto indx = parse_expression_rec(LOWEST);
-      if (!current_token_is(tokentypes::RBracket))
-        STOP_EXECUTION("array index operation needs to end in a ]\n");
-
-      if (indx->ValueType() != TYPE_INT && indx->ValueType() != TYPE_CHAR &&
-          indx->ValueType() != TYPE_LONG)
-        STOP_EXECUTION("the index expression needs to be an integer.");
-
-      auto index_modified =
-          change_type(std::move(indx), arr->ValueType(), tokentypes::Plus);
-
-      // We build multiple nodes such that we don't need to worry about
-      // creating extra nodes.
-      auto infix = std::make_unique<InfixExpression>();
-      infix->opr = tokentypes::Plus;
-      infix->v_type_ = arr->ValueType();
-      infix->left_ = std::move(arr);
-      if (index_modified.second == nullptr)
-        STOP_EXECUTION("right type cannot be changed.");
-      infix->right_ = std::move(index_modified.second);
-
-      auto deref = std::make_unique<Dereference>();
-      deref->to_dereference_ = std::move(infix);
-
-      result = std::move(deref);
+      result = parse_array(std::move(identifier));
       break;
     } else if (peek_token_is(tokentypes::Inc)) {
       next_token();
@@ -744,48 +693,6 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
 
   return params;
 }
-
-std::unique_ptr<Expression> Parser::parse_string_literal() {
-  auto strlit = std::make_unique<StringLiteral>();
-  auto value = current_.literal;
-
-  int label = get_next_label();
-  global_str(label, value);
-
-  strlit->value_ = value;
-  strlit->id_ = label;
-
-  return strlit;
-}
-
-// std::unique_ptr<Expression> Parser::parse_for_expression() {
-//   auto for_stmt = std::make_unique<ForStatement>();
-
-//   if (!expect_peek(tokentypes::LParen))
-//     return nullptr;
-
-//   for_stmt->assignment_ = parse_let_statement();
-
-//   if (!expect_peek(tokentypes::Semicolon))
-//     return nullptr;
-
-//   for_stmt->cond_ = parse_expression(LOWEST).first;
-
-//   if (!expect_peek(tokentypes::Semicolon))
-//     return nullptr;
-
-//   for_stmt->after_every_ = parse_let_statement();
-
-//   if (!expect_peek(tokentypes::RParen))
-//     return nullptr;
-
-//   if (!expect_peek(tokentypes::LBrace))
-//     return nullptr;
-
-//   for_stmt->body_ = parse_block_statement();
-
-//   return for_stmt;
-// }
 
 std::unique_ptr<Statement> Parser::parse_var_decl() {
   // cannot use var keyword out of function
