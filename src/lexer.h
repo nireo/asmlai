@@ -28,35 +28,34 @@ private:
 };
 
 struct LToken {
-  tokentypes type_;
+  TokenType type;
   size_t line_ = 1;
-  std::string_view literal_;
+  std::string literal_;
 
-  constexpr LToken() noexcept : type_(tokentypes::Eof){};
-  constexpr LToken(tokentypes t, std::string_view s, size_t ln) noexcept
-      : type_(t), line_(ln), literal_(s){};
+  LToken() noexcept : type(TokenType::Eof){};
+  LToken(TokenType t, std::string s, size_t ln) noexcept
+      : type(t), line_(ln), literal_(s){};
 };
 
 struct LLexer {
   size_t line_ = 1;
   size_t start_ = 0;
   size_t curr_ = 0;
-  std::string_view src;
+  std::string src;
 
-  constexpr explicit LLexer(std::string_view src) noexcept : src(src) {}
+  LLexer(std::string src) noexcept : src(src) {}
   LToken next_token();
-
 private:
   LToken ident();
   LToken num();
   LToken str();
   void skip();
 
-  tokentypes ident_type() const;
-  tokentypes check_keyword(size_t begin, size_t length, std::string_view rest,
-                           tokentypes type) const;
-  LToken error_token(std::string_view message) const noexcept;
-  LToken make_token(tokentypes type) const noexcept;
+  TokenType ident_type() const;
+  TokenType check_keyword(size_t begin, size_t length, std::string rest,
+                          TokenType type) const;
+  LToken error_token(std::string message) const noexcept;
+  LToken make_token(TokenType type) const noexcept;
 
   char advance();
   bool is_at_end() const noexcept;

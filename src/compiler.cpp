@@ -136,7 +136,7 @@ static bool is_ptr_type(const valuetype type) {
   return false;
 }
 
-static const valuetype convert_pointer_to_normal(const valuetype type) {
+static valuetype convert_pointer_to_normal(const valuetype type) {
   switch (type) {
   case TYPE_PTR_VOID:
     return TYPE_VOID;
@@ -155,7 +155,7 @@ static const valuetype convert_pointer_to_normal(const valuetype type) {
 
 std::pair<std::unique_ptr<Expression>, std::unique_ptr<Expression>>
 change_type(std::unique_ptr<Expression> exp, valuetype change_type,
-            tokentypes infix_opr) {
+            TokenType infix_opr) {
   auto exp_type = exp->ValueType();
   if (number_type(change_type) && number_type(exp_type)) {
     if (change_type == exp->ValueType())
@@ -177,7 +177,7 @@ change_type(std::unique_ptr<Expression> exp, valuetype change_type,
       return {nullptr, std::move(exp)};
   }
 
-  if (infix_opr == tokentypes::Plus || infix_opr == tokentypes::Minus) {
+  if (infix_opr == TokenType::Plus || infix_opr == TokenType::Minus) {
     if (number_type(exp_type) && is_ptr_type(change_type)) {
       int size = get_bytesize_of_type(convert_pointer_to_normal(change_type));
       if (size > 1) {
@@ -295,42 +295,42 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
     }
 
     switch (infix_exp.opr) {
-    case tokentypes::Plus:
+    case TokenType::Plus:
       return add_registers(left, right);
-    case tokentypes::Minus:
+    case TokenType::Minus:
       return sub_registers(left, right);
-    case tokentypes::Asterisk:
+    case TokenType::Asterisk:
       return mul_registers(left, right);
-    case tokentypes::Slash:
+    case TokenType::Slash:
       return div_registers(left, right);
-    case tokentypes::LT:
-    case tokentypes::EGT:
-    case tokentypes::ELT:
-    case tokentypes::GT:
-    case tokentypes::Eq:
-    case tokentypes::Neq: {
+    case TokenType::LT:
+    case TokenType::EGT:
+    case TokenType::ELT:
+    case TokenType::GT:
+    case TokenType::Eq:
+    case TokenType::Neq: {
       if (top_type == AstType::IfExpression ||
           top_type == AstType::WhileStatement) {
         return codegen_compare_jump(left, right, reg, infix_exp.opr);
       }
       return codegen_compare_no_jump(left, right, infix_exp.opr);
     }
-    case tokentypes::RShift: {
+    case TokenType::RShift: {
       return shift_right_from_reg(left, right);
     }
-    case tokentypes::LShift: {
+    case TokenType::LShift: {
       return shift_left_from_reg(left, right);
     }
-    case tokentypes::LogOr: {
+    case TokenType::LogOr: {
       return codegen_or(left, right);
     }
-    case tokentypes::LogAnd: {
+    case TokenType::LogAnd: {
       return codegen_and(left, right);
     }
-    case tokentypes::Xor: {
+    case TokenType::Xor: {
       return codegen_xor(left, right);
     }
-    case tokentypes::Assign: {
+    case TokenType::Assign: {
       switch (infix_exp.right_->Type()) {
       case AstType::Identifier: {
         const auto &identifier = CAST(Identifier, *infix_exp.right_);
@@ -343,8 +343,6 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
         }
       }
       case AstType::Dereference: {
-        const auto &deref = CAST(Dereference, *infix_exp.right_);
-
         return store_dereference(left, right, infix_exp.right_->ValueType());
       }
       default: {
@@ -409,10 +407,10 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
       if (local_symbols.find(identifier.value_) != local_symbols.end()) {
         const auto &sym = local_symbols[identifier.value_];
 
-        return load_local(sym, tokentypes::Eof, false);
+        return load_local(sym, TokenType::Eof, false);
       }
 
-      return load_global(get_symbol(identifier.value_), tokentypes::Eof, false);
+      return load_global(get_symbol(identifier.value_), TokenType::Eof, false);
     } else {
       return -1;
     }
@@ -455,11 +453,11 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
   case AstType::PrefixExpression: {
     const auto &pref = CAST(PrefixExpression, node);
     switch (pref.opr) {
-    case tokentypes::Amper: {
+    case TokenType::Amper: {
       const auto &identifier = CAST(Identifier, *pref.right_);
       return codegen_addr(get_symbol(identifier.value_));
     }
-    case tokentypes::Asterisk: {
+    case TokenType::Asterisk: {
       int right = compile_ast_node(*pref.right_, -1, node.Type());
       if (pref.right_->is_rvalue()) {
         return codegen_dereference(right, pref.right_->ValueType());
@@ -467,12 +465,12 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
 
       return right;
     }
-    case tokentypes::Minus: {
+    case TokenType::Minus: {
       int right = compile_ast_node(*pref.right_, -1, node.Type());
 
       return codegen_neg(right);
     }
-    case tokentypes::Bang: {
+    case TokenType::Bang: {
       int right = compile_ast_node(*pref.right_, -1, node.Type());
 
       return codegen_not(right);
@@ -521,12 +519,12 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
     const auto &identifier = CAST(Identifier, *ident_action.identifier_);
 
     switch (ident_action.action_) {
-    case tokentypes::Inc: {
-      return load_global(get_symbol(identifier.value_), tokentypes::Inc,
+    case TokenType::Inc: {
+      return load_global(get_symbol(identifier.value_), TokenType::Inc,
                          ident_action.post_);
     }
-    case tokentypes::Dec: {
-      return load_global(get_symbol(identifier.value_), tokentypes::Dec,
+    case TokenType::Dec: {
+      return load_global(get_symbol(identifier.value_), TokenType::Dec,
                          ident_action.post_);
     }
     default:

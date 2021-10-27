@@ -40,7 +40,7 @@ void add_new_symbol(const std::string &, const symboltype, const valuetype, int,
 bool symbol_exists(const std::string &);
 bool check_type_compatible(const valuetype, const valuetype, bool noleft);
 std::pair<std::unique_ptr<Expression>, std::unique_ptr<Expression>>
-    change_type(std::unique_ptr<Expression>, valuetype, tokentypes);
+    change_type(std::unique_ptr<Expression>, valuetype, TokenType);
 int get_next_label();
 
 #endif

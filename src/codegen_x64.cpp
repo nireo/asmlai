@@ -42,19 +42,19 @@ int get_local_offset(valuetype type, bool param) {
   return (-local_offset);
 }
 
-static int get_corresponding_inst_index(const tokentypes type) {
+static int get_corresponding_inst_index(const TokenType type) {
   switch (type) {
-  case tokentypes::Eq:
+  case TokenType::Eq:
     return 0;
-  case tokentypes::Neq:
+  case TokenType::Neq:
     return 1;
-  case tokentypes::LT:
+  case TokenType::LT:
     return 2;
-  case tokentypes::GT:
+  case TokenType::GT:
     return 3;
-  case tokentypes::ELT:
+  case TokenType::ELT:
     return 4;
-  case tokentypes::EGT:
+  case TokenType::EGT:
     return 5;
   default:
     std::fprintf(stderr, "no free registers\n");
@@ -231,17 +231,17 @@ void generate_sym(const Symbol &sym) {
   }
 }
 
-int load_global(const Symbol &sym, tokentypes opr, bool post) {
+int load_global(const Symbol &sym, TokenType opr, bool post) {
   int free_reg = get_register();
 
   switch (sym.value_type_) {
   case TYPE_CHAR: {
     if (!post) {
-      if (opr == tokentypes::Inc) {
+      if (opr == TokenType::Inc) {
         std::fprintf(fp, "\tincb\t%s(\%%rip)\n", sym.name_.c_str());
       }
 
-      if (opr == tokentypes::Dec) {
+      if (opr == TokenType::Dec) {
         std::fprintf(fp, "\tdecb\t%s(\%%rip)\n", sym.name_.c_str());
       }
     }
@@ -250,11 +250,11 @@ int load_global(const Symbol &sym, tokentypes opr, bool post) {
                  registers[free_reg].c_str());
 
     if (post) {
-      if (opr == tokentypes::Inc) {
+      if (opr == TokenType::Inc) {
         std::fprintf(fp, "\tincb\t%s(\%%rip)\n", sym.name_.c_str());
       }
 
-      if (opr == tokentypes::Dec) {
+      if (opr == TokenType::Dec) {
         std::fprintf(fp, "\tdecb\t%s(\%%rip)\n", sym.name_.c_str());
       }
     }
@@ -263,9 +263,9 @@ int load_global(const Symbol &sym, tokentypes opr, bool post) {
   }
   case TYPE_INT: {
     if (!post) {
-      if (opr == tokentypes::Inc)
+      if (opr == TokenType::Inc)
         fprintf(fp, "\tincl\t%s(\%%rip)\n", sym.name_.c_str());
-      if (opr == tokentypes::Dec)
+      if (opr == TokenType::Dec)
         fprintf(fp, "\tdecl\t%s(\%%rip)\n", sym.name_.c_str());
     }
 
@@ -273,9 +273,9 @@ int load_global(const Symbol &sym, tokentypes opr, bool post) {
                  registers[free_reg].c_str());
 
     if (post) {
-      if (opr == tokentypes::Inc)
+      if (opr == TokenType::Inc)
         fprintf(fp, "\tincl\t%s(\%%rip)\n", sym.name_.c_str());
-      if (opr == tokentypes::Dec)
+      if (opr == TokenType::Dec)
         fprintf(fp, "\tdecl\t%s(\%%rip)\n", sym.name_.c_str());
     }
 
@@ -286,9 +286,9 @@ int load_global(const Symbol &sym, tokentypes opr, bool post) {
   case TYPE_PTR_LONG:
   case TYPE_PTR_INT: {
     if (!post) {
-      if (opr == tokentypes::Inc)
+      if (opr == TokenType::Inc)
         fprintf(fp, "\tincq\t%s(\%%rip)\n", sym.name_.c_str());
-      if (opr == tokentypes::Dec)
+      if (opr == TokenType::Dec)
         fprintf(fp, "\tdecq\t%s(\%%rip)\n", sym.name_.c_str());
     }
 
@@ -296,9 +296,9 @@ int load_global(const Symbol &sym, tokentypes opr, bool post) {
                  registers[free_reg].c_str());
 
     if (post) {
-      if (opr == tokentypes::Inc)
+      if (opr == TokenType::Inc)
         fprintf(fp, "\tincq\t%s(\%%rip)\n", sym.name_.c_str());
-      if (opr == tokentypes::Dec)
+      if (opr == TokenType::Dec)
         fprintf(fp, "\tdecq\t%s(\%%rip)\n", sym.name_.c_str());
     }
 
@@ -313,7 +313,7 @@ int load_global(const Symbol &sym, tokentypes opr, bool post) {
   return free_reg;
 }
 
-int codegen_compare_no_jump(int reg1, int reg2, const tokentypes type) {
+int codegen_compare_no_jump(int reg1, int reg2, const TokenType type) {
   auto index = get_corresponding_inst_index(type);
 
   std::fprintf(fp, "\tcmpq\t%s, %s\n", registers[reg2].c_str(),
@@ -328,7 +328,7 @@ int codegen_compare_no_jump(int reg1, int reg2, const tokentypes type) {
   return reg2;
 }
 
-int codegen_compare_jump(int reg1, int reg2, int label, const tokentypes type) {
+int codegen_compare_jump(int reg1, int reg2, int label, const TokenType type) {
   auto index = get_corresponding_inst_index(type);
 
   std::fprintf(fp, "\tcmpq\t%s, %s\n", registers[reg2].c_str(),
@@ -539,7 +539,7 @@ int store_dereference(int reg1, int reg2, valuetype type) {
 
 void global_str(int l, const std::string &value) {
   gen_label(l);
-  for (int i = 0; i < value.length(); i++) {
+  for (size_t i = 0; i < value.length(); i++) {
     std::fprintf(fp, "\t.byte\t%d\n", value[i]);
   }
 
@@ -561,17 +561,17 @@ int load_global_str(int l) {
   return r;
 }
 
-int load_local(const Symbol &sym, tokentypes opr, bool post) {
+int load_local(const Symbol &sym, TokenType opr, bool post) {
   int free_reg = get_register();
 
   switch (sym.value_type_) {
   case TYPE_CHAR: {
     if (!post) {
-      if (opr == tokentypes::Inc) {
+      if (opr == TokenType::Inc) {
         std::fprintf(fp, "\tincb\t%d(\%%rip)\n", sym.position);
       }
 
-      if (opr == tokentypes::Dec) {
+      if (opr == TokenType::Dec) {
         std::fprintf(fp, "\tdecb\t%d(\%%rip)\n", sym.position);
       }
     }
@@ -580,11 +580,11 @@ int load_local(const Symbol &sym, tokentypes opr, bool post) {
                  registers[free_reg].c_str());
 
     if (post) {
-      if (opr == tokentypes::Inc) {
+      if (opr == TokenType::Inc) {
         std::fprintf(fp, "\tincb\t%d(\%%rip)\n", sym.position);
       }
 
-      if (opr == tokentypes::Dec) {
+      if (opr == TokenType::Dec) {
         std::fprintf(fp, "\tdecb\t%d(\%%rip)\n", sym.position);
       }
     }
@@ -593,9 +593,9 @@ int load_local(const Symbol &sym, tokentypes opr, bool post) {
   }
   case TYPE_INT: {
     if (!post) {
-      if (opr == tokentypes::Inc)
+      if (opr == TokenType::Inc)
         fprintf(fp, "\tincl\t%d(\%%rip)\n", sym.position);
-      if (opr == tokentypes::Dec)
+      if (opr == TokenType::Dec)
         fprintf(fp, "\tdecl\t%d(\%%rip)\n", sym.position);
     }
 
@@ -603,9 +603,9 @@ int load_local(const Symbol &sym, tokentypes opr, bool post) {
                  registers[free_reg].c_str());
 
     if (post) {
-      if (opr == tokentypes::Inc)
+      if (opr == TokenType::Inc)
         fprintf(fp, "\tincl\t%d(\%%rip)\n", sym.position);
-      if (opr == tokentypes::Dec)
+      if (opr == TokenType::Dec)
         fprintf(fp, "\tdecl\t%d(\%%rip)\n", sym.position);
     }
 
@@ -616,9 +616,9 @@ int load_local(const Symbol &sym, tokentypes opr, bool post) {
   case TYPE_PTR_LONG:
   case TYPE_PTR_INT: {
     if (!post) {
-      if (opr == tokentypes::Inc)
+      if (opr == TokenType::Inc)
         fprintf(fp, "\tincq\t%d(\%%rip)\n", sym.position);
-      if (opr == tokentypes::Dec)
+      if (opr == TokenType::Dec)
         fprintf(fp, "\tdecq\t%d(\%%rip)\n", sym.position);
     }
 
@@ -626,9 +626,9 @@ int load_local(const Symbol &sym, tokentypes opr, bool post) {
                  registers[free_reg].c_str());
 
     if (post) {
-      if (opr == tokentypes::Inc)
+      if (opr == TokenType::Inc)
         fprintf(fp, "\tincq\t%d(\%%rip)\n", sym.position);
-      if (opr == tokentypes::Dec)
+      if (opr == TokenType::Dec)
         fprintf(fp, "\tdecq\t%d(\%%rip)\n", sym.position);
     }
 

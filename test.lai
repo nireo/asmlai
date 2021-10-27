@@ -1,4 +1,4 @@
-fn main() => int {
+func main() => int {
   var int i;
   i = 10;
 

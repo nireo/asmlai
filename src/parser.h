@@ -22,27 +22,27 @@ enum Precedence {
   INDEX,
 };
 
-static std::unordered_map<tokentypes, Precedence> precedences = {
-    {tokentypes::Eq, EQUALS},      {tokentypes::Neq, EQUALS},
-    {tokentypes::LT, LESSGREATER}, {tokentypes::GT, LESSGREATER},
-    {tokentypes::Plus, SUM},       {tokentypes::Minus, SUM},
-    {tokentypes::Slash, PRODUCT},  {tokentypes::Asterisk, PRODUCT},
-    {tokentypes::LParen, CALL},    {tokentypes::LBracket, INDEX},
-    {tokentypes::Xor, SINGLE},     {tokentypes::Or, SINGLE},
-    {tokentypes::Amper, SINGLE},   {tokentypes::LShift, SHIFT},
-    {tokentypes::RShift, SHIFT},
+static std::unordered_map<TokenType, Precedence> precedences = {
+    {TokenType::Eq, EQUALS},      {TokenType::Neq, EQUALS},
+    {TokenType::LT, LESSGREATER}, {TokenType::GT, LESSGREATER},
+    {TokenType::Plus, SUM},       {TokenType::Minus, SUM},
+    {TokenType::Slash, PRODUCT},  {TokenType::Asterisk, PRODUCT},
+    {TokenType::LParen, CALL},    {TokenType::LBracket, INDEX},
+    {TokenType::Xor, SINGLE},     {TokenType::Or, SINGLE},
+    {TokenType::Amper, SINGLE},   {TokenType::LShift, SHIFT},
+    {TokenType::RShift, SHIFT},
 };
 
 class Parser {
 public:
-  Parser(std::unique_ptr<Lexer> lx);
+  Parser(std::unique_ptr<LLexer> lx);
   std::unique_ptr<Program> parse_program();
   std::vector<std::string> errors() const;
 
 private:
-  std::unique_ptr<Lexer> lx_;
-  Token current_;
-  Token peek_;
+  std::unique_ptr<LLexer> lx_;
+  LToken current_;
+  LToken peek_;
 
   void next_token();
 
@@ -72,9 +72,9 @@ private:
   Precedence peek_precedence();
   Precedence current_precedence();
 
-  bool expect_peek(tokentypes tt);
-  bool peek_token_is(tokentypes tt);
-  bool current_token_is(tokentypes tt);
+  bool expect_peek(TokenType tt);
+  bool peek_token_is(TokenType tt);
+  bool current_token_is(TokenType tt);
 };
 
 #endif

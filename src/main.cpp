@@ -5,10 +5,8 @@
 #include "parser.h"
 #include <sstream>
 
-int
-main(int argc, char *argv[])
-{
-  if(argc != 2) {
+int main(int argc, char *argv[]) {
+  if (argc != 2) {
     printf("usage: lai [input_file]\n");
     return EXIT_FAILURE;
   }
@@ -19,10 +17,9 @@ main(int argc, char *argv[])
   std::stringstream buffer;
   buffer << t.rdbuf();
 
-  auto lexer = Lexer(buffer.str());
-  auto parser = Parser(std::make_unique<Lexer>(lexer));
+  auto lexer = LLexer(buffer.str());
+  auto parser = Parser(std::make_unique<LLexer>(lexer));
   auto program = parser.parse_program();
-
 
   init_out_file();
   gen_start();

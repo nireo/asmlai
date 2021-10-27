@@ -112,7 +112,7 @@ public:
 
   valuetype ValueType() const noexcept { return TYPE_VOID; }
 
-  tokentypes type;
+  TokenType type;
   valuetype v_type;
   std::unique_ptr<Identifier> name_;
   std::unique_ptr<Expression> value_;
@@ -165,9 +165,9 @@ public:
   AstType Type() const noexcept { return AstType::PrefixExpression; }
 
   valuetype ValueType() const noexcept {
-    if (opr == tokentypes::Amper) {
+    if (opr == TokenType::Amper) {
       return TYPE_PTR_INT;
-    } else if (opr == tokentypes::Asterisk) {
+    } else if (opr == TokenType::Asterisk) {
       return TYPE_INT;
     }
 
@@ -175,7 +175,7 @@ public:
   }
 
   bool rvalue = false;
-  tokentypes opr;
+  TokenType opr;
   std::unique_ptr<Expression> right_;
 };
 
@@ -189,7 +189,7 @@ public:
 
   valuetype ValueType() const noexcept { return v_type_; }
 
-  tokentypes opr;
+  TokenType opr;
   std::unique_ptr<Expression> right_;
   std::unique_ptr<Expression> left_;
   valuetype v_type_ = TYPE_VOID;
@@ -387,7 +387,7 @@ public:
 
   void set_rvalue(bool value) { rvalue = value; }
 
-  tokentypes action_;
+  TokenType action_;
   std::unique_ptr<Expression> identifier_;
   bool rvalue = false;
   bool post_ = false;

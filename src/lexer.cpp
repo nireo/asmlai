@@ -1,6 +1,7 @@
 #include "lexer.h"
 #include "token.h"
 #include <cctype>
+#include <iostream>
 #include <stdlib.h>
 #include <string.h>
 
@@ -27,14 +28,14 @@ void Lexer::read_char() {
   read_pos_++;
 }
 
-Token new_token(tokentypes type, char ch) {
+Token new_token(TokenType type, char ch) {
   return Token{type, std::string(1, ch)};
 }
 
-tokentypes lookup_ident(const std::string &str) {
+TokenType lookup_ident(const std::string &str) {
   auto keyword = TokenKeywords.find(str);
   if (keyword == TokenKeywords.end())
-    return tokentypes::Ident;
+    return TokenType::Ident;
   return keyword->second;
 }
 
@@ -46,145 +47,145 @@ Token Lexer::next_token() {
   switch (ch_) {
   case '=':
     if (peek_char() == '=') {
-      tok = Token{.type = tokentypes::Eq, .literal = "=="};
+      tok = Token{.type = TokenType::Eq, .literal = "=="};
       read_char();
     } else if (peek_char() == '>') {
-      tok = Token{.type = tokentypes::Arrow, .literal = "=>"};
+      tok = Token{.type = TokenType::Arrow, .literal = "=>"};
       read_char();
     } else {
-      tok = new_token(tokentypes::Assign, ch_);
+      tok = new_token(TokenType::Assign, ch_);
     }
     read_char();
     break;
   case ';':
-    tok = new_token(tokentypes::Semicolon, ch_);
+    tok = new_token(TokenType::Semicolon, ch_);
     read_char();
     break;
   case ':':
-    tok = new_token(tokentypes::Colon, ch_);
+    tok = new_token(TokenType::Colon, ch_);
     read_char();
     break;
   case '(':
-    tok = new_token(tokentypes::LParen, ch_);
+    tok = new_token(TokenType::LParen, ch_);
     read_char();
     break;
   case ')':
-    tok = new_token(tokentypes::RParen, ch_);
+    tok = new_token(TokenType::RParen, ch_);
     read_char();
     break;
   case '[':
-    tok = new_token(tokentypes::LBracket, ch_);
+    tok = new_token(TokenType::LBracket, ch_);
     read_char();
     break;
   case ']':
-    tok = new_token(tokentypes::RBracket, ch_);
+    tok = new_token(TokenType::RBracket, ch_);
     read_char();
     break;
   case ',':
-    tok = new_token(tokentypes::Comma, ch_);
+    tok = new_token(TokenType::Comma, ch_);
     read_char();
     break;
   case '+':
     if (peek_char() == '+') {
-      tok = Token{.type = tokentypes::Inc, .literal = "++"};
+      tok = Token{.type = TokenType::Inc, .literal = "++"};
       read_char();
     } else {
-      tok = new_token(tokentypes::Plus, ch_);
+      tok = new_token(TokenType::Plus, ch_);
     }
     read_char();
     break;
   case '-':
     if (peek_char() == '-') {
-      tok = Token{.type = tokentypes::Minus, .literal = "--"};
+      tok = Token{.type = TokenType::Minus, .literal = "--"};
       read_char();
     } else {
-      tok = new_token(tokentypes::Minus, ch_);
+      tok = new_token(TokenType::Minus, ch_);
     }
     read_char();
     break;
   case '!':
     if (peek_char() == '=') {
-      tok = Token{.type = tokentypes::Neq, .literal = "!="};
+      tok = Token{.type = TokenType::Neq, .literal = "!="};
       read_char();
     } else {
-      tok = new_token(tokentypes::Bang, ch_);
+      tok = new_token(TokenType::Bang, ch_);
     }
     read_char();
     break;
   case '/':
-    tok = new_token(tokentypes::Slash, ch_);
+    tok = new_token(TokenType::Slash, ch_);
     read_char();
     break;
   case '*':
-    tok = new_token(tokentypes::Asterisk, ch_);
+    tok = new_token(TokenType::Asterisk, ch_);
     read_char();
     break;
   case '<':
     if (peek_char() == '=') {
-      tok = Token{.type = tokentypes::ELT, .literal = "<="};
+      tok = Token{.type = TokenType::ELT, .literal = "<="};
       read_char();
     } else if (peek_char() == '<') {
-      tok = Token{.type = tokentypes::LShift, .literal = "<<"};
+      tok = Token{.type = TokenType::LShift, .literal = "<<"};
       read_char();
     } else {
-      tok = new_token(tokentypes::LT, ch_);
+      tok = new_token(TokenType::LT, ch_);
     }
     read_char();
     break;
   case '>':
     if (peek_char() == '=') {
-      tok = Token{.type = tokentypes::EGT, .literal = ">="};
+      tok = Token{.type = TokenType::EGT, .literal = ">="};
       read_char();
     } else if (peek_char() == '>') {
-      tok = Token{.type = tokentypes::RShift, .literal = ">>"};
+      tok = Token{.type = TokenType::RShift, .literal = ">>"};
       read_char();
     } else {
-      tok = new_token(tokentypes::GT, ch_);
+      tok = new_token(TokenType::GT, ch_);
     }
     read_char();
     break;
   case '{':
-    tok = new_token(tokentypes::LBrace, ch_);
+    tok = new_token(TokenType::LBrace, ch_);
     read_char();
     break;
   case '}':
-    tok = new_token(tokentypes::RBrace, ch_);
+    tok = new_token(TokenType::RBrace, ch_);
     read_char();
     break;
   case '^':
-    tok = new_token(tokentypes::Xor, ch_);
+    tok = new_token(TokenType::Xor, ch_);
     read_char();
     break;
   case '~':
-    tok = new_token(tokentypes::Invert, ch_);
+    tok = new_token(TokenType::Invert, ch_);
     read_char();
     break;
   case '&':
     if (peek_char() == '&') {
-      tok = Token{.type = tokentypes::LogAnd, .literal = "&&"};
+      tok = Token{.type = TokenType::LogAnd, .literal = "&&"};
       read_char();
     } else {
-      tok = new_token(tokentypes::Amper, ch_);
+      tok = new_token(TokenType::Amper, ch_);
     }
     read_char();
     break;
   case '|':
     if (peek_char() == '|') {
-      tok = Token{.type = tokentypes::LogOr, .literal = "||"};
+      tok = Token{.type = TokenType::LogOr, .literal = "||"};
       read_char();
     } else {
-      tok = new_token(tokentypes::Or, ch_);
+      tok = new_token(TokenType::Or, ch_);
     }
     read_char();
     break;
   case '"':
-    tok.type = tokentypes::String;
+    tok.type = TokenType::String;
     tok.literal = read_string();
     read_char();
     break;
   case 0:
     tok.literal = "";
-    tok.type = tokentypes::Eof;
+    tok.type = TokenType::Eof;
     read_char();
     break;
   default:
@@ -192,10 +193,10 @@ Token Lexer::next_token() {
       tok.literal = read_ident();
       tok.type = lookup_ident(tok.literal);
     } else if (is_digit(ch_)) {
-      tok.type = tokentypes::Int;
+      tok.type = TokenType::Int;
       tok.literal = read_number();
     } else {
-      tok = new_token(tokentypes::Illegal, ch_);
+      tok = new_token(TokenType::Illegal, ch_);
       read_char();
     }
     break;
@@ -255,7 +256,7 @@ LToken LLexer::next_token() {
 
   start_ = curr_;
   if (is_at_end())
-    return make_token(tokentypes::Eof);
+    return make_token(TokenType::Eof);
 
   auto c = advance();
   if (std::isalpha(c))
@@ -263,40 +264,67 @@ LToken LLexer::next_token() {
   if (std::isdigit(c))
     return num();
 
+  std::cout << c << '\n';
+
   switch (c) {
   case '(':
-    return make_token(tokentypes::LParen);
+    return make_token(TokenType::LParen);
   case ')':
-    return make_token(tokentypes::RParen);
+    return make_token(TokenType::RParen);
   case '{':
-    return make_token(tokentypes::LBrace);
+    return make_token(TokenType::LBrace);
   case '}':
-    return make_token(tokentypes::RBrace);
+    return make_token(TokenType::RBrace);
   case ';':
-    return make_token(tokentypes::Semicolon);
+    return make_token(TokenType::Semicolon);
+  case '|':
+    return make_token(match('|') ? TokenType::LogOr : TokenType::Or);
   case ',':
-    return make_token(tokentypes::Comma);
+    return make_token(TokenType::Comma);
   case '-':
-    return make_token(tokentypes::Minus);
+    return make_token(match('-') ? TokenType::Dec : TokenType::Minus);
   case '+':
-    return make_token(tokentypes::Plus);
+    return make_token(match('+') ? TokenType::Inc : TokenType::Plus);
   case '/':
-    return make_token(tokentypes::Slash);
+    return make_token(TokenType::Slash);
   case '*':
-    return make_token(tokentypes::Asterisk);
+    return make_token(TokenType::Asterisk);
   case '&':
-    return make_token(tokentypes::Amper);
+    return make_token(TokenType::Amper);
+  case '~':
+    return make_token(TokenType::Invert);
   case '!':
-    return make_token(match('=') ? tokentypes::Neq : tokentypes::Bang);
+    return make_token(match('=') ? TokenType::Neq : TokenType::Bang);
   case '=':
-    return make_token(match('=') ? tokentypes::Eq : tokentypes::Assign);
+    if (match('>')) {
+      return make_token(TokenType::Arrow);
+    } else if (match('=')) {
+      return make_token(TokenType::Eq);
+    }
+
+    return make_token(TokenType::Assign);
+  case '^':
+    return make_token(TokenType::Xor);
   case '<':
-    return make_token(match('=') ? tokentypes::ELT : tokentypes::LT);
+    if (match('=')) {
+      return make_token(TokenType::ELT);
+    } else if ('<') {
+      return make_token(TokenType::LShift);
+    }
+
+    return make_token(TokenType::LT);
   case '>':
-    return make_token(match('=') ? tokentypes::EGT : tokentypes::GT);
+    if (match('=')) {
+      return make_token(TokenType::ELT);
+    } else if ('>') {
+      return make_token(TokenType::RShift);
+    }
+
+    return make_token(TokenType::GT);
   case '"':
     return str();
   }
+
   return error_token("Unexpected character.");
 }
 
@@ -316,7 +344,7 @@ LToken LLexer::num() {
       advance();
   }
 
-  return make_token(tokentypes::Int);
+  return make_token(TokenType::Int);
 }
 
 LToken LLexer::str() {
@@ -330,7 +358,7 @@ LToken LLexer::str() {
     return error_token("unterminated string");
 
   advance();
-  return make_token(tokentypes::String);
+  return make_token(TokenType::String);
 }
 
 void LLexer::skip() {
@@ -360,51 +388,75 @@ void LLexer::skip() {
   }
 }
 
-tokentypes LLexer::ident_type() const {
+TokenType LLexer::ident_type() const {
   switch (src.at(start_)) {
   case 'e':
-    return check_keyword(1, 3, "lse", tokentypes::Else);
+    return check_keyword(1, 3, "lse", TokenType::Else);
   case 'f':
     if (curr_ - start_ > 1) {
       switch (src.at(start_ + 1)) {
       case 'a':
-        return check_keyword(2, 3, "lse", tokentypes::False);
+        return check_keyword(2, 3, "lse", TokenType::False);
       case 'o':
-        return check_keyword(2, 1, "r", tokentypes::For);
-      case 'n':
-        return tokentypes::Function;
+        return check_keyword(2, 1, "r", TokenType::For);
+      case 'u':
+        return check_keyword(2, 2, "nc", TokenType::Function);
       }
     }
     break;
   case 'i':
-    return check_keyword(1, 1, "f", tokentypes::If);
+    if (curr_ - start_ > 1) {
+      switch (src.at(start_ + 1)) {
+      case 'n':
+        return check_keyword(2, 1, "t", TokenType::IntType);
+      case 'f':
+        return TokenType::If;
+      }
+    }
+    break;
+  case 'c':
+    return check_keyword(1, 3, "har", TokenType::CharType);
   case 'r':
-    return check_keyword(1, 5, "eturn", tokentypes::Return);
+    return check_keyword(1, 5, "eturn", TokenType::Return);
+  case 'l':
+    return check_keyword(1, 2, "et", TokenType::Let);
   case 'v':
-    return check_keyword(1, 2, "ar", tokentypes::Var);
+    if (curr_ - start_ > 1) {
+      switch (src.at(start_ + 1)) {
+      case 'a':
+        return check_keyword(2, 1, "r", TokenType::Var);
+      case 'o':
+        return check_keyword(2, 2, "id", TokenType::Void);
+      }
+    }
+    break;
+  case 'g':
+    return check_keyword(1, 5, "lobal", TokenType::Global);
+  case 's':
+    return check_keyword(1, 5, "tring", TokenType::StringType);
   case 'w':
-    return check_keyword(1, 4, "hile", tokentypes::While);
+    return check_keyword(1, 4, "hile", TokenType::While);
   default:
     break;
   }
 
-  return tokentypes::Ident;
+  return TokenType::Ident;
 }
 
-tokentypes LLexer::check_keyword(size_t begin, size_t length,
-                                 std::string_view rest, tokentypes type) const {
+TokenType LLexer::check_keyword(size_t begin, size_t length, std::string rest,
+                                TokenType type) const {
   if (curr_ - start_ == begin + length &&
       src.substr(start_ + begin, length) == rest)
     return type;
 
-  return tokentypes::Ident;
+  return TokenType::Ident;
 }
 
-LToken LLexer::error_token(std::string_view message) const noexcept {
-  return LToken(tokentypes::Eof, message, line_);
+LToken LLexer::error_token(std::string message) const noexcept {
+  return LToken(TokenType::Eof, message, line_);
 }
 
-LToken LLexer::make_token(tokentypes type) const noexcept {
+LToken LLexer::make_token(TokenType type) const noexcept {
   size_t length = curr_ - start_;
   return LToken(type, src.substr(start_, length), line_);
 }
@@ -435,6 +487,5 @@ char LLexer::peek() const {
 char LLexer::peek_next() const {
   if (is_at_end() || curr_ + 1 == src.length())
     return '\0';
-
   return src.at(curr_ + 1);
 }

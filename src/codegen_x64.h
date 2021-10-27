@@ -17,10 +17,10 @@ void gen_start();
 void end_codegen();
 int store_global(int, const Symbol &);
 void generate_sym(const Symbol &);
-int load_global(const Symbol &, tokentypes, bool);
+int load_global(const Symbol &, TokenType, bool);
 void free_all_registers();
-int codegen_compare_no_jump(int, int, const tokentypes);
-int codegen_compare_jump(int, int, int, const tokentypes);
+int codegen_compare_no_jump(int, int, const TokenType);
+int codegen_compare_jump(int, int, int, const TokenType);
 void gen_jmp(int);
 void gen_label(int);
 void function_start(const std::string &);
@@ -44,7 +44,7 @@ int codegen_neg(int);
 int codegen_not(int);
 void reset_local_offset();
 int get_local_offset(valuetype, bool);
-int load_local(const Symbol&, tokentypes, bool);
+int load_local(const Symbol&, TokenType, bool);
 int store_local(const Symbol&, int);
 
 #endif
