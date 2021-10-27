@@ -5,7 +5,7 @@
 #include "token.h"
 #include <string>
 
-int get_bytesize_of_type(valuetype);
+int get_bytesize_of_type(ValueT);
 int load_into_register(int);
 int mul_registers(int, int);
 int div_registers(int, int);
@@ -28,11 +28,11 @@ void function_end(int);
 int codegen_call(int, const std::string &);
 void codegen_return(int, const Symbol &);
 int codegen_addr(const Symbol &);
-int codegen_dereference(int, const valuetype);
+int codegen_dereference(int, const ValueT);
 int shift_left(int, int);
 int codegen_load_int(int);
-int store_dereference(int, int, valuetype);
-void global_str(int, const std::string&);
+int store_dereference(int, int, ValueT);
+void global_str(int, const std::string &);
 int load_global_str(int);
 int shift_right_from_reg(int, int);
 int shift_left_from_reg(int, int);
@@ -43,8 +43,8 @@ int codegen_invert(int);
 int codegen_neg(int);
 int codegen_not(int);
 void reset_local_offset();
-int get_local_offset(valuetype, bool);
-int load_local(const Symbol&, TokenType, bool);
-int store_local(const Symbol&, int);
+int get_local_offset(ValueT, bool);
+int load_local(const Symbol &, TokenType, bool);
+int store_local(const Symbol &, int);
 
 #endif

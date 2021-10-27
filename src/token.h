@@ -4,7 +4,8 @@
 #include <string>
 #include <unordered_map>
 
-enum class TokenType {
+enum class TokenType
+{
   Illegal,
   Eof,
   Ident,
@@ -64,20 +65,13 @@ enum class TokenType {
   Var,
 };
 
-struct Token {
+struct Token
+{
   TokenType type;
   std::string literal;
 };
 
 const std::unordered_map<std::string, TokenType> TokenKeywords = {
-    {"fn", TokenType::Function},     {"let", TokenType::Let},
-    {"true", TokenType::True},       {"false", TokenType::False},
-    {"if", TokenType::If},           {"else", TokenType::Else},
-    {"return", TokenType::Return},   {"int", TokenType::IntType},
-    {"char", TokenType::CharType},   {"string", TokenType::StringType},
-    {"float", TokenType::FloatType}, {"print", TokenType::Print},
-    {"while", TokenType::While},     {"for", TokenType::For},
-    {"void", TokenType::Void},       {"global", TokenType::Global},
-    {"var", TokenType::Var}};
+    {"fn", TokenType::Function}, {"let", TokenType::Let}, {"true", TokenType::True}, {"false", TokenType::False}, {"if", TokenType::If}, {"else", TokenType::Else}, {"return", TokenType::Return}, {"int", TokenType::IntType}, {"char", TokenType::CharType}, {"string", TokenType::StringType}, {"float", TokenType::FloatType}, {"print", TokenType::Print}, {"while", TokenType::While}, {"for", TokenType::For}, {"void", TokenType::Void}, {"global", TokenType::Global}, {"var", TokenType::Var}};
 
 #endif
