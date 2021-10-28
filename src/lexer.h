@@ -5,31 +5,7 @@
 #include <string>
 #include <string_view>
 
-class Lexer
-{
-public:
-  Lexer(const std::string &input);
-  Token next_token();
-  int line;
-
-private:
-  std::string input_;
-  int pos_;
-  char ch_;
-  int read_pos_;
-
-  std::string read_ident();
-  std::string read_number();
-  std::string read_string();
-
-  void read_char();
-  void skip_whitespace();
-
-  char peek_char();
-};
-
-struct LToken
-{
+struct LToken {
   TokenType type;
   size_t line_ = 1;
   std::string literal_;
@@ -39,8 +15,7 @@ struct LToken
       : type(t), line_(ln), literal_(s){};
 };
 
-struct LLexer
-{
+struct LLexer {
   size_t line_ = 1;
   size_t start_ = 0;
   size_t curr_ = 0;

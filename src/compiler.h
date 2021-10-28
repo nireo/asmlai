@@ -4,22 +4,19 @@
 #include "ast.h"
 #include "token.h"
 
-enum class Scope
-{
+enum class Scope {
   Global,
   Local,
   Parameter,
 };
 
-enum symboltype
-{
+enum symboltype {
   TYPE_VARIABLE,
   TYPE_FUNCTION,
   TYPE_ARRAY,
 };
 
-struct Symbol
-{
+struct Symbol {
   std::string name_;
   Scope st_type;
   symboltype type_;
@@ -36,8 +33,7 @@ int compile_ast_node(const Node &, int, const AstType);
 const Symbol &get_symbol(const std::string &);
 Symbol &get_symbol_ref(const std::string &);
 void add_new_symbol(const std::string &, const symboltype, const ValueT);
-void add_new_symbol(const std::string &, const symboltype, const ValueT,
-                    int);
+void add_new_symbol(const std::string &, const symboltype, const ValueT, int);
 void add_new_symbol(const std::string &, const symboltype, const ValueT, int,
                     int);
 bool symbol_exists(const std::string &);

@@ -5,10 +5,8 @@
 #include "parser.h"
 #include <sstream>
 
-int main(int argc, char *argv[])
-{
-  if (argc != 2)
-  {
+int main(int argc, char *argv[]) {
+  if (argc != 2) {
     printf("usage: lai [input_file]\n");
     return EXIT_FAILURE;
   }
