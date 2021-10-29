@@ -9,9 +9,18 @@
 
 static std::FILE *fp = nullptr;
 static bool free_registers[4];
-static const std::string registers[4] = {"%r8", "%r9", "%r10", "%r11"};
-static const std::string b_registers[4] = {"%r8b", "%r9b", "%r10b", "%r11b"};
-static const std::string d_registers[4] = {"%r8d", "%r9d", "%r10d", "%r11d"};
+static const std::string registers[10] = {"%r10", "%r11", "%r12", "%r13",
+                                          "%r9",  "%r8",  "%rcx", "%rdx",
+                                          "%rsi", "rdi"};
+
+static const std::string b_registers[10] = {"%r10b", "%r11b", "%r12b", "%r13b",
+                                            "%r9b",  "%r8b",  "%cl",   "%dl",
+                                            "%sil",  "%dil"};
+
+static const std::string d_registers[10] = {"%r10d", "%r11d", "%r12d", "%r13d",
+                                            "%r9d",  "%r8d",  "%ecx",  "%edx",
+                                            "%esi",  "%edi"};
+
 static const std::string jump_insts[] = {"jne", "je", "jge", "jle", "jg", "jl"};
 static const std::string compare_instructions[] = {"sete", "setne", "setl",
                                                    "setg", "setle", "setge"};
@@ -355,16 +364,44 @@ void gen_jmp(int label) { std::fprintf(fp, "\tjmp\tL%d\n", label); }
 
 void function_start(const std::string &name) {
   textseg();
-  stack_offset = (local_offset + 15) & ~15;
+  local_offset = 0;
 
   std::fprintf(fp,
                "\t.globl\t%s\n"
                "\t.type\t%s, @function\n"
                "%s:\n"
                "\tpushq\t%%rbp\n"
-               "\tmovq\t%%rsp, %%rbp\n"
-               "\taddq\t$%d, %%rsp\n",
-               name.c_str(), name.c_str(), name.c_str(), -stack_offset);
+               "\tmovq\t%%rsp, %%rbp\n",
+               name.c_str(), name.c_str(), name.c_str());
+
+  int param_register = 9;
+  int count = 0;
+  auto &locals = get_symbol_table(Scope::Local);
+  for (auto &[s, sym] : locals) {
+    if (sym.st_type != Scope::Parameter)
+      continue;
+
+    if (count < 6) {
+      break;
+    }
+    ++count;
+
+    sym.position = get_local_offset(sym.value_type_, false);
+    store_local(sym, param_register--);
+  }
+
+  int param_offset = 16;
+  for (auto &[s, sym] : locals) {
+    if (sym.st_type == Scope::Parameter) {
+      sym.position = param_offset;
+      param_offset += 8;
+    } else {
+      sym.position = get_local_offset(sym.value_type_, false);
+    }
+  }
+
+  stack_offset = (local_offset + 15) & ~15;
+  std::fprintf(fp, "\taddq\t$%d, %%rsp\n", -stack_offset);
 }
 
 void codegen_return(int reg, const Symbol &sym) {

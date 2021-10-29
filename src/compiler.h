@@ -3,6 +3,8 @@
 
 #include "ast.h"
 #include "token.h"
+#include <string>
+#include <unordered_map>
 
 enum class Scope {
   Global,
@@ -26,6 +28,7 @@ struct Symbol {
   int position;
 };
 
+std::unordered_map<std::string, Symbol> &get_symbol_table(Scope);
 void add_new_local_var(const std::string &, ValueT, int, int);
 void reset_local_variables();
 void add_new_param(const std::string &, ValueT, int, int);
