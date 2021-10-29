@@ -12,7 +12,6 @@
 
 std::unordered_map<std::string, Symbol> global_symbols;
 std::unordered_map<std::string, Symbol> local_symbols;
-std::unordered_map<std::string, Symbol> param_symbols;
 
 std::unordered_map<std::string, Symbol> &get_symbol_table(Scope scp) {
   switch (scp) {
@@ -21,9 +20,6 @@ std::unordered_map<std::string, Symbol> &get_symbol_table(Scope scp) {
   }
   case Scope::Local: {
     return local_symbols;
-  }
-  case Scope::Parameter: {
-    return param_symbols;
   }
   default:
     std::fprintf(stderr, "cannot find symbol table for given scope.\n");
@@ -38,7 +34,6 @@ void reset_local_variables() {
 
 void add_new_local_var(const std::string &name, ValueT vtype, int label,
                        int size) {
-  int position = get_local_offset(vtype, false);
   local_symbols[name] = {
       .name_ = name,
       .st_type = Scope::Local,
@@ -46,20 +41,20 @@ void add_new_local_var(const std::string &name, ValueT vtype, int label,
       .value_type_ = vtype,
       .label = label,
       .size = size,
-      .position = position,
+      .position = 0,
   };
 }
 
-void add_new_param(const std::string &name, ValueT vtype, int label, int size) {
-  int position = get_local_offset(vtype, false);
-  param_symbols[name] = {
+void add_new_param_var(const std::string &name, ValueT vtype, int label,
+                       int size) {
+  local_symbols[name] = {
       .name_ = name,
       .st_type = Scope::Parameter,
       .type_ = TYPE_VARIABLE, // cannot be function
       .value_type_ = vtype,
       .label = label,
       .size = size,
-      .position = position,
+      .position = 0,
   };
 }
 

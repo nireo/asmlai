@@ -679,7 +679,7 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
 
   // the parameters are stored in the local table meaning that they will be
   // overwritten after a function.
-  add_new_param(ident->value_, type, 0, 1);
+  add_new_param_var(ident->value_, type, 0, 1);
 
   next_token();
   params.push_back(std::move(ident));
@@ -697,7 +697,7 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
     }
 
     auto type = parse_type();
-    add_new_param(ident->value_, type, 0, 1);
+    add_new_param_var(ident->value_, type, 0, 1);
     next_token();
 
     params.push_back(std::move(ident));
