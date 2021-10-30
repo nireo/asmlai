@@ -679,9 +679,7 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
 
   params.push_back(std::move(ident));
 
-  while (peek_token_is(TokenType::Comma)) {
-    next_token();
-
+  while (current_token_is(TokenType::Comma)) {
     auto type = parse_type();
     next_token();
     next_token();

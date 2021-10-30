@@ -1,9 +1,9 @@
-func fib(int n) => int {
+func fib(int n, int b) => int {
   return 10;
 }
 
 func main() => int {
-  print_num(fib(10));
+  print_num(10);
 
   return 0;
 }
