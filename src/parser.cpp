@@ -51,6 +51,8 @@ Parser::Parser(std::unique_ptr<LLexer> lx) {
 void Parser::next_token() {
   current_ = peek_;
   peek_ = lx_->next_token();
+
+  std::cout << "current: " << current_.literal_ << ' ' << "peek: " << peek_.literal_ << '\n';
 }
 
 std::unique_ptr<Statement> Parser::parse_statement() {
@@ -147,22 +149,38 @@ static ValueT v_from_token(const TokenType type) {
   }
 }
 
+std::vector<std::unique_ptr<Expression>> Parser::parse_expression_list() {
+  std::vector<std::unique_ptr<Expression>> exprs;
+
+  while (current_.type != TokenType::RParen) {
+    exprs.push_back(parse_expression_rec(LOWEST));
+    if (current_token_is(TokenType::Comma)) {
+      next_token();
+    } else if (current_token_is(TokenType::RParen)) {
+    } else {
+      STOP_EXECUTION("need ',' or ')' after list of expressions");
+    }
+  }
+
+  return exprs;
+}
+
 std::unique_ptr<Expression>
 Parser::parse_call(std::unique_ptr<Expression> ident) {
   next_token();
   next_token();
 
+  auto arguments_ = parse_expression_list();
   auto argument = parse_expression_rec(LOWEST);
   if (!current_token_is(TokenType::RParen))
     STOP_EXECUTION(
         "function call arguments needs to be wrapped in parenthesies.");
 
+  next_token();
+
   auto call_exp = std::make_unique<CallExpression>();
-
   call_exp->func_ = std::move(ident);
-
-  std::vector<std::unique_ptr<Expression>> arguments_;
-  arguments_.push_back(std::move(argument));
+  call_exp->arguments_ = std::move(arguments_);
 
   return call_exp;
 }
@@ -366,7 +384,8 @@ std::unique_ptr<Expression> Parser::parse_primary() {
   }
   default:
     STOP_EXECUTION(
-        "unrecognized token when parsing primary expression factor. ")
+        "unrecognized token when parsing primary expression factor. %s",
+        current_.literal_.c_str())
   }
 
   next_token();

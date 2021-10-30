@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+static bool is_alpha(char c) {
+  return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+}
+
 LToken LLexer::next_token() {
   skip();
 
@@ -13,7 +17,7 @@ LToken LLexer::next_token() {
     return make_token(TokenType::Eof);
 
   auto c = advance();
-  if (std::isalpha(c) || c == '_')
+  if (is_alpha(c))
     return ident();
   if (std::isdigit(c))
     return num();
@@ -83,8 +87,9 @@ LToken LLexer::next_token() {
 }
 
 LToken LLexer::ident() {
-  while (std::isalnum(peek()) || peek() == '_')
+  while (is_alpha(peek()))
     advance();
+
   return make_token(ident_type());
 }
 

@@ -46,7 +46,6 @@ class Parser
 public:
   Parser(std::unique_ptr<LLexer> lx);
   std::unique_ptr<Program> parse_program();
-  std::vector<std::string> errors() const;
 
 private:
   std::unique_ptr<LLexer> lx_;
@@ -75,6 +74,7 @@ private:
   std::unique_ptr<BlockStatement> parse_block_statement();
   std::unique_ptr<Statement> parse_function_literal();
 
+  std::vector<std::unique_ptr<Expression>> parse_expression_list();
   std::vector<std::unique_ptr<Identifier>> parse_function_params();
   ValueT parse_type();
 

@@ -1,0 +1,1 @@
+/usr/bin/c++ -Wall -Wextra CMakeFiles/asmlai.dir/src/codegen_x64.cpp.o CMakeFiles/asmlai.dir/src/compiler.cpp.o CMakeFiles/asmlai.dir/src/lexer.cpp.o CMakeFiles/asmlai.dir/src/parser.cpp.o CMakeFiles/asmlai.dir/src/main.cpp.o -o asmlai 

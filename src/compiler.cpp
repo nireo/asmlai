@@ -395,9 +395,15 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
     const auto &call_exp = CAST(CallExpression, node);
     const auto &identifier = CAST(Identifier, *call_exp.func_);
 
-    int left_reg = compile_ast_node(*call_exp.arguments_[0], -1, node.Type());
+    auto sz = call_exp.arguments_.size();
+    int size = 1;
+    for (size_t i = sz - 1; sz >= 0; --sz) {
+      int reg = compile_ast_node(*call_exp.arguments_[i], -1, node.Type());
+      copy_argument(reg, size++);
 
-    return codegen_call(left_reg, identifier.value_);
+      free_all_registers();
+    }
+    return codegen_call(identifier.value_, size);
   }
   case AstType::AssingmentStatement: {
     const auto &assigment = CAST(AssignmentStatement, node);

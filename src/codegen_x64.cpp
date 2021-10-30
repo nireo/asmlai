@@ -424,13 +424,13 @@ void codegen_return(int reg, const Symbol &sym) {
   gen_jmp(sym.label);
 }
 
-int codegen_call(int reg, const std::string &name) {
+int codegen_call(const std::string &name, int argument_count) {
   int outer = get_register();
-  std::fprintf(fp, "\tmovq\t%s, %%rdi\n", registers[reg].c_str());
+  // std::fprintf(fp, "\tmovq\t%s, %%rdi\n", registers[reg].c_str());
   std::fprintf(fp, "\tcall\t%s\n", name.c_str());
+  if (argument_count > 6)
+    std::fprintf(fp, "\taddq\t$%d, %%rsp\n", 8 * (argument_count - 6));
   std::fprintf(fp, "\tmovq\t%%rax, %s\n", registers[outer].c_str());
-
-  free_register(reg);
 
   return outer;
 }
@@ -678,6 +678,15 @@ int load_local(const Symbol &sym, TokenType opr, bool post) {
   }
 
   return free_reg;
+}
+
+void copy_argument(int r, int pos) {
+  if (pos > 6) {
+    std::fprintf(fp, "\tpushq\t%s\n", registers[r].c_str());
+  } else {
+    std::fprintf(fp, "\tmovq\t%s, %s\n", registers[r].c_str(),
+                 registers[9 - pos + 1].c_str());
+  }
 }
 
 int store_local(const Symbol &sym, int r) {

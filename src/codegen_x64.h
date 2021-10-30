@@ -25,7 +25,7 @@ void gen_jmp(int);
 void gen_label(int);
 void function_start(const std::string &);
 void function_end(int);
-int codegen_call(int, const std::string &);
+int codegen_call(const std::string &, int);
 void codegen_return(int, const Symbol &);
 int codegen_addr(const Symbol &);
 int codegen_dereference(int, const ValueT);
@@ -46,5 +46,6 @@ void reset_local_offset();
 int get_local_offset(ValueT, bool);
 int load_local(const Symbol &, TokenType, bool);
 int store_local(const Symbol &, int);
+void copy_argument(int, int);
 
 #endif
