@@ -13,12 +13,10 @@ LToken LLexer::next_token() {
     return make_token(TokenType::Eof);
 
   auto c = advance();
-  if (std::isalpha(c))
+  if (std::isalpha(c) || c == '_')
     return ident();
   if (std::isdigit(c))
     return num();
-
-  std::cout << c << '\n';
 
   switch (c) {
   case '(':
@@ -31,6 +29,8 @@ LToken LLexer::next_token() {
     return make_token(TokenType::RBrace);
   case ';':
     return make_token(TokenType::Semicolon);
+  case ':':
+    return make_token(TokenType::Colon);
   case '|':
     return make_token(match('|') ? TokenType::LogOr : TokenType::Or);
   case ',':
@@ -83,7 +83,7 @@ LToken LLexer::next_token() {
 }
 
 LToken LLexer::ident() {
-  while (std::isalnum(peek()))
+  while (std::isalnum(peek()) || peek() == '_')
     advance();
   return make_token(ident_type());
 }

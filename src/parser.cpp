@@ -660,31 +660,29 @@ std::unique_ptr<Statement> Parser::parse_function_literal() {
 
 std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
   std::vector<std::unique_ptr<Identifier>> params;
-  if (peek_token_is(TokenType::LParen)) {
+  if (peek_token_is(TokenType::RParen)) {
     next_token();
     return params;
   }
 
+  auto type = parse_type();
   next_token();
 
+  next_token();
   auto ident = std::make_unique<Identifier>();
   ident->value_ = "";
   ident->value_ += current_.literal_;
-
-  if (!expect_peek(TokenType::Colon)) {
-    return {};
-  }
-
-  auto type = parse_type();
 
   // the parameters are stored in the local table meaning that they will be
   // overwritten after a function.
   add_new_param_var(ident->value_, type, 0, 1);
 
-  next_token();
   params.push_back(std::move(ident));
 
   while (peek_token_is(TokenType::Comma)) {
+    next_token();
+
+    auto type = parse_type();
     next_token();
     next_token();
 
@@ -692,19 +690,18 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
     ident->value_ = "";
     ident->value_ += current_.literal_;
 
-    if (!expect_peek(TokenType::Colon)) {
-      return {};
-    }
-
-    auto type = parse_type();
     add_new_param_var(ident->value_, type, 0, 1);
-    next_token();
 
     params.push_back(std::move(ident));
   }
 
-  if (!expect_peek(TokenType::RParen))
-    return std::vector<std::unique_ptr<Identifier>>();
+  std::cout << peek_.literal_ << '\n';
+  std::cout << current_.literal_ << '\n';
+
+  if (!current_token_is(TokenType::RParen)) {
+    STOP_EXECUTION(
+        "function parameters need to be followed by right parenthesis\n.");
+  }
 
   return params;
 }

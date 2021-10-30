@@ -1,6 +1,9 @@
+func fib(int n) => int {
+  return 10;
+}
+
 func main() => int {
-  var int i;
-  i = 10;
+  print_num(fib(10));
 
   return 0;
 }
