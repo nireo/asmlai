@@ -23,6 +23,7 @@ static std::stack<std::string> latest_function_identifers;
 
 std::unique_ptr<Program> Parser::parse_program() {
   add_new_symbol("print_num", TYPE_FUNCTION, TYPE_CHAR);
+  add_new_symbol("print", TYPE_FUNCTION, TYPE_CHAR);
   add_new_symbol("print_char", TYPE_FUNCTION, TYPE_CHAR);
 
   auto program = std::make_unique<Program>();
@@ -52,7 +53,8 @@ void Parser::next_token() {
   current_ = peek_;
   peek_ = lx_->next_token();
 
-  std::cout << "current: " << current_.literal_ << ' ' << "peek: " << peek_.literal_ << '\n';
+  std::cout << "current: " << current_.literal_ << " peek: " << peek_.literal_
+            << '\n';
 }
 
 std::unique_ptr<Statement> Parser::parse_statement() {
@@ -171,12 +173,9 @@ Parser::parse_call(std::unique_ptr<Expression> ident) {
   next_token();
 
   auto arguments_ = parse_expression_list();
-  auto argument = parse_expression_rec(LOWEST);
   if (!current_token_is(TokenType::RParen))
     STOP_EXECUTION(
         "function call arguments needs to be wrapped in parenthesies.");
-
-  next_token();
 
   auto call_exp = std::make_unique<CallExpression>();
   call_exp->func_ = std::move(ident);
@@ -646,7 +645,7 @@ std::unique_ptr<Statement> Parser::parse_function_literal() {
   lit->name_ = std::move(ident);
 
   // reset local variables, since we are inside a new function.
-  reset_local_variables();
+  // reset_local_variables();
 
   if (!expect_peek(TokenType::LParen))
     return nullptr;
@@ -687,10 +686,8 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
   auto type = parse_type();
   next_token();
 
-  next_token();
   auto ident = std::make_unique<Identifier>();
-  ident->value_ = "";
-  ident->value_ += current_.literal_;
+  ident->value_ = current_.literal_;
 
   // the parameters are stored in the local table meaning that they will be
   // overwritten after a function.
@@ -704,18 +701,14 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
     next_token();
 
     auto ident = std::make_unique<Identifier>();
-    ident->value_ = "";
-    ident->value_ += current_.literal_;
+    ident->value_ = current_.literal_;
 
     add_new_param_var(ident->value_, type, 0, 1);
 
     params.push_back(std::move(ident));
   }
 
-  std::cout << peek_.literal_ << '\n';
-  std::cout << current_.literal_ << '\n';
-
-  if (!current_token_is(TokenType::RParen)) {
+  if (!expect_peek(TokenType::RParen)) {
     STOP_EXECUTION(
         "function parameters need to be followed by right parenthesis\n.");
   }

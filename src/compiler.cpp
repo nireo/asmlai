@@ -88,12 +88,16 @@ void add_new_symbol(const std::string &name, const symboltype stype,
 }
 
 const Symbol &get_symbol(const std::string &name) {
-  if (global_symbols.find(name) == global_symbols.end()) {
-    std::fprintf(stderr, "symbol with name '%s' not found\n", name.c_str());
-    std::exit(1);
+  if (local_symbols.find(name) != local_symbols.end()) {
+    return local_symbols[name];
   }
 
-  return global_symbols[name];
+  if (global_symbols.find(name) != global_symbols.end()) {
+    return global_symbols[name];
+  }
+
+  std::fprintf(stderr, "symbol with name '%s' not found\n", name.c_str());
+  std::exit(1);
 }
 
 Symbol &get_symbol_ref(const std::string &name) {
@@ -395,10 +399,11 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
     const auto &call_exp = CAST(CallExpression, node);
     const auto &identifier = CAST(Identifier, *call_exp.func_);
 
-    auto sz = call_exp.arguments_.size();
+    auto sz = (int)call_exp.arguments_.size();
     int size = 1;
-    for (size_t i = sz - 1; sz >= 0; --sz) {
-      int reg = compile_ast_node(*call_exp.arguments_[i], -1, node.Type());
+    for (int i = sz - 1; i >= 0; --i) {
+      int reg = compile_ast_node(*call_exp.arguments_[i], -1,
+                                 call_exp.arguments_[i]->Type());
       copy_argument(reg, size++);
 
       free_all_registers();
@@ -415,11 +420,6 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
   case AstType::Identifier: {
     const auto &identifier = CAST(Identifier, node);
 
-    if (global_symbols.find(identifier.value_) == global_symbols.end()) {
-      std::fprintf(stderr, "identifier '%s' not found\n",
-                   identifier.value_.c_str());
-      std::exit(1);
-    }
     if (identifier.rvalue || top_type == AstType::Dereference) {
       if (local_symbols.find(identifier.value_) != local_symbols.end()) {
         const auto &sym = local_symbols[identifier.value_];

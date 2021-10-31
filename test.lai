@@ -1,6 +1,9 @@
+func xd(int n) => void {
+  print_num(n);
+}
+
 func main() => int {
-  var int a;
-  a = 100;
+  xd(100);
 
   return 0;
 }
