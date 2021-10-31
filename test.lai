@@ -2,7 +2,5 @@ func main() => int {
   var int a;
   a = 100;
 
-  print_num(a);
-
   return 0;
 }
