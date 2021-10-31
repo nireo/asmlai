@@ -24,22 +24,6 @@ constexpr const char *jump_insts[] = {"jne", "je", "jge", "jle", "jg", "jl"};
 constexpr const char *compare_instructions[] = {"sete", "setne", "setl",
                                                 "setg", "setle", "setge"};
 
-enum { no_seg, text_seg, data_seg } curr_seg = no_seg;
-
-void textseg() {
-  if (curr_seg != data_seg) {
-    std::fputs("\t.text\n", fp);
-    curr_seg = text_seg;
-  }
-}
-
-void dataseg() {
-  if (curr_seg != data_seg) {
-    std::fputs("\t.data\n", fp);
-    curr_seg = data_seg;
-  }
-}
-
 static int local_offset;
 static int stack_offset;
 void reset_local_offset() { local_offset = 0; }
@@ -47,7 +31,7 @@ void reset_local_offset() { local_offset = 0; }
 int get_local_offset(ValueT type) {
   local_offset +=
       (get_bytesize_of_type(type) > 4) ? get_bytesize_of_type(type) : 4;
-  return (-local_offset);
+  return -local_offset;
 }
 
 static int get_corresponding_inst_index(const TokenType type) {
@@ -88,6 +72,22 @@ int get_bytesize_of_type(ValueT type) {
     std::fprintf(stderr, "type not found.");
     std::exit(1);
   }
+  }
+}
+
+enum { no_seg, text_seg, data_seg } curr_seg = no_seg;
+
+void textseg() {
+  if (curr_seg != data_seg) {
+    std::fputs("\t.text\n", fp);
+    curr_seg = text_seg;
+  }
+}
+
+void dataseg() {
+  if (curr_seg != data_seg) {
+    std::fputs("\t.data\n", fp);
+    curr_seg = data_seg;
   }
 }
 
@@ -369,18 +369,15 @@ void function_start(const std::string &name) {
                nc, nc, nc);
 
   int param_register = 9;
-  int count = 0;
   auto &locals = get_symbol_table(Scope::Local);
   for (auto &[s, sym] : locals) {
     if (sym.st_type != Scope::Parameter)
       continue;
 
-    if (count < 6) {
-      break;
-    }
-    ++count;
+    std::cout << s << '\n';
 
     sym.position = get_local_offset(sym.value_type_);
+    std::cout << sym.position;
     store_local(sym, param_register--);
   }
 
@@ -671,6 +668,7 @@ void copy_argument(int r, int pos) {
 }
 
 int store_local(const Symbol &sym, int r) {
+  std::cout << ' ' << sym.position << '\n';
   switch (sym.value_type_) {
   case TYPE_CHAR:
     std::fprintf(fp, "\tmovb\t%s, %d(%%rbp)\n", b_registers[r], sym.position);
