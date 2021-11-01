@@ -2,7 +2,7 @@ func xd(int n) => void {
   print_num(n);
 }
 
-func main() => int {
+func () => int {
   xd(100);
 
   return 0;

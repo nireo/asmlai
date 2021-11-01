@@ -13,9 +13,11 @@
 #include "parser.h"
 #include "token.h"
 
-#define STOP_EXECUTION(message, ...)                                           \
+#define PARSER_ERROR(message, ...)                                             \
   do {                                                                         \
+    std::fprintf(stderr, "[line %d] ", (int)lx_->line_);                       \
     std::fprintf(stderr, message, ##__VA_ARGS__);                              \
+    std::fprintf(stderr, "\n");                                                \
     std::exit(1);                                                              \
   } while (false);
 
@@ -33,7 +35,7 @@ std::unique_ptr<Program> Parser::parse_program() {
     if (stmt != nullptr) {
       program->statements_.push_back(std::move(stmt));
     } else {
-      STOP_EXECUTION("error parsing statement\n");
+      PARSER_ERROR("error parsing statement\n");
     }
     next_token();
   }
@@ -85,7 +87,8 @@ static ValueT convert_type_to_pointer(const ValueT type) {
     return TYPE_PTR_LONG;
   }
   default:
-    STOP_EXECUTION("cannot convert type: %d into pointer\n", type);
+    std::fprintf(stderr, "cannot convert type: %d into pointer\n", type);
+    std::exit(1);
   }
 }
 
@@ -106,7 +109,7 @@ ValueT Parser::parse_type() {
     break;
   }
   default:
-    STOP_EXECUTION("cannot parser type for token: %d \n", peek_.type);
+    PARSER_ERROR("cannot parser type for token: %d \n", peek_.type);
   }
 
   while (true) {
@@ -134,19 +137,6 @@ bool Parser::expect_peek(TokenType tt) {
   return false;
 }
 
-static ValueT v_from_token(const TokenType type) {
-  switch (type) {
-  case TokenType::Void:
-    return TYPE_VOID;
-  case TokenType::IntType:
-    return TYPE_INT;
-  case TokenType::CharType:
-    return TYPE_CHAR;
-  default:
-    STOP_EXECUTION("cannot convert token type into value.\n");
-  }
-}
-
 std::vector<std::unique_ptr<Expression>> Parser::parse_expression_list() {
   std::vector<std::unique_ptr<Expression>> exprs;
 
@@ -156,7 +146,7 @@ std::vector<std::unique_ptr<Expression>> Parser::parse_expression_list() {
       next_token();
     } else if (current_token_is(TokenType::RParen)) {
     } else {
-      STOP_EXECUTION("need ',' or ')' after list of expressions");
+      PARSER_ERROR("need ',' or ')' after list of expressions");
     }
   }
 
@@ -170,7 +160,7 @@ Parser::parse_call(std::unique_ptr<Expression> ident) {
 
   auto arguments_ = parse_expression_list();
   if (!current_token_is(TokenType::RParen))
-    STOP_EXECUTION(
+    PARSER_ERROR(
         "function call arguments needs to be wrapped in parenthesies.");
 
   auto call_exp = std::make_unique<CallExpression>();
@@ -189,11 +179,11 @@ Parser::parse_array(std::unique_ptr<Expression> ident) {
 
   auto indx = parse_expression_rec(LOWEST);
   if (!current_token_is(TokenType::RBracket))
-    STOP_EXECUTION("array index operation needs to end in a ]\n");
+    PARSER_ERROR("array index operation needs to end in a ]\n");
 
   if (indx->ValueType() != TYPE_INT && indx->ValueType() != TYPE_CHAR &&
       indx->ValueType() != TYPE_LONG)
-    STOP_EXECUTION("the index expression needs to be an integer.");
+    PARSER_ERROR("the index expression needs to be an integer.");
 
   auto index_modified =
       change_type(std::move(indx), arr->ValueType(), TokenType::Plus);
@@ -203,7 +193,7 @@ Parser::parse_array(std::unique_ptr<Expression> ident) {
   infix->v_type_ = arr->ValueType();
   infix->left_ = std::move(arr);
   if (index_modified.second == nullptr)
-    STOP_EXECUTION("right type cannot be changed.");
+    PARSER_ERROR("right type cannot be changed.");
   infix->right_ = std::move(index_modified.second);
 
   auto deref = std::make_unique<Dereference>();
@@ -248,30 +238,24 @@ std::unique_ptr<Expression> Parser::parse_postfix() {
 std::unique_ptr<Statement> Parser::parse_let_statement() {
   auto letstmt = std::make_unique<LetStatement>();
 
-  if (!expect_peek(TokenType::Ident)) {
-    return nullptr;
-  }
+  if (!expect_peek(TokenType::Ident))
+    PARSER_ERROR("let statement should be followed by an identifier.");
 
   auto ident = std::make_unique<Identifier>();
-  std::string name = "";
-  name += current_.literal_;
-
+  std::string name = current_.literal_;
   ident->value_ = name;
 
-  if (!expect_peek(TokenType::Colon)) {
-    return nullptr;
-  }
+  if (!expect_peek(TokenType::Colon))
+    PARSER_ERROR("let statement identifier should be followed by a colon.");
 
   letstmt->v_type = parse_type();
 
-  if (!expect_peek(TokenType::Assign)) {
-    return nullptr;
-  }
+  if (!expect_peek(TokenType::Assign))
+    PARSER_ERROR("let type should be followed by an assign token.");
   next_token();
 
-  if (!symbol_exists(ident->value_)) {
+  if (!symbol_exists(ident->value_))
     add_new_symbol(ident->value_, TYPE_VARIABLE, letstmt->v_type);
-  }
 
   letstmt->name_ = std::move(ident);
 
@@ -302,7 +286,7 @@ std::unique_ptr<Statement> Parser::parse_return_statement() {
 
   auto value = parse_expression_rec(LOWEST);
   if (!check_type_compatible(function_return_type_, value->ValueType(), false))
-    STOP_EXECUTION("return value doesn't match functions return type\n");
+    PARSER_ERROR("return value doesn't match functions return type\n");
   returnstmt->return_value_ = std::move(value);
 
   return returnstmt;
@@ -373,12 +357,12 @@ std::unique_ptr<Expression> Parser::parse_primary() {
 
     auto expr = parse_expression_rec(LOWEST);
     if (!current_token_is(TokenType::RParen))
-      STOP_EXECUTION("expected right paren after");
+      PARSER_ERROR("expected right paren after");
 
     return expr;
   }
   default:
-    STOP_EXECUTION(
+    PARSER_ERROR(
         "unrecognized token when parsing primary expression factor. %s",
         current_.literal_.c_str())
   }
@@ -394,7 +378,7 @@ std::unique_ptr<Expression> Parser::parse_prefix() {
 
     auto right = parse_prefix();
     if (right->Type() != AstType::Identifier)
-      STOP_EXECUTION("ampersand cannot be used for nothing but identifiers.\n");
+      PARSER_ERROR("ampersand cannot be used for nothing but identifiers.\n");
 
     auto addr_exp = std::make_unique<Addr>();
     addr_exp->to_addr_ = std::move(right);
@@ -406,7 +390,7 @@ std::unique_ptr<Expression> Parser::parse_prefix() {
 
     auto right = parse_prefix();
     if (right->Type() != AstType::Identifier)
-      STOP_EXECUTION("ampersand cannot be used for nothing but identifiers.\n");
+      PARSER_ERROR("ampersand cannot be used for nothing but identifiers.\n");
 
     auto deref_exp = std::make_unique<Dereference>();
     deref_exp->to_dereference_ = std::move(right);
@@ -420,7 +404,7 @@ std::unique_ptr<Expression> Parser::parse_prefix() {
 
     auto right = parse_prefix();
     if (right->Type() != AstType::Identifier)
-      STOP_EXECUTION("cannot increment/decrement a non-identifier.");
+      PARSER_ERROR("cannot increment/decrement a non-identifier.");
 
     auto identifier_action = std::make_unique<IdentifierAction>();
     identifier_action->identifier_ = std::move(right);
@@ -448,13 +432,14 @@ std::unique_ptr<Expression> Parser::parse_prefix() {
   case TokenType::While: {
     auto while_stmt = std::make_unique<WhileStatement>();
     if (!expect_peek(TokenType::LParen))
-      return nullptr;
+      PARSER_ERROR("while statement should be followed by a left paren.");
 
     next_token();
     while_stmt->cond_ = parse_expression_rec(LOWEST);
 
     if (!expect_peek(TokenType::LBrace))
-      return nullptr;
+      PARSER_ERROR(
+          "while statement condition should be followed by a left brace.");
 
     while_stmt->body_ = parse_block_statement();
 
@@ -488,7 +473,7 @@ std::unique_ptr<Expression> Parser::parse_expression_rec(Precedence prec) {
 
       auto right_temp = change_type(std::move(right), left_type, tokentype);
       if (right_temp.second == nullptr) {
-        STOP_EXECUTION("incompatible type in assingment");
+        PARSER_ERROR("incompatible type in assingment");
       }
 
       auto infix = std::make_unique<InfixExpression>();
@@ -508,7 +493,7 @@ std::unique_ptr<Expression> Parser::parse_expression_rec(Precedence prec) {
       auto right_temp = change_type(std::move(right), left_type, tokentype);
 
       if (left_temp.second == nullptr && right_temp.second == nullptr) {
-        STOP_EXECUTION("bad types in expression\n");
+        PARSER_ERROR("bad types in expression\n");
       }
 
       auto infix = std::make_unique<InfixExpression>();
@@ -566,7 +551,7 @@ std::unique_ptr<Expression> Parser::parse_integer_literal() {
     int res = std::stoi(current_.literal_);
     lit->value_ = res;
   } catch (const std::invalid_argument &e) {
-    STOP_EXECUTION("cannot convert string into number.\n");
+    PARSER_ERROR("cannot convert string into number.\n");
   }
 
   return lit;
@@ -588,22 +573,21 @@ std::unique_ptr<Expression> Parser::parse_if_expression() {
   auto exp = std::make_unique<IfExpression>();
 
   if (!expect_peek(TokenType::LParen))
-    return nullptr;
+    PARSER_ERROR("if expressions should be followed by left paren.");
 
   next_token();
   exp->cond_ = parse_expression_rec(LOWEST);
 
   if (!expect_peek(TokenType::LBrace))
-    return nullptr;
+    PARSER_ERROR("if expression condition should be followed by left brace.");
 
   exp->after_ = parse_block_statement();
 
   if (peek_token_is(TokenType::Else)) {
     next_token();
 
-    if (!expect_peek(TokenType::LBrace)) {
-      return nullptr;
-    }
+    if (!expect_peek(TokenType::LBrace))
+      PARSER_ERROR("else keyword should be followed by left brace");
 
     exp->other_ = parse_block_statement();
   }
@@ -632,9 +616,8 @@ std::unique_ptr<BlockStatement> Parser::parse_block_statement() {
 std::unique_ptr<Statement> Parser::parse_function_literal() {
   auto lit = std::make_unique<FunctionLiteral>();
 
-  if (!expect_peek(TokenType::Ident)) {
-    return nullptr;
-  }
+  if (!expect_peek(TokenType::Ident))
+    PARSER_ERROR("function keyword should be followed by an identifier");
 
   auto ident = std::make_unique<Identifier>();
   std::string name = current_.literal_;
@@ -646,24 +629,18 @@ std::unique_ptr<Statement> Parser::parse_function_literal() {
   lit->name_ = std::move(ident);
 
   if (!expect_peek(TokenType::LParen))
-    return nullptr;
+    PARSER_ERROR("function name should be followed by left paren.");
 
   lit->params_ = parse_function_params();
 
   if (!expect_peek(TokenType::Arrow))
-    return nullptr;
+    PARSER_ERROR("function parameters should be followed by an arrow.");
 
-  if (peek_token_is(TokenType::Void) || peek_token_is(TokenType::IntType) ||
-      peek_token_is(TokenType::CharType)) {
-    lit->return_type_ = v_from_token(peek_.type);
-    next_token();
-  } else {
-    return nullptr;
-  }
+  lit->return_type_ = parse_type();
   add_new_symbol(name, TYPE_FUNCTION, lit->return_type_, get_next_label());
 
   if (!expect_peek(TokenType::LBrace))
-    return nullptr;
+    PARSER_ERROR("function type should be followed by an left brace.");
 
   lit->body_ = parse_block_statement();
   latest_function_identifers.pop();
@@ -705,7 +682,7 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
   }
 
   if (!expect_peek(TokenType::RParen)) {
-    STOP_EXECUTION(
+    PARSER_ERROR(
         "function parameters need to be followed by right parenthesis\n.");
   }
 
@@ -714,15 +691,14 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
 
 std::unique_ptr<Statement> Parser::parse_var_decl() {
   // cannot use var keyword out of function
-  if (latest_function_identifers.empty()) {
-    return nullptr;
-  }
+  if (latest_function_identifers.empty())
+    PARSER_ERROR("var declarations only inside functions.");
 
   auto var_decl = std::make_unique<VarDecl>();
   var_decl->type_ = parse_type();
 
   if (!expect_peek(TokenType::Ident))
-    return nullptr;
+    PARSER_ERROR("var keyword should be followed by an identifier.");
 
   auto ident = std::make_unique<Identifier>();
   std::string name = current_.literal_;
@@ -736,35 +712,34 @@ std::unique_ptr<Statement> Parser::parse_var_decl() {
   if (peek_token_is(TokenType::LBracket)) {
     next_token();
     if (!expect_peek(TokenType::Int))
-      STOP_EXECUTION("array declaration needs size.");
+      PARSER_ERROR("array declaration needs size.");
 
     int size = std::stoi(current_.literal_.data());
     add_new_symbol(name, TYPE_ARRAY, convert_type_to_pointer(var_decl->type_),
                    0, size);
 
     if (!expect_peek(TokenType::RBracket))
-      STOP_EXECUTION("array declration must end in ]");
+      PARSER_ERROR("array declration must end in ]");
   } else {
     add_new_symbol(name, TYPE_VARIABLE, var_decl->type_, 0, 1);
   }
 
   if (!expect_peek(TokenType::Semicolon))
-    return nullptr;
+    PARSER_ERROR("var declaration should be followed by an semicolon.");
 
   return var_decl;
 }
 
 std::unique_ptr<Statement> Parser::parse_global_decl() {
   // cannot use global keyword inside function
-  if (!latest_function_identifers.empty()) {
-    return nullptr;
-  }
+  if (!latest_function_identifers.empty())
+    PARSER_ERROR("global declarations cannot be inside functions.");
 
   auto globl = std::make_unique<GlobalVariable>();
   globl->type_ = parse_type();
 
   if (!expect_peek(TokenType::Ident))
-    return nullptr;
+    PARSER_ERROR("global keyword should be followed by an identifier.");
 
   auto ident = std::make_unique<Identifier>();
   const std::string name = current_.literal_.data();
@@ -772,27 +747,26 @@ std::unique_ptr<Statement> Parser::parse_global_decl() {
   globl->identifier_ = std::move(ident);
 
   // we don't want multiple global defintions
-  if (symbol_exists(name)) {
-    return nullptr;
-  }
+  if (symbol_exists(name))
+    PARSER_ERROR("found multiple global definitions of '%s'", name.c_str());
 
   if (peek_token_is(TokenType::LBracket)) {
     next_token();
     if (!expect_peek(TokenType::Int))
-      STOP_EXECUTION("array declaration needs size.");
+      PARSER_ERROR("array declaration needs size.");
 
     int size = std::stoi(current_.literal_.data());
     add_new_symbol(name, TYPE_ARRAY, convert_type_to_pointer(globl->type_), 0,
                    size);
 
     if (!expect_peek(TokenType::RBracket))
-      STOP_EXECUTION("array declration must end in ]");
+      PARSER_ERROR("array declration must end in ]");
   } else {
     add_new_symbol(name, TYPE_VARIABLE, globl->type_, 0, 1);
   }
 
   if (!expect_peek(TokenType::Semicolon))
-    return nullptr;
+    PARSER_ERROR("global declaration should be followed by an semicolon.")
 
   return globl;
 }
