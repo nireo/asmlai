@@ -369,7 +369,7 @@ void function_start(const std::string &name) {
                nc, nc, nc);
 
   int param_register = 9;
-  auto &locals = get_symbol_table(Scope::Local);
+  auto &locals = get_function_locals(name);
   for (auto &[s, sym] : locals) {
     if (sym.st_type != Scope::Parameter)
       continue;

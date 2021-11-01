@@ -23,7 +23,6 @@ static std::stack<std::string> latest_function_identifers;
 
 std::unique_ptr<Program> Parser::parse_program() {
   add_new_symbol("print_num", TYPE_FUNCTION, TYPE_CHAR);
-  add_new_symbol("print", TYPE_FUNCTION, TYPE_CHAR);
   add_new_symbol("print_char", TYPE_FUNCTION, TYPE_CHAR);
 
   auto program = std::make_unique<Program>();
@@ -52,9 +51,6 @@ Parser::Parser(std::unique_ptr<LLexer> lx) {
 void Parser::next_token() {
   current_ = peek_;
   peek_ = lx_->next_token();
-
-  std::cout << "current: " << current_.literal_ << " peek: " << peek_.literal_
-            << '\n';
 }
 
 std::unique_ptr<Statement> Parser::parse_statement() {
@@ -549,11 +545,16 @@ std::unique_ptr<Expression> Parser::parse_expression_rec(Precedence prec) {
 
 std::unique_ptr<Expression> Parser::parse_identifier() {
   auto identifier = std::make_unique<Identifier>();
-  identifier->value_ = "";
-  identifier->value_ += current_.literal_.data();
+  identifier->value_ = current_.literal_;
 
-  const auto &sym = get_symbol(current_.literal_.data());
-  identifier->value_type = sym.value_type_;
+  if (!latest_function_identifers.empty()) {
+    const auto &sym =
+        get_symbol_w_func(latest_function_identifers.top(), current_.literal_);
+    identifier->value_type = sym.value_type_;
+  } else {
+    const auto &sym = get_symbol(current_.literal_);
+    identifier->value_type = sym.value_type_;
+  }
 
   return identifier;
 }
@@ -562,9 +563,7 @@ std::unique_ptr<Expression> Parser::parse_integer_literal() {
   auto lit = std::make_unique<IntegerLiteral>();
 
   try {
-    std::string str = "";
-    str += current_.literal_;
-    int res = std::stoi(str);
+    int res = std::stoi(current_.literal_);
     lit->value_ = res;
   } catch (const std::invalid_argument &e) {
     STOP_EXECUTION("cannot convert string into number.\n");
@@ -638,14 +637,13 @@ std::unique_ptr<Statement> Parser::parse_function_literal() {
   }
 
   auto ident = std::make_unique<Identifier>();
-  std::string name = "";
-  name += current_.literal_;
+  std::string name = current_.literal_;
+
+  latest_function_identifers.push(name);
+  create_new_function_table(name);
 
   ident->value_ = name;
   lit->name_ = std::move(ident);
-
-  // reset local variables, since we are inside a new function.
-  // reset_local_variables();
 
   if (!expect_peek(TokenType::LParen))
     return nullptr;
@@ -664,13 +662,10 @@ std::unique_ptr<Statement> Parser::parse_function_literal() {
   }
   add_new_symbol(name, TYPE_FUNCTION, lit->return_type_, get_next_label());
 
-  latest_function_identifers.push(name);
-
   if (!expect_peek(TokenType::LBrace))
     return nullptr;
 
   lit->body_ = parse_block_statement();
-
   latest_function_identifers.pop();
 
   return lit;
@@ -691,8 +686,8 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
 
   // the parameters are stored in the local table meaning that they will be
   // overwritten after a function.
-  add_new_param_var(ident->value_, type, 0, 1);
-
+  new_function_param(latest_function_identifers.top(), ident->value_, type, 0,
+                     1);
   params.push_back(std::move(ident));
 
   while (current_token_is(TokenType::Comma)) {
@@ -703,7 +698,8 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
     auto ident = std::make_unique<Identifier>();
     ident->value_ = current_.literal_;
 
-    add_new_param_var(ident->value_, type, 0, 1);
+    new_function_param(latest_function_identifers.top(), ident->value_, type, 0,
+                       1);
 
     params.push_back(std::move(ident));
   }
@@ -729,13 +725,13 @@ std::unique_ptr<Statement> Parser::parse_var_decl() {
     return nullptr;
 
   auto ident = std::make_unique<Identifier>();
-  std::string name = "";
-  name += current_.literal_;
+  std::string name = current_.literal_;
 
   ident->value_ = name;
   var_decl->identifier_ = std::move(ident);
 
-  add_new_local_var(name, var_decl->type_, 0, 1);
+  new_function_local(latest_function_identifers.top(), name, var_decl->type_, 0,
+                     1);
 
   if (peek_token_is(TokenType::LBracket)) {
     next_token();

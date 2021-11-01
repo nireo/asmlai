@@ -10,31 +10,17 @@
 
 #define CAST(type, node) static_cast<const type &>(node);
 
-std::unordered_map<std::string, Symbol> global_symbols;
-std::unordered_map<std::string, Symbol> local_symbols;
+SymbolTable global_symbols;
+std::unordered_map<std::string, SymbolTable> function_locals;
+static std::string current_function = "";
 
-std::unordered_map<std::string, Symbol> &get_symbol_table(Scope scp) {
-  switch (scp) {
-  case Scope::Global: {
-    return global_symbols;
-  }
-  case Scope::Local: {
-    return local_symbols;
-  }
-  default:
-    std::fprintf(stderr, "cannot find symbol table for given scope.\n");
-    std::exit(1);
-  }
+void create_new_function_table(const std::string &func_name) {
+  function_locals[func_name] = SymbolTable();
 }
 
-void reset_local_variables() {
-  local_symbols = std::unordered_map<std::string, Symbol>();
-  reset_local_offset();
-}
-
-void add_new_local_var(const std::string &name, ValueT vtype, int label,
-                       int size) {
-  local_symbols[name] = {
+void new_function_local(const std::string &func_name, const std::string &name,
+                        ValueT vtype, int label, int size) {
+  function_locals[func_name][name] = {
       .name_ = name,
       .st_type = Scope::Local,
       .type_ = TYPE_VARIABLE, // cannot be function
@@ -45,9 +31,9 @@ void add_new_local_var(const std::string &name, ValueT vtype, int label,
   };
 }
 
-void add_new_param_var(const std::string &name, ValueT vtype, int label,
-                       int size) {
-  local_symbols[name] = {
+void new_function_param(const std::string &func_name, const std::string &name,
+                        ValueT vtype, int label, int size) {
+  function_locals[func_name][name] = {
       .name_ = name,
       .st_type = Scope::Parameter,
       .type_ = TYPE_VARIABLE, // cannot be function
@@ -57,6 +43,12 @@ void add_new_param_var(const std::string &name, ValueT vtype, int label,
       .position = 0,
   };
 }
+
+SymbolTable &get_function_locals(const std::string &name) {
+  return function_locals[name];
+}
+
+void reset_local_variables() { reset_local_offset(); }
 
 void add_new_symbol(const std::string &name, const symboltype stype,
                     const ValueT vtype) {
@@ -72,9 +64,11 @@ void add_new_symbol(const std::string &name, const symboltype stype,
                     const ValueT vtype, int label) {
   global_symbols[name] = Symbol{
       .name_ = name,
+      .st_type = Scope::Global,
       .type_ = stype,
       .value_type_ = vtype,
       .label = label,
+      .position = 0,
   };
 }
 
@@ -88,9 +82,24 @@ void add_new_symbol(const std::string &name, const symboltype stype,
 }
 
 const Symbol &get_symbol(const std::string &name) {
-  if (local_symbols.find(name) != local_symbols.end()) {
-    return local_symbols[name];
+  if (current_function != "") {
+    if (function_locals[current_function].find(name) !=
+        function_locals[current_function].end())
+      return function_locals[current_function][name];
   }
+
+  if (global_symbols.find(name) != global_symbols.end()) {
+    return global_symbols[name];
+  }
+
+  std::fprintf(stderr, "symbol with name '%s' not found\n", name.c_str());
+  std::exit(1);
+}
+
+const Symbol &get_symbol_w_func(const std::string &func,
+                                const std::string &name) {
+  if (function_locals[func].find(name) != function_locals[func].end())
+    return function_locals[func][name];
 
   if (global_symbols.find(name) != global_symbols.end()) {
     return global_symbols[name];
@@ -350,10 +359,12 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
       case AstType::Identifier: {
         const auto &identifier = CAST(Identifier, *infix_exp.right_);
 
-        if (local_symbols.find(identifier.value_) == local_symbols.end()) {
+        if (function_locals[current_function].find(identifier.value_) ==
+            function_locals[current_function].end()) {
           return store_global(left, get_symbol(identifier.value_));
         } else {
-          const auto &sym = local_symbols.at(identifier.value_);
+          const auto &sym =
+              function_locals[current_function].at(identifier.value_);
           return store_local(sym, left);
         }
       }
@@ -420,9 +431,12 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
   case AstType::Identifier: {
     const auto &identifier = CAST(Identifier, node);
 
+    std::cout << current_function << '\n';
+
     if (identifier.rvalue || top_type == AstType::Dereference) {
-      if (local_symbols.find(identifier.value_) != local_symbols.end()) {
-        const auto &sym = local_symbols[identifier.value_];
+      if (function_locals[current_function].find(identifier.value_) !=
+          function_locals[current_function].end()) {
+        const auto &sym = function_locals[current_function][identifier.value_];
 
         return load_local(sym, TokenType::Eof, false);
       }
@@ -437,6 +451,8 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
     const auto &name = CAST(Identifier, *func.name_);
 
     const auto &sym = get_symbol(name.value_);
+    current_function = name.value_;
+    std::cout << current_function << '\n';
 
     function_start(name.value_);
     compile_ast_node(*func.body_, -1, node.Type());
