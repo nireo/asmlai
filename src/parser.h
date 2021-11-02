@@ -55,7 +55,6 @@ private:
   void next_token();
 
   std::unique_ptr<Statement> parse_statement();
-  std::unique_ptr<Statement> parse_let_statement();
   std::unique_ptr<Statement> parse_return_statement();
   std::unique_ptr<Statement> parse_expression_statement();
   std::unique_ptr<Statement> parse_var_decl();

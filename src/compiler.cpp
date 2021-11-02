@@ -2,6 +2,7 @@
 #include "ast.h"
 #include "codegen_x64.h"
 #include "token.h"
+
 #include <cstdio>
 #include <iostream>
 #include <sstream>
@@ -382,21 +383,6 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
       std::exit(1);
     }
     }
-  }
-  case AstType::LetStatement: {
-    const auto &assigment = CAST(LetStatement, node);
-    const auto &identifier = CAST(Identifier, *assigment.name_);
-
-    if (!symbol_exists(identifier.value_)) {
-      const auto &sym = get_symbol(identifier.value_);
-      generate_sym(sym);
-    }
-
-    int reg = compile_ast_node(*assigment.value_, -1, node.Type());
-    store_global(reg, get_symbol(identifier.value_));
-    free_all_registers();
-
-    return -1;
   }
   case AstType::ReturnStatement: {
     const auto &returnstmt = CAST(ReturnStatement, node);

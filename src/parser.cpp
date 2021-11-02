@@ -56,9 +56,6 @@ void Parser::next_token() {
 }
 
 std::unique_ptr<Statement> Parser::parse_statement() {
-  if (current_.type == TokenType::Let) {
-    return parse_let_statement();
-  }
   if (current_.type == TokenType::Function) {
     return parse_function_literal();
   } else if (current_.type == TokenType::Return) {
@@ -109,7 +106,7 @@ ValueT Parser::parse_type() {
     break;
   }
   default:
-    PARSER_ERROR("cannot parser type for token: %d \n", peek_.type);
+    PARSER_ERROR("cannot parser type for token: %d \n", (int)peek_.type);
   }
 
   while (true) {
@@ -233,45 +230,6 @@ std::unique_ptr<Expression> Parser::parse_postfix() {
   default:
     return identifier;
   }
-}
-
-std::unique_ptr<Statement> Parser::parse_let_statement() {
-  auto letstmt = std::make_unique<LetStatement>();
-
-  if (!expect_peek(TokenType::Ident))
-    PARSER_ERROR("let statement should be followed by an identifier.");
-
-  auto ident = std::make_unique<Identifier>();
-  std::string name = current_.literal_;
-  ident->value_ = name;
-
-  if (!expect_peek(TokenType::Colon))
-    PARSER_ERROR("let statement identifier should be followed by a colon.");
-
-  letstmt->v_type = parse_type();
-
-  if (!expect_peek(TokenType::Assign))
-    PARSER_ERROR("let type should be followed by an assign token.");
-  next_token();
-
-  if (!symbol_exists(ident->value_))
-    add_new_symbol(ident->value_, TYPE_VARIABLE, letstmt->v_type);
-
-  letstmt->name_ = std::move(ident);
-
-  auto exp = parse_expression_rec(LOWEST);
-  // check if the types are applicable.
-  auto res = change_type(std::move(exp), letstmt->v_type, TokenType::Eof);
-  if (res.second == nullptr) {
-    letstmt->value_ = std::move(res.first);
-    //   std::fprintf(stderr, "types are not applicable in let statement.");
-    //   std::exit(1);
-    // }
-  } else {
-    letstmt->value_ = std::move(res.second);
-  }
-
-  return letstmt;
 }
 
 std::unique_ptr<Statement> Parser::parse_return_statement() {

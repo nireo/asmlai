@@ -668,7 +668,6 @@ void copy_argument(int r, int pos) {
 }
 
 int store_local(const Symbol &sym, int r) {
-  std::cout << ' ' << sym.position << '\n';
   switch (sym.value_type_) {
   case TYPE_CHAR:
     std::fprintf(fp, "\tmovb\t%s, %d(%%rbp)\n", b_registers[r], sym.position);

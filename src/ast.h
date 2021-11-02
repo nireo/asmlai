@@ -11,7 +11,6 @@
 enum class AstType {
   Program,
   Identifier,
-  LetStatement,
   ReturnStatement,
   ExpressionStatement,
   CallExpression,
@@ -102,20 +101,6 @@ public:
   std::string value_;
   ValueT value_type;
   bool rvalue = false;
-};
-
-class LetStatement : public Statement {
-public:
-  void statementNode() {}
-
-  AstType Type() const noexcept { return AstType::LetStatement; }
-
-  ValueT ValueType() const noexcept { return TYPE_VOID; }
-
-  TokenType type;
-  ValueT v_type;
-  std::unique_ptr<Identifier> name_;
-  std::unique_ptr<Expression> value_;
 };
 
 class ReturnStatement : public Statement {
