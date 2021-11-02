@@ -4,10 +4,8 @@
 #include "ast.h"
 #include "lexer.h"
 #include "token.h"
-#include <memory>
-#include <unordered_map>
 
-class Parser;
+#include <memory>
 
 enum Precedence
 {
@@ -76,9 +74,6 @@ private:
   std::vector<std::unique_ptr<Expression>> parse_expression_list();
   std::vector<std::unique_ptr<Identifier>> parse_function_params();
   ValueT parse_type();
-
-  Precedence peek_precedence();
-  Precedence current_precedence();
 
   bool expect_peek(TokenType tt);
   bool peek_token_is(TokenType tt);

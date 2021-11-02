@@ -1,11 +1,9 @@
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
-#include <iostream>
 #include <memory>
-#include <sstream>
-#include <stack>
 #include <string>
+#include <iostream>
 
 #include "ast.h"
 #include "codegen_x64.h"
@@ -21,7 +19,7 @@
     std::exit(1);                                                              \
   } while (false);
 
-static std::stack<std::string> latest_function_identifers;
+static std::string latest_function_name = "";
 
 std::unique_ptr<Program> Parser::parse_program() {
   add_new_symbol("print_num", TYPE_FUNCTION, TYPE_CHAR);
@@ -45,7 +43,6 @@ std::unique_ptr<Program> Parser::parse_program() {
 
 Parser::Parser(std::unique_ptr<LLexer> lx) {
   lx_ = std::move(lx);
-
   next_token();
   next_token();
 }
@@ -56,15 +53,16 @@ void Parser::next_token() {
 }
 
 std::unique_ptr<Statement> Parser::parse_statement() {
-  if (current_.type == TokenType::Function) {
+  switch (current_.type) {
+  case TokenType::Function:
     return parse_function_literal();
-  } else if (current_.type == TokenType::Return) {
+  case TokenType::Return:
     return parse_return_statement();
-  } else if (current_.type == TokenType::Global) {
+  case TokenType::Global:
     return parse_global_decl();
-  } else if (current_.type == TokenType::Var) {
+  case TokenType::Var:
     return parse_var_decl();
-  } else {
+  default:
     return parse_expression_statement();
   }
 }
@@ -189,6 +187,7 @@ Parser::parse_array(std::unique_ptr<Expression> ident) {
   infix->opr = TokenType::Plus;
   infix->v_type_ = arr->ValueType();
   infix->left_ = std::move(arr);
+
   if (index_modified.second == nullptr)
     PARSER_ERROR("right type cannot be changed.");
   infix->right_ = std::move(index_modified.second);
@@ -210,31 +209,22 @@ std::unique_ptr<Expression> Parser::parse_postfix() {
 
   next_token();
 
-  switch (current_.type) {
-  case TokenType::Inc: {
+  if (current_.type == TokenType::Inc || current_.type == TokenType::Dec) {
+    auto type = current_.type;
     next_token();
     auto action = std::make_unique<IdentifierAction>();
-    action->action_ = TokenType::Inc;
+    action->action_ = type;
     action->identifier_ = std::move(identifier);
 
     return action;
   }
-  case TokenType::Dec: {
-    next_token();
-    auto action = std::make_unique<IdentifierAction>();
-    action->action_ = TokenType::Dec;
-    action->identifier_ = std::move(identifier);
 
-    return action;
-  }
-  default:
-    return identifier;
-  }
+  return identifier;
 }
 
 std::unique_ptr<Statement> Parser::parse_return_statement() {
   auto returnstmt = std::make_unique<ReturnStatement>();
-  const std::string top = latest_function_identifers.top();
+  const std::string top = latest_function_name;
   returnstmt->function_identifier_ = top;
   ValueT function_return_type_ = get_symbol(top).value_type_;
 
@@ -331,29 +321,42 @@ std::unique_ptr<Expression> Parser::parse_primary() {
 
 std::unique_ptr<Expression> Parser::parse_prefix() {
   switch (current_.type) {
+  case TokenType::Minus:
+  case TokenType::Bang:
+  case TokenType::Asterisk:
   case TokenType::Amper: {
+    auto type = current_.type;
     next_token();
 
     auto right = parse_prefix();
-    if (right->Type() != AstType::Identifier)
-      PARSER_ERROR("ampersand cannot be used for nothing but identifiers.\n");
+    if (type != TokenType::Minus && type != TokenType::Bang) {
+      if (right->Type() != AstType::Identifier)
+        PARSER_ERROR(
+            "ampersand or amper cannot be used for nothing but identifiers.\n");
+    }
 
-    auto addr_exp = std::make_unique<Addr>();
-    addr_exp->to_addr_ = std::move(right);
+    if (type == TokenType::Amper) {
+      auto addr_exp = std::make_unique<Addr>();
+      addr_exp->to_addr_ = std::move(right);
 
-    return addr_exp;
-  }
-  case TokenType::Asterisk: {
-    next_token();
+      return addr_exp;
+    } else if (type == TokenType::Amper) {
+      auto deref_exp = std::make_unique<Dereference>();
+      deref_exp->to_dereference_ = std::move(right);
 
-    auto right = parse_prefix();
-    if (right->Type() != AstType::Identifier)
-      PARSER_ERROR("ampersand cannot be used for nothing but identifiers.\n");
+      return deref_exp;
+    } else if (type == TokenType::Bang || type == TokenType::Minus) {
+      next_token();
 
-    auto deref_exp = std::make_unique<Dereference>();
-    deref_exp->to_dereference_ = std::move(right);
+      auto right = parse_prefix();
+      auto prefix = std::make_unique<PrefixExpression>();
+      prefix->opr = type;
+      prefix->right_ = std::move(right);
 
-    return deref_exp;
+      return prefix;
+    } else {
+      std::exit(1); // cannot get here
+    }
   }
   case TokenType::Dec:
   case TokenType::Inc: {
@@ -371,41 +374,32 @@ std::unique_ptr<Expression> Parser::parse_prefix() {
 
     return identifier_action;
   }
-  case TokenType::Bang:
-  case TokenType::Minus: {
-    auto type = current_.type;
-    next_token();
-
-    auto right = parse_prefix();
-
-    auto prefix = std::make_unique<PrefixExpression>();
-    prefix->opr = type;
-    prefix->right_ = std::move(right);
-
-    return prefix;
-  }
   case TokenType::If: {
     return parse_if_expression();
   }
   case TokenType::While: {
-    auto while_stmt = std::make_unique<WhileStatement>();
-    if (!expect_peek(TokenType::LParen))
-      PARSER_ERROR("while statement should be followed by a left paren.");
-
-    next_token();
-    while_stmt->cond_ = parse_expression_rec(LOWEST);
-
-    if (!expect_peek(TokenType::LBrace))
-      PARSER_ERROR(
-          "while statement condition should be followed by a left brace.");
-
-    while_stmt->body_ = parse_block_statement();
-
-    return while_stmt;
+    return parse_while_expression();
   }
   default:
     return parse_primary();
   }
+}
+
+std::unique_ptr<Expression> Parser::parse_while_expression() {
+  auto while_stmt = std::make_unique<WhileStatement>();
+  if (!expect_peek(TokenType::LParen))
+    PARSER_ERROR("while statement should be followed by a left paren.");
+
+  next_token();
+  while_stmt->cond_ = parse_expression_rec(LOWEST);
+
+  if (!expect_peek(TokenType::LBrace))
+    PARSER_ERROR(
+        "while statement condition should be followed by a left brace.");
+
+  while_stmt->body_ = parse_block_statement();
+
+  return while_stmt;
 }
 
 std::unique_ptr<Expression> Parser::parse_expression_rec(Precedence prec) {
@@ -490,9 +484,9 @@ std::unique_ptr<Expression> Parser::parse_identifier() {
   auto identifier = std::make_unique<Identifier>();
   identifier->value_ = current_.literal_;
 
-  if (!latest_function_identifers.empty()) {
+  if (latest_function_name != "") {
     const auto &sym =
-        get_symbol_w_func(latest_function_identifers.top(), current_.literal_);
+        get_symbol_w_func(latest_function_name, current_.literal_);
     identifier->value_type = sym.value_type_;
   } else {
     const auto &sym = get_symbol(current_.literal_);
@@ -513,18 +507,6 @@ std::unique_ptr<Expression> Parser::parse_integer_literal() {
   }
 
   return lit;
-}
-
-Precedence Parser::peek_precedence() {
-  if (precedences.find(peek_.type) != precedences.end())
-    return precedences.at(peek_.type);
-  return LOWEST;
-}
-
-Precedence Parser::current_precedence() {
-  if (precedences.find(current_.type) != precedences.end())
-    return precedences.at(current_.type);
-  return LOWEST;
 }
 
 std::unique_ptr<Expression> Parser::parse_if_expression() {
@@ -580,7 +562,8 @@ std::unique_ptr<Statement> Parser::parse_function_literal() {
   auto ident = std::make_unique<Identifier>();
   std::string name = current_.literal_;
 
-  latest_function_identifers.push(name);
+  latest_function_name = name; // inside function, this is needed for type
+                               // checking, and some ast generation
   create_new_function_table(name);
 
   ident->value_ = name;
@@ -601,7 +584,7 @@ std::unique_ptr<Statement> Parser::parse_function_literal() {
     PARSER_ERROR("function type should be followed by an left brace.");
 
   lit->body_ = parse_block_statement();
-  latest_function_identifers.pop();
+  latest_function_name = ""; // outside function no function name
 
   return lit;
 }
@@ -621,8 +604,7 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
 
   // the parameters are stored in the local table meaning that they will be
   // overwritten after a function.
-  new_function_param(latest_function_identifers.top(), ident->value_, type, 0,
-                     1);
+  new_function_param(latest_function_name, ident->value_, type, 0, 1);
   params.push_back(std::move(ident));
 
   while (current_token_is(TokenType::Comma)) {
@@ -633,8 +615,7 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
     auto ident = std::make_unique<Identifier>();
     ident->value_ = current_.literal_;
 
-    new_function_param(latest_function_identifers.top(), ident->value_, type, 0,
-                       1);
+    new_function_param(latest_function_name, ident->value_, type, 0, 1);
 
     params.push_back(std::move(ident));
   }
@@ -649,7 +630,7 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
 
 std::unique_ptr<Statement> Parser::parse_var_decl() {
   // cannot use var keyword out of function
-  if (latest_function_identifers.empty())
+  if (latest_function_name == "")
     PARSER_ERROR("var declarations only inside functions.");
 
   auto var_decl = std::make_unique<VarDecl>();
@@ -663,9 +644,7 @@ std::unique_ptr<Statement> Parser::parse_var_decl() {
 
   ident->value_ = name;
   var_decl->identifier_ = std::move(ident);
-
-  new_function_local(latest_function_identifers.top(), name, var_decl->type_, 0,
-                     1);
+  new_function_local(latest_function_name, name, var_decl->type_, 0, 1);
 
   if (peek_token_is(TokenType::LBracket)) {
     next_token();
@@ -690,7 +669,7 @@ std::unique_ptr<Statement> Parser::parse_var_decl() {
 
 std::unique_ptr<Statement> Parser::parse_global_decl() {
   // cannot use global keyword inside function
-  if (!latest_function_identifers.empty())
+  if (latest_function_name != "")
     PARSER_ERROR("global declarations cannot be inside functions.");
 
   auto globl = std::make_unique<GlobalVariable>();
