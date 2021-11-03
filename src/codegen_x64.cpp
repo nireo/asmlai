@@ -374,19 +374,13 @@ void function_start(const std::string &name) {
     if (sym.st_type != Scope::Parameter)
       continue;
 
-    std::cout << s << '\n';
-
     sym.position = get_local_offset(sym.value_type_);
     std::cout << sym.position;
     store_local(sym, param_register--);
   }
 
-  int param_offset = 16;
   for (auto &[s, sym] : locals) {
-    if (sym.st_type == Scope::Parameter) {
-      sym.position = param_offset;
-      param_offset += 8;
-    } else {
+    if (sym.st_type == Scope::Local) {
       sym.position = get_local_offset(sym.value_type_);
     }
   }

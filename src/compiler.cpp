@@ -554,7 +554,7 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
     return -1;
   }
   default: {
-    std::fprintf(stderr, "unknown node type %d\n", node.Type());
+    std::fprintf(stderr, "unrecognized node type when compiling.\n");
     std::exit(1);
   }
   }

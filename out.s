@@ -7,7 +7,7 @@ xd:
 	movq	%rsp, %rbp
 	movl	%edi, -4(%rbp)
 	addq	$-16, %rsp
-	movslq	16(%rbp), %r10
+	movslq	-4(%rbp), %r10
 	movq	%r10, %rdi
 	call	print_num
 	movq	%rax, %r10
