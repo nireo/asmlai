@@ -1,9 +1,10 @@
-func xd(int n) => void {
-  print_num(n);
+func xd(int a, int b) => void {
+  print_num(a);
+  print_num(b);
 }
 
 func main() => int {
-  xd(100);
+  xd(10, 100);
 
   return 0;
 }
