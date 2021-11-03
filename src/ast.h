@@ -255,12 +255,9 @@ public:
 class CallExpression : public Expression {
 public:
   bool is_rvalue() { return rvalue; }
-
   void set_rvalue(bool value) { rvalue = value; }
-
   AstType Type() const noexcept { return AstType::CallExpression; }
-
-  ValueT ValueType() const noexcept { return TYPE_VOID; }
+  ValueT ValueType() const noexcept { return func_->ValueType(); }
 
   std::vector<std::unique_ptr<Expression>> arguments_;
   std::unique_ptr<Expression> func_;

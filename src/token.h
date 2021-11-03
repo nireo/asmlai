@@ -58,6 +58,7 @@ enum class TokenType {
   IntType,
   CharType,
   StringType,
+  LongType,
   FloatType,
   Void,
   Global,

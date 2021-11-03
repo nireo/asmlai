@@ -178,7 +178,7 @@ TokenType LLexer::ident_type() const {
   case 'r':
     return check_keyword(1, 5, "eturn", TokenType::Return);
   case 'l':
-    return check_keyword(1, 2, "et", TokenType::Let);
+    return check_keyword(1, 3, "ong", TokenType::LongType);
   case 'v':
     if (curr_ - start_ > 1) {
       switch (src.at(start_ + 1)) {
