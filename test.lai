@@ -1,17 +1,20 @@
-func fib(int n) => int {
-  if (n == 0) {
-    return 0;
-  }
+func open(char* pathname, int flags) => int;
+func read(int fd, char* buf, int count) => int;
+func write(int fd, void* buf, int count) => int;
+func close(int fd) => int;
 
-  if (n == 1) {
-    return 1;
-  }
-
-  return fib(n-1) + fib(n-2);
-}
+global char* buf;
+global int in;
+global int count;
 
 func main() => int {
-  print_num(fib(36));
+  buf="                                                             ";
+  in = open("test.lai", 0);
 
+  while ((count = read(in, buf, 60)) > 0) {
+    write(1, buf, count);
+  }
+
+  close(zin);
   return 0;
 }

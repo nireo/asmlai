@@ -250,6 +250,7 @@ public:
   std::unique_ptr<BlockStatement> body_;
   std::unique_ptr<Identifier> name_;
   ValueT return_type_;
+  bool is_prototype = false;
 };
 
 class CallExpression : public Expression {

@@ -51,6 +51,7 @@ Parser::Parser(std::unique_ptr<LLexer> lx) {
 void Parser::next_token() {
   current_ = peek_;
   peek_ = lx_->next_token();
+  std::cout << current_.literal_ << '\n';
 }
 
 std::unique_ptr<Statement> Parser::parse_statement() {
@@ -109,7 +110,7 @@ ValueT Parser::parse_type() {
     break;
   }
   default:
-    PARSER_ERROR("cannot parser type for token: %d \n", (int)peek_.type);
+    PARSER_ERROR("cannot parser type for token: %s \n", peek_.literal_.c_str());
   }
 
   while (true) {
@@ -581,7 +582,22 @@ std::unique_ptr<Statement> Parser::parse_function_literal() {
   if (!expect_peek(TokenType::LParen))
     PARSER_ERROR("function name should be followed by left paren.");
 
-  lit->params_ = parse_function_params();
+  // check if function has already been prototyped
+  int param_count = -1;
+  if (symbol_exists(name)) {
+    const auto &sym = get_symbol(name);
+    if (sym.type_ == TYPE_FUNCTION)
+      PARSER_ERROR("global variable with same name as function.");
+
+    // since it is a prototype, all of the function local variables, are just
+    // parameters so no need to filter
+    param_count = (int)get_function_locals(name).size();
+  }
+
+  lit->params_ = parse_function_params(param_count != -1);
+  if (param_count != -1 && (int)lit->params_.size() == param_count)
+    PARSER_ERROR("wrong amount of parameters in function literal compared to "
+                 "prototype.");
 
   if (!expect_peek(TokenType::Arrow))
     PARSER_ERROR("function parameters should be followed by an arrow.");
@@ -589,16 +605,24 @@ std::unique_ptr<Statement> Parser::parse_function_literal() {
   lit->return_type_ = parse_type();
   add_new_symbol(name, TYPE_FUNCTION, lit->return_type_, get_next_label());
 
-  if (!expect_peek(TokenType::LBrace))
-    PARSER_ERROR("function type should be followed by an left brace.");
+  if (peek_token_is(TokenType::Semicolon)) {
+    next_token();
+    lit->is_prototype = true;
+    latest_function_name = "";
+    return lit;
+  } else {
+    if (!expect_peek(TokenType::LBrace))
+      PARSER_ERROR("function type should be followed by an left brace.");
 
-  lit->body_ = parse_block_statement();
-  latest_function_name = ""; // outside function no function name
+    lit->body_ = parse_block_statement();
+    latest_function_name = ""; // outside function no function name
 
-  return lit;
+    return lit;
+  }
 }
 
-std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
+std::vector<std::unique_ptr<Identifier>>
+Parser::parse_function_params(bool is_prototype) {
   std::vector<std::unique_ptr<Identifier>> params;
   if (peek_token_is(TokenType::RParen)) {
     next_token();
@@ -616,12 +640,8 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
   new_function_param(latest_function_name, ident->value_, type, 0, 1);
   params.push_back(std::move(ident));
 
-  bool first = false;
+  next_token();
   while (current_token_is(TokenType::Comma)) {
-    if (first) {
-      next_token();
-      first = true;
-    }
     auto type = parse_type();
     next_token();
 
@@ -631,6 +651,11 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
     new_function_param(latest_function_name, ident->value_, type, 0, 1);
 
     params.push_back(std::move(ident));
+    next_token();
+  }
+
+  if (current_token_is(TokenType::RParen)) {
+    return params;
   }
 
   if (!expect_peek(TokenType::RParen)) {

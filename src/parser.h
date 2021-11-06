@@ -61,10 +61,10 @@ private:
   std::unique_ptr<Statement> parse_global_decl();
   std::unique_ptr<Expression> parse_primary();
   std::unique_ptr<Expression> parse_prefix();
-  std::unique_ptr<Expression> parse_expression_rec(Precedence prec);
+  std::unique_ptr<Expression> parse_expression_rec(Precedence);
   std::unique_ptr<Expression> parse_postfix();
-  std::unique_ptr<Expression> parse_array(std::unique_ptr<Expression> ident);
-  std::unique_ptr<Expression> parse_call(std::unique_ptr<Expression> ident);
+  std::unique_ptr<Expression> parse_array(std::unique_ptr<Expression>);
+  std::unique_ptr<Expression> parse_call(std::unique_ptr<Expression>);
   std::unique_ptr<Expression> parse_identifier();
   std::unique_ptr<Expression> parse_integer_literal();
   std::unique_ptr<Expression> parse_if_expression();
@@ -72,12 +72,12 @@ private:
   std::unique_ptr<Statement> parse_function_literal();
 
   std::vector<std::unique_ptr<Expression>> parse_expression_list();
-  std::vector<std::unique_ptr<Identifier>> parse_function_params();
+  std::vector<std::unique_ptr<Identifier>> parse_function_params(bool);
   ValueT parse_type();
 
-  bool expect_peek(TokenType tt);
-  bool peek_token_is(TokenType tt);
-  bool current_token_is(TokenType tt);
+  bool expect_peek(TokenType);
+  bool peek_token_is(TokenType);
+  bool current_token_is(TokenType);
 };
 
 #endif

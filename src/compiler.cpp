@@ -434,6 +434,11 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
   }
   case AstType::FunctionLiteral: {
     const auto &func = CAST(FunctionLiteral, node);
+    if (func.is_prototype) {
+      // all of the processing is done by the parser.
+      return -1;
+    }
+
     const auto &name = CAST(Identifier, *func.name_);
 
     const auto &sym = get_symbol(name.value_);
