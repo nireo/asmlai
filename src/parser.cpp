@@ -51,7 +51,6 @@ Parser::Parser(std::unique_ptr<LLexer> lx) {
 void Parser::next_token() {
   current_ = peek_;
   peek_ = lx_->next_token();
-  std::cout << current_.literal_ << '\n';
 }
 
 std::unique_ptr<Statement> Parser::parse_statement() {
@@ -64,6 +63,18 @@ std::unique_ptr<Statement> Parser::parse_statement() {
     return parse_global_decl();
   case TokenType::Var:
     return parse_var_decl();
+  case TokenType::While: {
+    auto stmt = std::make_unique<ExpressionStatement>();
+    stmt->expression_ = parse_while_expression();
+
+    return stmt;
+  }
+  case TokenType::If: {
+    auto stmt = std::make_unique<ExpressionStatement>();
+    stmt->expression_ = parse_if_expression();
+
+    return stmt;
+  }
   default:
     return parse_expression_statement();
   }
@@ -381,12 +392,6 @@ std::unique_ptr<Expression> Parser::parse_prefix() {
 
     return identifier_action;
   }
-  case TokenType::If: {
-    return parse_if_expression();
-  }
-  case TokenType::While: {
-    return parse_while_expression();
-  }
   default:
     return parse_primary();
   }
@@ -400,9 +405,12 @@ std::unique_ptr<Expression> Parser::parse_while_expression() {
   next_token();
   while_stmt->cond_ = parse_expression_rec(LOWEST);
 
-  if (!expect_peek(TokenType::LBrace))
-    PARSER_ERROR(
-        "while statement condition should be followed by a left brace.");
+  if (current_token_is(TokenType::LBrace)) {
+  } else {
+    if (!expect_peek(TokenType::LBrace))
+      PARSER_ERROR(
+          "while statement condition should be followed by a left brace.");
+  }
 
   while_stmt->body_ = parse_block_statement();
 

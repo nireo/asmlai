@@ -4,17 +4,17 @@ func write(int fd, void* buf, int count) => int;
 func close(int fd) => int;
 
 global char* buf;
-global int in;
-global int count;
 
 func main() => int {
-  buf="                                                             ";
+  var int in;
+  var int count;
+  buf="                                                        ";
   in = open("test.lai", 0);
-
   while ((count = read(in, buf, 60)) > 0) {
     write(1, buf, count);
   }
 
-  close(zin);
+  close(in);
+
   return 0;
 }
