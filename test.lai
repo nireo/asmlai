@@ -8,12 +8,20 @@ global char* buf;
 func main() => int {
   var int in;
   var int count;
-  buf="                                                        ";
-  in = open("test.lai", 0);
-  while ((count = read(in, buf, 60)) > 0) {
-    write(1, buf, count);
+  var int xd;
+
+  buf="                                                            ";
+  in = open("~/dev/asmlai/test.lai", 0);
+  if (in == xd) {
+    print_num(100);
+    return 1;
   }
 
+  count = read(in, buf, 60);
+  while (count > 0) {
+    write(1, buf, count);
+    count = read(in, buf, 60);
+  }
   close(in);
 
   return 0;
