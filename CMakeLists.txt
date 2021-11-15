@@ -9,9 +9,9 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 add_executable(
   asmlai
-  src/codegen_x64.cpp
-  src/compiler.cpp
-  src/lexer.cpp
-  src/parser.cpp
-  src/main.cpp
+  src/codegen_x64.cc
+  src/compiler.cc
+  src/lexer.cc
+  src/parser.cc
+  src/main.cc
   )

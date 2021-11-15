@@ -129,125 +129,125 @@ asmlai/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/build
 .PHONY : asmlai/fast
 
-src/codegen_x64.o: src/codegen_x64.cpp.o
+src/codegen_x64.o: src/codegen_x64.cc.o
 .PHONY : src/codegen_x64.o
 
 # target to build an object file
-src/codegen_x64.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/codegen_x64.cpp.o
-.PHONY : src/codegen_x64.cpp.o
+src/codegen_x64.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/codegen_x64.cc.o
+.PHONY : src/codegen_x64.cc.o
 
-src/codegen_x64.i: src/codegen_x64.cpp.i
+src/codegen_x64.i: src/codegen_x64.cc.i
 .PHONY : src/codegen_x64.i
 
 # target to preprocess a source file
-src/codegen_x64.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/codegen_x64.cpp.i
-.PHONY : src/codegen_x64.cpp.i
+src/codegen_x64.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/codegen_x64.cc.i
+.PHONY : src/codegen_x64.cc.i
 
-src/codegen_x64.s: src/codegen_x64.cpp.s
+src/codegen_x64.s: src/codegen_x64.cc.s
 .PHONY : src/codegen_x64.s
 
 # target to generate assembly for a file
-src/codegen_x64.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/codegen_x64.cpp.s
-.PHONY : src/codegen_x64.cpp.s
+src/codegen_x64.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/codegen_x64.cc.s
+.PHONY : src/codegen_x64.cc.s
 
-src/compiler.o: src/compiler.cpp.o
+src/compiler.o: src/compiler.cc.o
 .PHONY : src/compiler.o
 
 # target to build an object file
-src/compiler.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/compiler.cpp.o
-.PHONY : src/compiler.cpp.o
+src/compiler.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/compiler.cc.o
+.PHONY : src/compiler.cc.o
 
-src/compiler.i: src/compiler.cpp.i
+src/compiler.i: src/compiler.cc.i
 .PHONY : src/compiler.i
 
 # target to preprocess a source file
-src/compiler.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/compiler.cpp.i
-.PHONY : src/compiler.cpp.i
+src/compiler.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/compiler.cc.i
+.PHONY : src/compiler.cc.i
 
-src/compiler.s: src/compiler.cpp.s
+src/compiler.s: src/compiler.cc.s
 .PHONY : src/compiler.s
 
 # target to generate assembly for a file
-src/compiler.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/compiler.cpp.s
-.PHONY : src/compiler.cpp.s
+src/compiler.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/compiler.cc.s
+.PHONY : src/compiler.cc.s
 
-src/lexer.o: src/lexer.cpp.o
+src/lexer.o: src/lexer.cc.o
 .PHONY : src/lexer.o
 
 # target to build an object file
-src/lexer.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/lexer.cpp.o
-.PHONY : src/lexer.cpp.o
+src/lexer.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/lexer.cc.o
+.PHONY : src/lexer.cc.o
 
-src/lexer.i: src/lexer.cpp.i
+src/lexer.i: src/lexer.cc.i
 .PHONY : src/lexer.i
 
 # target to preprocess a source file
-src/lexer.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/lexer.cpp.i
-.PHONY : src/lexer.cpp.i
+src/lexer.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/lexer.cc.i
+.PHONY : src/lexer.cc.i
 
-src/lexer.s: src/lexer.cpp.s
+src/lexer.s: src/lexer.cc.s
 .PHONY : src/lexer.s
 
 # target to generate assembly for a file
-src/lexer.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/lexer.cpp.s
-.PHONY : src/lexer.cpp.s
+src/lexer.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/lexer.cc.s
+.PHONY : src/lexer.cc.s
 
-src/main.o: src/main.cpp.o
+src/main.o: src/main.cc.o
 .PHONY : src/main.o
 
 # target to build an object file
-src/main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/main.cpp.o
-.PHONY : src/main.cpp.o
+src/main.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/main.cc.o
+.PHONY : src/main.cc.o
 
-src/main.i: src/main.cpp.i
+src/main.i: src/main.cc.i
 .PHONY : src/main.i
 
 # target to preprocess a source file
-src/main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/main.cpp.i
-.PHONY : src/main.cpp.i
+src/main.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/main.cc.i
+.PHONY : src/main.cc.i
 
-src/main.s: src/main.cpp.s
+src/main.s: src/main.cc.s
 .PHONY : src/main.s
 
 # target to generate assembly for a file
-src/main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/main.cpp.s
-.PHONY : src/main.cpp.s
+src/main.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/main.cc.s
+.PHONY : src/main.cc.s
 
-src/parser.o: src/parser.cpp.o
+src/parser.o: src/parser.cc.o
 .PHONY : src/parser.o
 
 # target to build an object file
-src/parser.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/parser.cpp.o
-.PHONY : src/parser.cpp.o
+src/parser.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/parser.cc.o
+.PHONY : src/parser.cc.o
 
-src/parser.i: src/parser.cpp.i
+src/parser.i: src/parser.cc.i
 .PHONY : src/parser.i
 
 # target to preprocess a source file
-src/parser.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/parser.cpp.i
-.PHONY : src/parser.cpp.i
+src/parser.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/parser.cc.i
+.PHONY : src/parser.cc.i
 
-src/parser.s: src/parser.cpp.s
+src/parser.s: src/parser.cc.s
 .PHONY : src/parser.s
 
 # target to generate assembly for a file
-src/parser.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/parser.cpp.s
-.PHONY : src/parser.cpp.s
+src/parser.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/parser.cc.s
+.PHONY : src/parser.cc.s
 
 # Help Target
 help:

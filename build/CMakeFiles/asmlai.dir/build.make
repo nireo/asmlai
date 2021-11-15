@@ -69,92 +69,92 @@ include CMakeFiles/asmlai.dir/progress.make
 # Include the compile flags for this target's objects.
 include CMakeFiles/asmlai.dir/flags.make
 
-CMakeFiles/asmlai.dir/src/codegen_x64.cpp.o: CMakeFiles/asmlai.dir/flags.make
-CMakeFiles/asmlai.dir/src/codegen_x64.cpp.o: ../src/codegen_x64.cpp
-CMakeFiles/asmlai.dir/src/codegen_x64.cpp.o: CMakeFiles/asmlai.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/eemil/dev/asmlai/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/asmlai.dir/src/codegen_x64.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/asmlai.dir/src/codegen_x64.cpp.o -MF CMakeFiles/asmlai.dir/src/codegen_x64.cpp.o.d -o CMakeFiles/asmlai.dir/src/codegen_x64.cpp.o -c /home/eemil/dev/asmlai/src/codegen_x64.cpp
+CMakeFiles/asmlai.dir/src/codegen_x64.cc.o: CMakeFiles/asmlai.dir/flags.make
+CMakeFiles/asmlai.dir/src/codegen_x64.cc.o: ../src/codegen_x64.cc
+CMakeFiles/asmlai.dir/src/codegen_x64.cc.o: CMakeFiles/asmlai.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/eemil/dev/asmlai/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/asmlai.dir/src/codegen_x64.cc.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/asmlai.dir/src/codegen_x64.cc.o -MF CMakeFiles/asmlai.dir/src/codegen_x64.cc.o.d -o CMakeFiles/asmlai.dir/src/codegen_x64.cc.o -c /home/eemil/dev/asmlai/src/codegen_x64.cc
 
-CMakeFiles/asmlai.dir/src/codegen_x64.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/asmlai.dir/src/codegen_x64.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/eemil/dev/asmlai/src/codegen_x64.cpp > CMakeFiles/asmlai.dir/src/codegen_x64.cpp.i
+CMakeFiles/asmlai.dir/src/codegen_x64.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/asmlai.dir/src/codegen_x64.cc.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/eemil/dev/asmlai/src/codegen_x64.cc > CMakeFiles/asmlai.dir/src/codegen_x64.cc.i
 
-CMakeFiles/asmlai.dir/src/codegen_x64.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/asmlai.dir/src/codegen_x64.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/eemil/dev/asmlai/src/codegen_x64.cpp -o CMakeFiles/asmlai.dir/src/codegen_x64.cpp.s
+CMakeFiles/asmlai.dir/src/codegen_x64.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/asmlai.dir/src/codegen_x64.cc.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/eemil/dev/asmlai/src/codegen_x64.cc -o CMakeFiles/asmlai.dir/src/codegen_x64.cc.s
 
-CMakeFiles/asmlai.dir/src/compiler.cpp.o: CMakeFiles/asmlai.dir/flags.make
-CMakeFiles/asmlai.dir/src/compiler.cpp.o: ../src/compiler.cpp
-CMakeFiles/asmlai.dir/src/compiler.cpp.o: CMakeFiles/asmlai.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/eemil/dev/asmlai/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/asmlai.dir/src/compiler.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/asmlai.dir/src/compiler.cpp.o -MF CMakeFiles/asmlai.dir/src/compiler.cpp.o.d -o CMakeFiles/asmlai.dir/src/compiler.cpp.o -c /home/eemil/dev/asmlai/src/compiler.cpp
+CMakeFiles/asmlai.dir/src/compiler.cc.o: CMakeFiles/asmlai.dir/flags.make
+CMakeFiles/asmlai.dir/src/compiler.cc.o: ../src/compiler.cc
+CMakeFiles/asmlai.dir/src/compiler.cc.o: CMakeFiles/asmlai.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/eemil/dev/asmlai/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/asmlai.dir/src/compiler.cc.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/asmlai.dir/src/compiler.cc.o -MF CMakeFiles/asmlai.dir/src/compiler.cc.o.d -o CMakeFiles/asmlai.dir/src/compiler.cc.o -c /home/eemil/dev/asmlai/src/compiler.cc
 
-CMakeFiles/asmlai.dir/src/compiler.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/asmlai.dir/src/compiler.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/eemil/dev/asmlai/src/compiler.cpp > CMakeFiles/asmlai.dir/src/compiler.cpp.i
+CMakeFiles/asmlai.dir/src/compiler.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/asmlai.dir/src/compiler.cc.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/eemil/dev/asmlai/src/compiler.cc > CMakeFiles/asmlai.dir/src/compiler.cc.i
 
-CMakeFiles/asmlai.dir/src/compiler.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/asmlai.dir/src/compiler.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/eemil/dev/asmlai/src/compiler.cpp -o CMakeFiles/asmlai.dir/src/compiler.cpp.s
+CMakeFiles/asmlai.dir/src/compiler.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/asmlai.dir/src/compiler.cc.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/eemil/dev/asmlai/src/compiler.cc -o CMakeFiles/asmlai.dir/src/compiler.cc.s
 
-CMakeFiles/asmlai.dir/src/lexer.cpp.o: CMakeFiles/asmlai.dir/flags.make
-CMakeFiles/asmlai.dir/src/lexer.cpp.o: ../src/lexer.cpp
-CMakeFiles/asmlai.dir/src/lexer.cpp.o: CMakeFiles/asmlai.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/eemil/dev/asmlai/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/asmlai.dir/src/lexer.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/asmlai.dir/src/lexer.cpp.o -MF CMakeFiles/asmlai.dir/src/lexer.cpp.o.d -o CMakeFiles/asmlai.dir/src/lexer.cpp.o -c /home/eemil/dev/asmlai/src/lexer.cpp
+CMakeFiles/asmlai.dir/src/lexer.cc.o: CMakeFiles/asmlai.dir/flags.make
+CMakeFiles/asmlai.dir/src/lexer.cc.o: ../src/lexer.cc
+CMakeFiles/asmlai.dir/src/lexer.cc.o: CMakeFiles/asmlai.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/eemil/dev/asmlai/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/asmlai.dir/src/lexer.cc.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/asmlai.dir/src/lexer.cc.o -MF CMakeFiles/asmlai.dir/src/lexer.cc.o.d -o CMakeFiles/asmlai.dir/src/lexer.cc.o -c /home/eemil/dev/asmlai/src/lexer.cc
 
-CMakeFiles/asmlai.dir/src/lexer.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/asmlai.dir/src/lexer.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/eemil/dev/asmlai/src/lexer.cpp > CMakeFiles/asmlai.dir/src/lexer.cpp.i
+CMakeFiles/asmlai.dir/src/lexer.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/asmlai.dir/src/lexer.cc.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/eemil/dev/asmlai/src/lexer.cc > CMakeFiles/asmlai.dir/src/lexer.cc.i
 
-CMakeFiles/asmlai.dir/src/lexer.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/asmlai.dir/src/lexer.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/eemil/dev/asmlai/src/lexer.cpp -o CMakeFiles/asmlai.dir/src/lexer.cpp.s
+CMakeFiles/asmlai.dir/src/lexer.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/asmlai.dir/src/lexer.cc.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/eemil/dev/asmlai/src/lexer.cc -o CMakeFiles/asmlai.dir/src/lexer.cc.s
 
-CMakeFiles/asmlai.dir/src/parser.cpp.o: CMakeFiles/asmlai.dir/flags.make
-CMakeFiles/asmlai.dir/src/parser.cpp.o: ../src/parser.cpp
-CMakeFiles/asmlai.dir/src/parser.cpp.o: CMakeFiles/asmlai.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/eemil/dev/asmlai/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/asmlai.dir/src/parser.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/asmlai.dir/src/parser.cpp.o -MF CMakeFiles/asmlai.dir/src/parser.cpp.o.d -o CMakeFiles/asmlai.dir/src/parser.cpp.o -c /home/eemil/dev/asmlai/src/parser.cpp
+CMakeFiles/asmlai.dir/src/parser.cc.o: CMakeFiles/asmlai.dir/flags.make
+CMakeFiles/asmlai.dir/src/parser.cc.o: ../src/parser.cc
+CMakeFiles/asmlai.dir/src/parser.cc.o: CMakeFiles/asmlai.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/eemil/dev/asmlai/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/asmlai.dir/src/parser.cc.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/asmlai.dir/src/parser.cc.o -MF CMakeFiles/asmlai.dir/src/parser.cc.o.d -o CMakeFiles/asmlai.dir/src/parser.cc.o -c /home/eemil/dev/asmlai/src/parser.cc
 
-CMakeFiles/asmlai.dir/src/parser.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/asmlai.dir/src/parser.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/eemil/dev/asmlai/src/parser.cpp > CMakeFiles/asmlai.dir/src/parser.cpp.i
+CMakeFiles/asmlai.dir/src/parser.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/asmlai.dir/src/parser.cc.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/eemil/dev/asmlai/src/parser.cc > CMakeFiles/asmlai.dir/src/parser.cc.i
 
-CMakeFiles/asmlai.dir/src/parser.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/asmlai.dir/src/parser.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/eemil/dev/asmlai/src/parser.cpp -o CMakeFiles/asmlai.dir/src/parser.cpp.s
+CMakeFiles/asmlai.dir/src/parser.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/asmlai.dir/src/parser.cc.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/eemil/dev/asmlai/src/parser.cc -o CMakeFiles/asmlai.dir/src/parser.cc.s
 
-CMakeFiles/asmlai.dir/src/main.cpp.o: CMakeFiles/asmlai.dir/flags.make
-CMakeFiles/asmlai.dir/src/main.cpp.o: ../src/main.cpp
-CMakeFiles/asmlai.dir/src/main.cpp.o: CMakeFiles/asmlai.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/eemil/dev/asmlai/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/asmlai.dir/src/main.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/asmlai.dir/src/main.cpp.o -MF CMakeFiles/asmlai.dir/src/main.cpp.o.d -o CMakeFiles/asmlai.dir/src/main.cpp.o -c /home/eemil/dev/asmlai/src/main.cpp
+CMakeFiles/asmlai.dir/src/main.cc.o: CMakeFiles/asmlai.dir/flags.make
+CMakeFiles/asmlai.dir/src/main.cc.o: ../src/main.cc
+CMakeFiles/asmlai.dir/src/main.cc.o: CMakeFiles/asmlai.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/eemil/dev/asmlai/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/asmlai.dir/src/main.cc.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/asmlai.dir/src/main.cc.o -MF CMakeFiles/asmlai.dir/src/main.cc.o.d -o CMakeFiles/asmlai.dir/src/main.cc.o -c /home/eemil/dev/asmlai/src/main.cc
 
-CMakeFiles/asmlai.dir/src/main.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/asmlai.dir/src/main.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/eemil/dev/asmlai/src/main.cpp > CMakeFiles/asmlai.dir/src/main.cpp.i
+CMakeFiles/asmlai.dir/src/main.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/asmlai.dir/src/main.cc.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/eemil/dev/asmlai/src/main.cc > CMakeFiles/asmlai.dir/src/main.cc.i
 
-CMakeFiles/asmlai.dir/src/main.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/asmlai.dir/src/main.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/eemil/dev/asmlai/src/main.cpp -o CMakeFiles/asmlai.dir/src/main.cpp.s
+CMakeFiles/asmlai.dir/src/main.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/asmlai.dir/src/main.cc.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/eemil/dev/asmlai/src/main.cc -o CMakeFiles/asmlai.dir/src/main.cc.s
 
 # Object files for target asmlai
 asmlai_OBJECTS = \
-"CMakeFiles/asmlai.dir/src/codegen_x64.cpp.o" \
-"CMakeFiles/asmlai.dir/src/compiler.cpp.o" \
-"CMakeFiles/asmlai.dir/src/lexer.cpp.o" \
-"CMakeFiles/asmlai.dir/src/parser.cpp.o" \
-"CMakeFiles/asmlai.dir/src/main.cpp.o"
+"CMakeFiles/asmlai.dir/src/codegen_x64.cc.o" \
+"CMakeFiles/asmlai.dir/src/compiler.cc.o" \
+"CMakeFiles/asmlai.dir/src/lexer.cc.o" \
+"CMakeFiles/asmlai.dir/src/parser.cc.o" \
+"CMakeFiles/asmlai.dir/src/main.cc.o"
 
 # External object files for target asmlai
 asmlai_EXTERNAL_OBJECTS =
 
-asmlai: CMakeFiles/asmlai.dir/src/codegen_x64.cpp.o
-asmlai: CMakeFiles/asmlai.dir/src/compiler.cpp.o
-asmlai: CMakeFiles/asmlai.dir/src/lexer.cpp.o
-asmlai: CMakeFiles/asmlai.dir/src/parser.cpp.o
-asmlai: CMakeFiles/asmlai.dir/src/main.cpp.o
+asmlai: CMakeFiles/asmlai.dir/src/codegen_x64.cc.o
+asmlai: CMakeFiles/asmlai.dir/src/compiler.cc.o
+asmlai: CMakeFiles/asmlai.dir/src/lexer.cc.o
+asmlai: CMakeFiles/asmlai.dir/src/parser.cc.o
+asmlai: CMakeFiles/asmlai.dir/src/main.cc.o
 asmlai: CMakeFiles/asmlai.dir/build.make
 asmlai: CMakeFiles/asmlai.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/eemil/dev/asmlai/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Linking CXX executable asmlai"
