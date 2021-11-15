@@ -251,8 +251,7 @@ std::unique_ptr<Statement> Parser::parse_return_statement() {
   returnstmt->types_ = function_return_type_;
 
   auto value = parse_expression_rec(LOWEST);
-  if (!check_type_compatible(function_return_type_, value->ValueType(), false))
-    PARSER_ERROR("return value doesn't match functions return type\n");
+
   returnstmt->return_value_ = std::move(value);
 
   return returnstmt;
@@ -603,7 +602,7 @@ std::unique_ptr<Statement> Parser::parse_function_literal() {
     param_count = (int)get_function_locals(name).size();
   }
 
-  lit->params_ = parse_function_params(param_count != -1);
+  lit->params_ = parse_function_params();
   if (param_count != -1 && (int)lit->params_.size() == param_count)
     PARSER_ERROR("wrong amount of parameters in function literal compared to "
                  "prototype.");
@@ -631,7 +630,7 @@ std::unique_ptr<Statement> Parser::parse_function_literal() {
 }
 
 std::vector<std::unique_ptr<Identifier>>
-Parser::parse_function_params(bool is_prototype) {
+Parser::parse_function_params() {
   std::vector<std::unique_ptr<Identifier>> params;
   if (peek_token_is(TokenType::RParen)) {
     next_token();

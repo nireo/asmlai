@@ -124,26 +124,6 @@ int get_next_label() {
   return id++;
 }
 
-bool check_type_compatible(const ValueT left, const ValueT right, bool noleft) {
-  if (left == TYPE_VOID || right == TYPE_VOID)
-    return false;
-
-  if (left == right)
-    return true;
-
-  if (left == TYPE_CHAR && right == TYPE_INT) {
-    return true;
-  }
-
-  if (left == TYPE_INT && right == TYPE_CHAR) {
-    if (noleft)
-      return false;
-    return true;
-  }
-
-  return false;
-}
-
 static bool number_type(const ValueT type) {
   if (type == TYPE_CHAR || type == TYPE_INT || type == TYPE_LONG)
     return true;

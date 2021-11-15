@@ -72,7 +72,7 @@ private:
   std::unique_ptr<Statement> parse_function_literal();
 
   std::vector<std::unique_ptr<Expression>> parse_expression_list();
-  std::vector<std::unique_ptr<Identifier>> parse_function_params(bool);
+  std::vector<std::unique_ptr<Identifier>> parse_function_params();
   ValueT parse_type();
 
   bool expect_peek(TokenType);
