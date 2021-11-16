@@ -5,6 +5,7 @@
 #include "token.h"
 #include <string>
 
+namespace codegen {
 int get_bytesize_of_type(ValueT);
 int load_into_register(int);
 int mul_registers(int, int);
@@ -47,5 +48,6 @@ int get_local_offset(ValueT);
 int load_local(const Symbol &, TokenType, bool);
 int store_local(const Symbol &, int);
 void copy_argument(int, int);
+}; // namespace codegen
 
 #endif

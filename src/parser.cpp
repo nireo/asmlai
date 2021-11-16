@@ -279,7 +279,7 @@ std::unique_ptr<Expression> Parser::parse_primary() {
 
     int label = get_next_label();
 
-    codegen::global_str(label, value);
+    global_str(label, value);
 
     strlit->value_ = value;
     strlit->id_ = label;

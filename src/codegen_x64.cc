@@ -27,11 +27,12 @@ constexpr const char *compare_instructions[] = {"sete", "setne", "setl",
 
 static int local_offset;
 static int stack_offset;
-void reset_local_offset() { local_offset = 0; }
+void codegen::reset_local_offset() { local_offset = 0; }
 
-int get_local_offset(ValueT type) {
-  local_offset +=
-      (get_bytesize_of_type(type) > 4) ? get_bytesize_of_type(type) : 4;
+int codegen::get_local_offset(ValueT type) {
+  local_offset += (codegen::get_bytesize_of_type(type) > 4)
+                      ? codegen::get_bytesize_of_type(type)
+                      : 4;
   return -local_offset;
 }
 
@@ -55,7 +56,7 @@ static int get_corresponding_inst_index(const TokenType type) {
   }
 }
 
-int get_bytesize_of_type(ValueT type) {
+int codegen::get_bytesize_of_type(ValueT type) {
   switch (type) {
   case TYPE_VOID:
     return 0;
@@ -92,7 +93,7 @@ void dataseg() {
   }
 }
 
-void free_all_registers() {
+void codegen::free_all_registers() {
   free_registers[0] = true;
   free_registers[1] = true;
   free_registers[2] = true;
@@ -120,33 +121,33 @@ static void free_register(int reg) {
   free_registers[reg] = true;
 }
 
-void init_out_file() {
+void codegen::init_out_file() {
   if ((fp = fopen("out.s", "w")) == NULL) {
     std::fprintf(stderr, "unable to create out file\n");
     std::exit(1);
   }
 }
 
-void gen_start() {
-  free_all_registers();
+void codegen::gen_start() {
+  codegen::free_all_registers();
   std::fprintf(fp, "\t.text\n");
 }
 
-int load_into_register(int val) {
+int codegen::load_into_register(int val) {
   int reg = get_register();
   fprintf(fp, "\tmovq\t$%d, %s\n", val, registers[reg]);
 
   return reg;
 }
 
-int mul_registers(int r1, int r2) {
+int codegen::mul_registers(int r1, int r2) {
   fprintf(fp, "\timulq\t%s, %s\n", registers[r1], registers[r2]);
   free_register(r1);
 
   return r2;
 }
 
-int div_registers(int r1, int r2) {
+int codegen::div_registers(int r1, int r2) {
   fprintf(fp, "\tmovq\t%s,%%rax\n\tcqo\n", registers[r1]);
   fprintf(fp, "\tidivq\t%s\n", registers[r2]);
   fprintf(fp, "\tmovq\t%%rax,%s\n", registers[r1]);
@@ -155,21 +156,21 @@ int div_registers(int r1, int r2) {
   return r1;
 }
 
-int add_registers(int reg1, int reg2) {
+int codegen::add_registers(int reg1, int reg2) {
   fprintf(fp, "\taddq\t%s, %s\n", registers[reg1], registers[reg2]);
   free_register(reg1);
 
   return reg2;
 }
 
-int sub_registers(int reg1, int reg2) {
+int codegen::sub_registers(int reg1, int reg2) {
   fprintf(fp, "\tsubq\t%s, %s\n", registers[reg2], registers[reg1]);
   free_register(reg2);
 
   return reg1;
 }
 
-void print_register(int r) {
+void codegen::print_register(int r) {
   fprintf(fp,
           "\tmovq\t%s, %%rdi\n"
           "\tcall\ttest_print_integer\n",
@@ -177,9 +178,9 @@ void print_register(int r) {
   free_register(r);
 }
 
-void end_codegen() { fclose(fp); }
+void codegen::end_codegen() { fclose(fp); }
 
-int store_global(int r, const Symbol &sym) {
+int codegen::store_global(int r, const Symbol &sym) {
   switch (sym.value_type_) {
   case TYPE_CHAR: {
     std::fprintf(fp, "\tmovb\t%s, %s(\%%rip)\n", b_registers[r],
@@ -212,8 +213,8 @@ int store_global(int r, const Symbol &sym) {
   return r;
 }
 
-void generate_sym(const Symbol &sym) {
-  int size = get_bytesize_of_type(sym.value_type_);
+void codegen::generate_sym(const Symbol &sym) {
+  int size = codegen::get_bytesize_of_type(sym.value_type_);
   std::fprintf(fp,
                "\t.data\n"
                "\t.globl\t%s\n%s:",
@@ -237,7 +238,7 @@ void generate_sym(const Symbol &sym) {
   }
 }
 
-int load_global(const Symbol &sym, TokenType opr, bool post) {
+int codegen::load_global(const Symbol &sym, TokenType opr, bool post) {
   int free_reg = get_register();
 
   switch (sym.value_type_) {
@@ -319,7 +320,7 @@ int load_global(const Symbol &sym, TokenType opr, bool post) {
   return free_reg;
 }
 
-int codegen_compare_no_jump(int reg1, int reg2, const TokenType type) {
+int codegen::codegen_compare_no_jump(int reg1, int reg2, const TokenType type) {
   auto index = get_corresponding_inst_index(type);
 
   std::fprintf(fp, "\tcmpq\t%s, %s\n", registers[reg2], registers[reg1]);
@@ -332,17 +333,18 @@ int codegen_compare_no_jump(int reg1, int reg2, const TokenType type) {
   return reg2;
 }
 
-int codegen_compare_jump(int reg1, int reg2, int label, const TokenType type) {
+int codegen::codegen_compare_jump(int reg1, int reg2, int label,
+                                  const TokenType type) {
   auto index = get_corresponding_inst_index(type);
 
   std::fprintf(fp, "\tcmpq\t%s, %s\n", registers[reg2], registers[reg1]);
   std::fprintf(fp, "\t%s\tL%d\n", jump_insts[index], label);
-  free_all_registers();
+  codegen::free_all_registers();
 
   return -1;
 }
 
-void gen_label(int label) {
+void codegen::gen_label(int label) {
   std::cout << "label: " << label << '\n';
   if (fp == nullptr) {
     if ((fp = fopen("out.s", "a")) == NULL) {
@@ -354,9 +356,9 @@ void gen_label(int label) {
   std::fprintf(fp, "L%d:\n", label);
 }
 
-void gen_jmp(int label) { std::fprintf(fp, "\tjmp\tL%d\n", label); }
+void codegen::gen_jmp(int label) { std::fprintf(fp, "\tjmp\tL%d\n", label); }
 
-void function_start(const std::string &name) {
+void codegen::function_start(const std::string &name) {
   textseg();
   local_offset = 0;
 
@@ -390,7 +392,7 @@ void function_start(const std::string &name) {
   std::fprintf(fp, "\taddq\t$%d, %%rsp\n", -stack_offset);
 }
 
-void codegen_return(int reg, const Symbol &sym) {
+void codegen::codegen_return(int reg, const Symbol &sym) {
   switch (sym.value_type_) {
   case TYPE_CHAR:
     fprintf(fp, "\tmovzbl\t%s, %%eax\n", b_registers[reg]);
@@ -410,7 +412,7 @@ void codegen_return(int reg, const Symbol &sym) {
   gen_jmp(sym.label);
 }
 
-int codegen_call(const std::string &name, int argument_count) {
+int codegen::codegen_call(const std::string &name, int argument_count) {
   int outer = get_register();
   // std::fprintf(fp, "\tmovq\t%s, %%rdi\n", registers[reg]);
   std::fprintf(fp, "\tcall\t%s@PLT\n", name.c_str());
@@ -421,7 +423,7 @@ int codegen_call(const std::string &name, int argument_count) {
   return outer;
 }
 
-void function_end(int label) {
+void codegen::function_end(int label) {
   gen_label(label);
   std::fprintf(fp, "\taddq\t$%d,%%rsp\n", stack_offset);
 
@@ -430,7 +432,7 @@ void function_end(int label) {
              fp);
 }
 
-int codegen_addr(const Symbol &sym) {
+int codegen::codegen_addr(const Symbol &sym) {
   int r = get_register();
 
   std::fprintf(fp, "\tleaq\t%s(%%rip), %s\n", sym.name_.c_str(), registers[r]);
@@ -438,7 +440,7 @@ int codegen_addr(const Symbol &sym) {
   return r;
 }
 
-int codegen_dereference(int reg, const ValueT type) {
+int codegen::codegen_dereference(int reg, const ValueT type) {
   switch (type) {
   case TYPE_PTR_CHAR: {
     std::fprintf(fp, "\tmovzbq\t(%s), %s\n", registers[reg], registers[reg]);
@@ -458,12 +460,12 @@ int codegen_dereference(int reg, const ValueT type) {
   return reg;
 }
 
-int shift_left(int reg, int value) {
+int codegen::shift_left(int reg, int value) {
   std::fprintf(fp, "\tsalq\t$%d, %s\n", value, registers[reg]);
   return reg;
 }
 
-int shift_left_from_reg(int r1, int r2) {
+int codegen::shift_left_from_reg(int r1, int r2) {
   std::fprintf(fp, "\tmovb\t%s, %%cl\n", b_registers[r2]);
   std::fprintf(fp, "\tshlq\t%%cl, %s\n", registers[r1]);
 
@@ -471,7 +473,7 @@ int shift_left_from_reg(int r1, int r2) {
   return r1;
 }
 
-int shift_right_from_reg(int r1, int r2) {
+int codegen::shift_right_from_reg(int r1, int r2) {
   std::fprintf(fp, "\tmovb\t%s, %%cl\n", b_registers[r2]);
   std::fprintf(fp, "\tshrq\t%%cl, %s\n", registers[r1]);
   free_register(r2);
@@ -479,21 +481,21 @@ int shift_right_from_reg(int r1, int r2) {
   return r1;
 }
 
-int codegen_and(int r1, int r2) {
+int codegen::codegen_and(int r1, int r2) {
   std::fprintf(fp, "\tandq\t%s, %s\n", registers[r1], registers[r2]);
 
   free_register(r1);
   return r2;
 }
 
-int codegen_or(int r1, int r2) {
+int codegen::codegen_or(int r1, int r2) {
   std::fprintf(fp, "\torq\t%s, %s\n", registers[r1], registers[r2]);
 
   free_register(r1);
   return r2;
 }
 
-int codegen_load_int(int value) {
+int codegen::codegen_load_int(int value) {
   int free_reg = get_register();
 
   std::fprintf(fp, "\tmovq\t$%d, %s\n", value, registers[free_reg]);
@@ -512,17 +514,17 @@ int convert_into_bool(int r, AstType node_type, int label) {
   return r;
 }
 
-int codegen_invert(int r) {
+int codegen::codegen_invert(int r) {
   std::fprintf(fp, "\tnotq\t%s\n", registers[r]);
   return r;
 }
 
-int codegen_neg(int r) {
+int codegen::codegen_neg(int r) {
   std::fprintf(fp, "\tnegq\t%s\n", registers[r]);
   return r;
 }
 
-int codegen_not(int r) {
+int codegen::codegen_not(int r) {
   std::fprintf(fp, "\ttest\t%s, %s\n", registers[r], registers[r]);
   std::fprintf(fp, "\tsete\t%s\n", b_registers[r]);
   std::fprintf(fp, "\tmovzbq\t%s, %s\n", b_registers[r], registers[r]);
@@ -530,7 +532,7 @@ int codegen_not(int r) {
   return r;
 }
 
-int store_dereference(int reg1, int reg2, ValueT type) {
+int codegen::store_dereference(int reg1, int reg2, ValueT type) {
   switch (type) {
   case TYPE_CHAR:
     std::fprintf(fp, "\tmovb\t%s, (%s)\n", b_registers[reg1], registers[reg2]);
@@ -549,7 +551,7 @@ int store_dereference(int reg1, int reg2, ValueT type) {
   return reg1;
 }
 
-void global_str(int l, const std::string &value) {
+void codegen::global_str(int l, const std::string &value) {
   gen_label(l);
   for (size_t i = 0; i < value.length(); i++) {
     std::fprintf(fp, "\t.byte\t%d\n", value[i]);
@@ -558,21 +560,21 @@ void global_str(int l, const std::string &value) {
   std::fprintf(fp, "\t.byte\t0\n");
 }
 
-int codegen_xor(int r1, int r2) {
+int codegen::codegen_xor(int r1, int r2) {
   std::fprintf(fp, "\txorq\t%s, %s\n", registers[r1], registers[r2]);
   free_register(r1);
 
   return r2;
 }
 
-int load_global_str(int l) {
+int codegen::load_global_str(int l) {
   int r = get_register();
   std::fprintf(fp, "\tleaq\tL%d(\%%rip), %s\n", l, registers[r]);
 
   return r;
 }
 
-int load_local(const Symbol &sym, TokenType opr, bool post) {
+int codegen::load_local(const Symbol &sym, TokenType opr, bool post) {
   int free_reg = get_register();
 
   switch (sym.value_type_) {
@@ -654,7 +656,7 @@ int load_local(const Symbol &sym, TokenType opr, bool post) {
   return free_reg;
 }
 
-void copy_argument(int r, int pos) {
+void codegen::copy_argument(int r, int pos) {
   if (pos > 6) {
     std::fprintf(fp, "\tpushq\t%s\n", registers[r]);
   } else {
@@ -662,7 +664,7 @@ void copy_argument(int r, int pos) {
   }
 }
 
-int store_local(const Symbol &sym, int r) {
+int codegen::store_local(const Symbol &sym, int r) {
   switch (sym.value_type_) {
   case TYPE_CHAR:
     std::fprintf(fp, "\tmovb\t%s, %d(%%rbp)\n", b_registers[r], sym.position);

@@ -21,13 +21,13 @@ int main(int argc, char *argv[]) {
   auto parser = Parser(std::make_unique<LLexer>(lexer));
   auto program = parser.parse_program();
 
-  init_out_file();
-  gen_start();
+  codegen::init_out_file();
+  codegen::gen_start();
 
   // init some libc functions.
   compile_ast_node(*program, -1, AstType::Program);
 
-  end_codegen();
+  codegen::end_codegen();
 
   return EXIT_SUCCESS;
 }
