@@ -11,6 +11,7 @@
 #include "codegen_x64.h"
 #include "compiler.h"
 #include "token.h"
+#include "types.h"
 
 #define PARSER_ERROR(message, ...)                                             \
   do {                                                                         \
@@ -198,8 +199,8 @@ Parser::parse_array(std::unique_ptr<Expression> ident) {
       indx->ValueType() != TYPE_LONG)
     PARSER_ERROR("the index expression needs to be an integer.");
 
-  auto index_modified =
-      change_type(std::move(indx), arr->ValueType(), TokenType::Plus);
+  auto index_modified = typesystem::change_type(
+      std::move(indx), arr->ValueType(), TokenType::Plus);
 
   auto infix = std::make_unique<InfixExpression>();
   infix->opr = TokenType::Plus;
@@ -438,7 +439,8 @@ std::unique_ptr<Expression> Parser::parse_expression_rec(Precedence prec) {
     if (tokentype == TokenType::Assign) {
       right->set_rvalue(true);
 
-      auto right_temp = change_type(std::move(right), left_type, tokentype);
+      auto right_temp =
+          typesystem::change_type(std::move(right), left_type, tokentype);
       if (right_temp.second == nullptr) {
         PARSER_ERROR("incompatible type in assingment");
       }
@@ -455,9 +457,10 @@ std::unique_ptr<Expression> Parser::parse_expression_rec(Precedence prec) {
       left->set_rvalue(true);
       right->set_rvalue(true);
 
-      auto left_temp =
-          change_type(std::move(left), right->ValueType(), tokentype);
-      auto right_temp = change_type(std::move(right), left_type, tokentype);
+      auto left_temp = typesystem::change_type(std::move(left),
+                                               right->ValueType(), tokentype);
+      auto right_temp =
+          typesystem::change_type(std::move(right), left_type, tokentype);
 
       if (left_temp.second == nullptr && right_temp.second == nullptr) {
         PARSER_ERROR("bad types in expression\n");
@@ -629,8 +632,7 @@ std::unique_ptr<Statement> Parser::parse_function_literal() {
   }
 }
 
-std::vector<std::unique_ptr<Identifier>>
-Parser::parse_function_params() {
+std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
   std::vector<std::unique_ptr<Identifier>> params;
   if (peek_token_is(TokenType::RParen)) {
     next_token();

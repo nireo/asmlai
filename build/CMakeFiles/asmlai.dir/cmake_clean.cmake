@@ -9,6 +9,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/asmlai.dir/src/main.cc.o.d"
   "CMakeFiles/asmlai.dir/src/parser.cc.o"
   "CMakeFiles/asmlai.dir/src/parser.cc.o.d"
+  "CMakeFiles/asmlai.dir/src/types.cc.o"
+  "CMakeFiles/asmlai.dir/src/types.cc.o.d"
   "asmlai"
   "asmlai.pdb"
 )

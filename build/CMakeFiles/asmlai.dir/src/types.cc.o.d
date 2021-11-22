@@ -1,7 +1,7 @@
-CMakeFiles/asmlai.dir/src/main.cpp.o: /home/eemil/dev/asmlai/src/main.cpp \
- /usr/include/stdc-predef.h /home/eemil/dev/asmlai/src/codegen_x64.h \
- /home/eemil/dev/asmlai/src/compiler.h /home/eemil/dev/asmlai/src/ast.h \
- /home/eemil/dev/asmlai/src/token.h /usr/include/c++/11.1.0/string \
+CMakeFiles/asmlai.dir/src/types.cc.o: /home/eemil/dev/asmlai/src/types.cc \
+ /usr/include/stdc-predef.h /home/eemil/dev/asmlai/src/types.h \
+ /home/eemil/dev/asmlai/src/ast.h /home/eemil/dev/asmlai/src/token.h \
+ /usr/include/c++/11.1.0/string \
  /usr/include/c++/11.1.0/x86_64-pc-linux-gnu/bits/c++config.h \
  /usr/include/c++/11.1.0/x86_64-pc-linux-gnu/bits/os_defines.h \
  /usr/include/features.h /usr/include/sys/cdefs.h \
@@ -140,29 +140,6 @@ CMakeFiles/asmlai.dir/src/main.cpp.o: /home/eemil/dev/asmlai/src/main.cpp \
  /usr/include/c++/11.1.0/pstl/execution_defs.h \
  /usr/include/c++/11.1.0/vector /usr/include/c++/11.1.0/bits/stl_vector.h \
  /usr/include/c++/11.1.0/bits/stl_bvector.h \
- /usr/include/c++/11.1.0/bits/vector.tcc /usr/include/c++/11.1.0/fstream \
- /usr/include/c++/11.1.0/istream /usr/include/c++/11.1.0/ios \
- /usr/include/c++/11.1.0/bits/ios_base.h \
- /usr/include/c++/11.1.0/bits/locale_classes.h \
- /usr/include/c++/11.1.0/bits/locale_classes.tcc \
- /usr/include/c++/11.1.0/system_error \
- /usr/include/c++/11.1.0/x86_64-pc-linux-gnu/bits/error_constants.h \
- /usr/include/c++/11.1.0/stdexcept /usr/include/c++/11.1.0/streambuf \
- /usr/include/c++/11.1.0/bits/streambuf.tcc \
- /usr/include/c++/11.1.0/bits/basic_ios.h \
- /usr/include/c++/11.1.0/bits/locale_facets.h \
- /usr/include/c++/11.1.0/cwctype /usr/include/wctype.h \
- /usr/include/bits/wctype-wchar.h \
- /usr/include/c++/11.1.0/x86_64-pc-linux-gnu/bits/ctype_base.h \
- /usr/include/c++/11.1.0/bits/streambuf_iterator.h \
- /usr/include/c++/11.1.0/x86_64-pc-linux-gnu/bits/ctype_inline.h \
- /usr/include/c++/11.1.0/bits/locale_facets.tcc \
- /usr/include/c++/11.1.0/bits/basic_ios.tcc \
- /usr/include/c++/11.1.0/ostream /usr/include/c++/11.1.0/bits/ostream.tcc \
- /usr/include/c++/11.1.0/bits/istream.tcc \
- /usr/include/c++/11.1.0/bits/codecvt.h \
- /usr/include/c++/11.1.0/x86_64-pc-linux-gnu/bits/basic_file.h \
- /usr/include/c++/11.1.0/x86_64-pc-linux-gnu/bits/c++io.h \
- /usr/include/c++/11.1.0/bits/fstream.tcc \
- /home/eemil/dev/asmlai/src/lexer.h /home/eemil/dev/asmlai/src/parser.h \
- /usr/include/c++/11.1.0/sstream /usr/include/c++/11.1.0/bits/sstream.tcc
+ /usr/include/c++/11.1.0/bits/vector.tcc \
+ /home/eemil/dev/asmlai/src/codegen_x64.h \
+ /home/eemil/dev/asmlai/src/compiler.h

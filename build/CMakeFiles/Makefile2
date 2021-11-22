@@ -81,12 +81,12 @@ clean: CMakeFiles/asmlai.dir/clean
 CMakeFiles/asmlai.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/eemil/dev/asmlai/build/CMakeFiles --progress-num=1,2,3,4,5,6 "Built target asmlai"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/eemil/dev/asmlai/build/CMakeFiles --progress-num=1,2,3,4,5,6,7 "Built target asmlai"
 .PHONY : CMakeFiles/asmlai.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/asmlai.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/eemil/dev/asmlai/build/CMakeFiles 6
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/eemil/dev/asmlai/build/CMakeFiles 7
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/asmlai.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/eemil/dev/asmlai/build/CMakeFiles 0
 .PHONY : CMakeFiles/asmlai.dir/rule

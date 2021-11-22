@@ -21,6 +21,11 @@
 },
 {
   "directory": "/home/eemil/dev/asmlai/build",
+  "command": "/usr/bin/c++   -Wall -Wextra -std=gnu++17 -o CMakeFiles/asmlai.dir/src/types.cc.o -c /home/eemil/dev/asmlai/src/types.cc",
+  "file": "/home/eemil/dev/asmlai/src/types.cc"
+},
+{
+  "directory": "/home/eemil/dev/asmlai/build",
   "command": "/usr/bin/c++   -Wall -Wextra -std=gnu++17 -o CMakeFiles/asmlai.dir/src/main.cc.o -c /home/eemil/dev/asmlai/src/main.cc",
   "file": "/home/eemil/dev/asmlai/src/main.cc"
 }

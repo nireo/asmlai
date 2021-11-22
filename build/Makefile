@@ -249,6 +249,30 @@ src/parser.cc.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/parser.cc.s
 .PHONY : src/parser.cc.s
 
+src/types.o: src/types.cc.o
+.PHONY : src/types.o
+
+# target to build an object file
+src/types.cc.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/types.cc.o
+.PHONY : src/types.cc.o
+
+src/types.i: src/types.cc.i
+.PHONY : src/types.i
+
+# target to preprocess a source file
+src/types.cc.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/types.cc.i
+.PHONY : src/types.cc.i
+
+src/types.s: src/types.cc.s
+.PHONY : src/types.s
+
+# target to generate assembly for a file
+src/types.cc.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/asmlai.dir/build.make CMakeFiles/asmlai.dir/src/types.cc.s
+.PHONY : src/types.cc.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -273,6 +297,9 @@ help:
 	@echo "... src/parser.o"
 	@echo "... src/parser.i"
 	@echo "... src/parser.s"
+	@echo "... src/types.o"
+	@echo "... src/types.i"
+	@echo "... src/types.s"
 .PHONY : help
 
 

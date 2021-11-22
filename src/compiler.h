@@ -46,8 +46,6 @@ void add_new_symbol(const std::string &, const symboltype, const ValueT, int);
 void add_new_symbol(const std::string &, const symboltype, const ValueT, int,
                     int);
 bool symbol_exists(const std::string &);
-std::pair<std::unique_ptr<Expression>, std::unique_ptr<Expression>>
-    change_type(std::unique_ptr<Expression>, ValueT, TokenType);
 int get_next_label();
 
 #endif

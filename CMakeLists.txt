@@ -13,5 +13,6 @@ add_executable(
   src/compiler.cc
   src/lexer.cc
   src/parser.cc
+  src/types.cc
   src/main.cc
   )

@@ -169,4 +169,4 @@ CMakeFiles/asmlai.dir/src/parser.cc.o: \
  /usr/include/c++/11.1.0/bits/ostream.tcc /usr/include/c++/11.1.0/istream \
  /usr/include/c++/11.1.0/bits/istream.tcc \
  /home/eemil/dev/asmlai/src/codegen_x64.h \
- /home/eemil/dev/asmlai/src/compiler.h
+ /home/eemil/dev/asmlai/src/compiler.h /home/eemil/dev/asmlai/src/types.h
