@@ -68,6 +68,9 @@ public:
   virtual ValueT ValueType() const noexcept = 0;
 };
 
+using ExpressionPtr = std::unique_ptr<Expression>;
+using StatementPtr = std::unique_ptr<Statement>;
+
 class Program : public Node {
 public:
   AstType Type() const noexcept { return AstType::Program; }

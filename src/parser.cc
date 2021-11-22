@@ -20,15 +20,14 @@
     std::fprintf(stderr, "\n");                                                \
     std::exit(1);                                                              \
   } while (false);
-
-static std::string latest_function_name = "";
+static std::string latest_function_name;
 
 std::unique_ptr<Program> Parser::parse_program() {
   add_new_symbol("print_num", TYPE_FUNCTION, TYPE_CHAR);
   add_new_symbol("print_char", TYPE_FUNCTION, TYPE_CHAR);
 
   auto program = std::make_unique<Program>();
-  program->statements_ = std::vector<std::unique_ptr<Statement>>();
+  program->statements_ = std::vector<StatementPtr>();
 
   while (current_.type != TokenType::Eof) {
     auto stmt = parse_statement();
@@ -54,7 +53,7 @@ void Parser::next_token() {
   peek_ = lx_->next_token();
 }
 
-std::unique_ptr<Statement> Parser::parse_statement() {
+StatementPtr Parser::parse_statement() {
   switch (current_.type) {
   case TokenType::Function:
     return parse_function_literal();
@@ -81,26 +80,8 @@ std::unique_ptr<Statement> Parser::parse_statement() {
   }
 }
 
-static ValueT convert_type_to_pointer(const ValueT type) {
-  switch (type) {
-  case TYPE_VOID: {
-    return TYPE_PTR_VOID;
-  }
-  case TYPE_CHAR: {
-    return TYPE_PTR_CHAR;
-  }
-  case TYPE_INT: {
-    return TYPE_PTR_INT;
-  }
-  case TYPE_LONG: {
-    return TYPE_PTR_LONG;
-  }
-  default:
-    std::fprintf(stderr, "cannot convert type: %d into pointer\n", type);
-    std::exit(1);
-  }
-}
-
+// this cannot really be held inside the typesystem namespace as it needs the
+// parsers local varialbes.
 ValueT Parser::parse_type() {
   ValueT type;
 
@@ -130,8 +111,7 @@ ValueT Parser::parse_type() {
     if (!peek_token_is(TokenType::Asterisk)) {
       break;
     }
-
-    type = convert_type_to_pointer(type);
+    type = typesystem::convert_to_ptr(type);
   }
 
   return type;
@@ -150,8 +130,8 @@ bool Parser::expect_peek(TokenType tt) {
   return false;
 }
 
-std::vector<std::unique_ptr<Expression>> Parser::parse_expression_list() {
-  std::vector<std::unique_ptr<Expression>> exprs;
+std::vector<ExpressionPtr> Parser::parse_expression_list() {
+  std::vector<ExpressionPtr> exprs;
 
   while (current_.type != TokenType::RParen) {
     exprs.push_back(parse_expression_rec(LOWEST));
@@ -166,8 +146,7 @@ std::vector<std::unique_ptr<Expression>> Parser::parse_expression_list() {
   return exprs;
 }
 
-std::unique_ptr<Expression>
-Parser::parse_call(std::unique_ptr<Expression> ident) {
+ExpressionPtr Parser::parse_call(ExpressionPtr ident) {
   next_token();
   next_token();
 
@@ -184,8 +163,7 @@ Parser::parse_call(std::unique_ptr<Expression> ident) {
   return call_exp;
 }
 
-std::unique_ptr<Expression>
-Parser::parse_array(std::unique_ptr<Expression> ident) {
+ExpressionPtr Parser::parse_array(ExpressionPtr ident) {
   next_token();
   next_token();
   auto arr = std::make_unique<Addr>();
@@ -217,7 +195,7 @@ Parser::parse_array(std::unique_ptr<Expression> ident) {
   return deref;
 }
 
-std::unique_ptr<Expression> Parser::parse_postfix() {
+ExpressionPtr Parser::parse_postfix() {
   auto identifier = parse_identifier();
 
   if (peek_token_is(TokenType::LParen)) {
@@ -241,7 +219,7 @@ std::unique_ptr<Expression> Parser::parse_postfix() {
   return identifier;
 }
 
-std::unique_ptr<Statement> Parser::parse_return_statement() {
+StatementPtr Parser::parse_return_statement() {
   auto returnstmt = std::make_unique<ReturnStatement>();
   const std::string top = latest_function_name;
   returnstmt->function_identifier_ = top;
@@ -258,15 +236,15 @@ std::unique_ptr<Statement> Parser::parse_return_statement() {
   return returnstmt;
 }
 
-std::unique_ptr<Statement> Parser::parse_expression_statement() {
+StatementPtr Parser::parse_expression_statement() {
   auto stmt = std::make_unique<ExpressionStatement>();
   stmt->expression_ = parse_expression_rec(LOWEST);
 
   return stmt;
 }
 
-std::unique_ptr<Expression> Parser::parse_primary() {
-  std::unique_ptr<Expression> result = nullptr;
+ExpressionPtr Parser::parse_primary() {
+  ExpressionPtr result = nullptr;
   switch (current_.type) {
   case TokenType::Int: {
     result = parse_integer_literal();
@@ -337,7 +315,7 @@ std::unique_ptr<Expression> Parser::parse_primary() {
   return result;
 }
 
-std::unique_ptr<Expression> Parser::parse_prefix() {
+ExpressionPtr Parser::parse_prefix() {
   switch (current_.type) {
   case TokenType::Minus:
   case TokenType::Bang:
@@ -397,7 +375,7 @@ std::unique_ptr<Expression> Parser::parse_prefix() {
   }
 }
 
-std::unique_ptr<Expression> Parser::parse_while_expression() {
+ExpressionPtr Parser::parse_while_expression() {
   std::cout << "in while expression" << '\n';
   auto while_stmt = std::make_unique<WhileStatement>();
   if (!expect_peek(TokenType::LParen))
@@ -418,7 +396,7 @@ std::unique_ptr<Expression> Parser::parse_while_expression() {
   return while_stmt;
 }
 
-std::unique_ptr<Expression> Parser::parse_expression_rec(Precedence prec) {
+ExpressionPtr Parser::parse_expression_rec(Precedence prec) {
   auto left = parse_prefix();
 
   if (current_token_is(TokenType::Semicolon) ||
@@ -498,7 +476,7 @@ std::unique_ptr<Expression> Parser::parse_expression_rec(Precedence prec) {
   return left;
 }
 
-std::unique_ptr<Expression> Parser::parse_identifier() {
+ExpressionPtr Parser::parse_identifier() {
   auto identifier = std::make_unique<Identifier>();
   identifier->value_ = current_.literal_;
 
@@ -514,7 +492,7 @@ std::unique_ptr<Expression> Parser::parse_identifier() {
   return identifier;
 }
 
-std::unique_ptr<Expression> Parser::parse_integer_literal() {
+ExpressionPtr Parser::parse_integer_literal() {
   auto lit = std::make_unique<IntegerLiteral>();
 
   try {
@@ -527,7 +505,7 @@ std::unique_ptr<Expression> Parser::parse_integer_literal() {
   return lit;
 }
 
-std::unique_ptr<Expression> Parser::parse_if_expression() {
+ExpressionPtr Parser::parse_if_expression() {
   auto exp = std::make_unique<IfExpression>();
 
   if (!expect_peek(TokenType::LParen))
@@ -558,7 +536,7 @@ std::unique_ptr<Expression> Parser::parse_if_expression() {
 
 std::unique_ptr<BlockStatement> Parser::parse_block_statement() {
   auto block = std::make_unique<BlockStatement>();
-  block->statements_ = std::vector<std::unique_ptr<Statement>>();
+  block->statements_ = std::vector<StatementPtr>();
 
   next_token();
 
@@ -574,7 +552,7 @@ std::unique_ptr<BlockStatement> Parser::parse_block_statement() {
   return block;
 }
 
-std::unique_ptr<Statement> Parser::parse_function_literal() {
+StatementPtr Parser::parse_function_literal() {
   auto lit = std::make_unique<FunctionLiteral>();
 
   if (!expect_peek(TokenType::Ident))
@@ -676,7 +654,7 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
   return params;
 }
 
-std::unique_ptr<Statement> Parser::parse_var_decl() {
+StatementPtr Parser::parse_var_decl() {
   // cannot use var keyword out of function
   if (latest_function_name == "")
     PARSER_ERROR("var declarations only inside functions.");
@@ -700,8 +678,8 @@ std::unique_ptr<Statement> Parser::parse_var_decl() {
       PARSER_ERROR("array declaration needs size.");
 
     int size = std::stoi(current_.literal_.data());
-    add_new_symbol(name, TYPE_ARRAY, convert_type_to_pointer(var_decl->type_),
-                   0, size);
+    add_new_symbol(name, TYPE_ARRAY,
+                   typesystem::convert_to_ptr(var_decl->type_), 0, size);
 
     if (!expect_peek(TokenType::RBracket))
       PARSER_ERROR("array declration must end in ]");
@@ -715,7 +693,7 @@ std::unique_ptr<Statement> Parser::parse_var_decl() {
   return var_decl;
 }
 
-std::unique_ptr<Statement> Parser::parse_global_decl() {
+StatementPtr Parser::parse_global_decl() {
   // cannot use global keyword inside function
   if (latest_function_name != "")
     PARSER_ERROR("global declarations cannot be inside functions.");
@@ -741,8 +719,8 @@ std::unique_ptr<Statement> Parser::parse_global_decl() {
       PARSER_ERROR("array declaration needs size.");
 
     int size = std::stoi(current_.literal_.data());
-    add_new_symbol(name, TYPE_ARRAY, convert_type_to_pointer(globl->type_), 0,
-                   size);
+    add_new_symbol(name, TYPE_ARRAY, typesystem::convert_to_ptr(globl->type_),
+                   0, size);
 
     if (!expect_peek(TokenType::RBracket))
       PARSER_ERROR("array declration must end in ]");
