@@ -376,7 +376,6 @@ ExpressionPtr Parser::parse_prefix() {
 }
 
 ExpressionPtr Parser::parse_while_expression() {
-  std::cout << "in while expression" << '\n';
   auto while_stmt = std::make_unique<WhileStatement>();
   if (!expect_peek(TokenType::LParen))
     PARSER_ERROR("while statement should be followed by a left paren.");

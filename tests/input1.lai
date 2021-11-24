@@ -1,0 +1,5 @@
+func main() => int {
+  print_num(100);
+
+  return 0;
+}

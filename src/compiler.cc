@@ -314,7 +314,6 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
   case AstType::Identifier: {
     const auto &identifier = CAST(Identifier, node);
 
-    std::cout << current_function << '\n';
 
     if (identifier.rvalue || top_type == AstType::Dereference) {
       if (function_locals[current_function].find(identifier.value_) !=
@@ -341,7 +340,6 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
 
     const auto &sym = get_symbol(name.value_);
     current_function = name.value_;
-    std::cout << current_function << '\n';
 
     codegen::function_start(name.value_);
     compile_ast_node(*func.body_, -1, node.Type());

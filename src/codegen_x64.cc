@@ -345,7 +345,6 @@ int codegen::codegen_compare_jump(int reg1, int reg2, int label,
 }
 
 void codegen::gen_label(int label) {
-  std::cout << "label: " << label << '\n';
   if (fp == nullptr) {
     if ((fp = fopen("out.s", "a")) == NULL) {
       std::fprintf(stderr, "unable to reopen out file\n");
@@ -378,7 +377,6 @@ void codegen::function_start(const std::string &name) {
       continue;
 
     sym.position = get_local_offset(sym.value_type_);
-    std::cout << sym.position;
     store_local(sym, param_register--);
   }
 
