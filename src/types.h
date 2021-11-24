@@ -11,8 +11,8 @@ bool is_number(const ValueT);
 bool is_ptr(const ValueT);
 ValueT convert_to_ptr(const ValueT);
 ValueT convert_from_ptr(const ValueT);
-std::pair<std::unique_ptr<Expression>, std::unique_ptr<Expression>>
-    change_type(std::unique_ptr<Expression>, ValueT, TokenType);
+std::pair<ExpressionPtr, ExpressionPtr> change_type(ExpressionPtr, ValueT,
+                                                    TokenType);
 }; // namespace typesystem
 
 #endif

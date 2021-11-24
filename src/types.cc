@@ -56,8 +56,8 @@ ValueT typesystem::convert_from_ptr(const ValueT type) {
   }
 }
 
-std::pair<std::unique_ptr<Expression>, std::unique_ptr<Expression>>
-typesystem::change_type(std::unique_ptr<Expression> exp, ValueT change_type,
+std::pair<ExpressionPtr, ExpressionPtr>
+typesystem::change_type(ExpressionPtr exp, ValueT change_type,
                         TokenType infix_opr) {
   auto exp_type = exp->ValueType();
   if (is_number(change_type) && is_number(exp_type)) {
@@ -82,7 +82,8 @@ typesystem::change_type(std::unique_ptr<Expression> exp, ValueT change_type,
 
   if (infix_opr == TokenType::Plus || infix_opr == TokenType::Minus) {
     if (is_number(exp_type) && is_ptr(change_type)) {
-      int size = codegen::get_bytesize_of_type(convert_from_ptr(change_type));
+      int size = codegen::get_bytesize_of_type(
+          typesystem::convert_from_ptr(change_type));
       if (size > 1) {
         auto wrapper = std::make_unique<TypeChangeAction>();
         wrapper->size = size;

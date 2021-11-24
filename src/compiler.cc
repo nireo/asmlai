@@ -311,13 +311,6 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
     }
     return codegen::codegen_call(identifier.value_, size);
   }
-  case AstType::AssingmentStatement: {
-    const auto &assigment = CAST(AssignmentStatement, node);
-    const auto &identifier = CAST(Identifier, *assigment.identifier_);
-
-    int reg = compile_ast_node(*assigment.value_, -1, node.Type());
-    return codegen::store_global(reg, get_symbol(identifier.value_));
-  }
   case AstType::Identifier: {
     const auto &identifier = CAST(Identifier, node);
 
@@ -331,7 +324,8 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
         return codegen::load_local(sym, TokenType::Eof, false);
       }
 
-      return codegen::load_global(get_symbol(identifier.value_), TokenType::Eof, false);
+      return codegen::load_global(get_symbol(identifier.value_), TokenType::Eof,
+                                  false);
     } else {
       return -1;
     }
@@ -434,7 +428,8 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
     int compiled = compile_ast_node(*deref.to_dereference_, -1, node.Type());
 
     if (deref.rvalue) {
-      return codegen::codegen_dereference(compiled, deref.to_dereference_->ValueType());
+      return codegen::codegen_dereference(compiled,
+                                          deref.to_dereference_->ValueType());
     }
 
     return compile_ast_node(*deref.to_dereference_, -1, node.Type());
@@ -449,11 +444,11 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
     switch (ident_action.action_) {
     case TokenType::Inc: {
       return codegen::load_global(get_symbol(identifier.value_), TokenType::Inc,
-                         ident_action.post_);
+                                  ident_action.post_);
     }
     case TokenType::Dec: {
       return codegen::load_global(get_symbol(identifier.value_), TokenType::Dec,
-                         ident_action.post_);
+                                  ident_action.post_);
     }
     default:
       std::fprintf(stderr, "unknown identifier action");
