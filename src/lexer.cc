@@ -1,9 +1,7 @@
 #include "lexer.h"
 #include "token.h"
 #include <cctype>
-#include <iostream>
-#include <stdlib.h>
-#include <string.h>
+#include <utility>
 
 static bool is_alpha(char c) {
   return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
@@ -66,7 +64,7 @@ LToken LLexer::next_token() {
   case '<':
     if (match('=')) {
       return make_token(TokenType::ELT);
-    } else if ('<') {
+    } else if (match('<')) {
       return make_token(TokenType::LShift);
     }
 
@@ -74,7 +72,7 @@ LToken LLexer::next_token() {
   case '>':
     if (match('=')) {
       return make_token(TokenType::ELT);
-    } else if ('>') {
+    } else if (match('>')) {
       return make_token(TokenType::RShift);
     }
 
@@ -202,7 +200,7 @@ TokenType LLexer::ident_type() const {
   return TokenType::Ident;
 }
 
-TokenType LLexer::check_keyword(size_t begin, size_t length, std::string rest,
+TokenType LLexer::check_keyword(size_t begin, size_t length, const std::string& rest,
                                 TokenType type) const {
   if (curr_ - start_ == begin + length &&
       src.substr(start_ + begin, length) == rest)
@@ -212,12 +210,12 @@ TokenType LLexer::check_keyword(size_t begin, size_t length, std::string rest,
 }
 
 LToken LLexer::error_token(std::string message) const noexcept {
-  return LToken(TokenType::Eof, message, line_);
+  return {TokenType::Eof, std::move(message), line_};
 }
 
 LToken LLexer::make_token(TokenType type) const noexcept {
   size_t length = curr_ - start_;
-  return LToken(type, src.substr(start_, length), line_);
+  return {type, src.substr(start_, length), line_};
 }
 
 char LLexer::advance() {

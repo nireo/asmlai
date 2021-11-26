@@ -31,7 +31,7 @@ private:
   void skip();
 
   TokenType ident_type() const;
-  TokenType check_keyword(size_t begin, size_t length, std::string rest,
+  TokenType check_keyword(size_t begin, size_t length, const std::string& rest,
                           TokenType type) const;
   LToken error_token(std::string message) const noexcept;
   LToken make_token(TokenType type) const noexcept;

@@ -40,10 +40,9 @@ void add_new_param(const std::string &, ValueT, int, int);
 int compile_ast_node(const Node &, int, const AstType);
 const Symbol &get_symbol(const std::string &);
 const Symbol &get_symbol_w_func(const std::string &, const std::string &);
-Symbol &get_symbol_ref(const std::string &);
-void add_new_symbol(const std::string &, const symboltype, const ValueT);
-void add_new_symbol(const std::string &, const symboltype, const ValueT, int);
-void add_new_symbol(const std::string &, const symboltype, const ValueT, int,
+void add_new_symbol(const std::string &, symboltype, ValueT);
+void add_new_symbol(const std::string &, symboltype, ValueT, int);
+void add_new_symbol(const std::string &, symboltype, ValueT, int,
                     int);
 bool symbol_exists(const std::string &);
 int get_next_label();

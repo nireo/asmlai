@@ -4,16 +4,14 @@
 #include "token.h"
 
 #include <cstdio>
-#include <iostream>
-#include <sstream>
 #include <string>
 #include <unordered_map>
 
-#define CAST(type, node) static_cast<const type &>(node);
+#define CAST(type, node) dynamic_cast<const type &>(node)
 
 SymbolTable global_symbols;
 std::unordered_map<std::string, SymbolTable> function_locals;
-static std::string current_function = "";
+static std::string current_function;
 
 void create_new_function_table(const std::string &func_name) {
   function_locals[func_name] = SymbolTable();
@@ -49,8 +47,6 @@ SymbolTable &get_function_locals(const std::string &name) {
   return function_locals[name];
 }
 
-void reset_local_variables() { codegen::reset_local_offset(); }
-
 void add_new_symbol(const std::string &name, const symboltype stype,
                     const ValueT vtype) {
   global_symbols[name] = Symbol{
@@ -83,7 +79,7 @@ void add_new_symbol(const std::string &name, const symboltype stype,
 }
 
 const Symbol &get_symbol(const std::string &name) {
-  if (current_function != "") {
+  if (!current_function.empty()) {
     if (function_locals[current_function].find(name) !=
         function_locals[current_function].end())
       return function_locals[current_function][name];
@@ -108,11 +104,6 @@ const Symbol &get_symbol_w_func(const std::string &func,
 
   std::fprintf(stderr, "symbol with name '%s' not found\n", name.c_str());
   std::exit(1);
-}
-
-Symbol &get_symbol_ref(const std::string &name) {
-  auto &symbol = global_symbols[name];
-  return symbol;
 }
 
 bool symbol_exists(const std::string &name) {
@@ -303,9 +294,9 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
     auto sz = (int)call_exp.arguments_.size();
     int size = 1;
     for (int i = sz - 1; i >= 0; --i) {
-      int reg = compile_ast_node(*call_exp.arguments_[i], -1,
+      int r = compile_ast_node(*call_exp.arguments_[i], -1,
                                  call_exp.arguments_[i]->Type());
-      codegen::copy_argument(reg, size++);
+      codegen::copy_argument(r, size++);
 
       codegen::free_all_registers();
     }
@@ -332,7 +323,7 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
   case AstType::FunctionLiteral: {
     const auto &func = CAST(FunctionLiteral, node);
     if (func.is_prototype) {
-      // all of the processing is done by the parser.
+      // all the processing is done by the parser.
       return -1;
     }
 
@@ -372,7 +363,7 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
   }
   case AstType::PrefixExpression: {
     const auto &pref = CAST(PrefixExpression, node);
-    switch (pref.opr) {
+    switch (pref.opr_) {
     case TokenType::Amper: {
       const auto &identifier = CAST(Identifier, *pref.right_);
       return codegen::codegen_addr(get_symbol(identifier.value_));
@@ -452,8 +443,6 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
       std::fprintf(stderr, "unknown identifier action");
       std::exit(1);
     }
-
-    return -1;
   }
   default: {
     std::fprintf(stderr, "unrecognized node type when compiling.\n");

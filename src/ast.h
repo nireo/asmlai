@@ -89,26 +89,26 @@ static ValueT convert_from_ptr(const ValueT type) {
 
 class Node {
 public:
-  virtual AstType Type() const noexcept = 0;
+  [[nodiscard]] virtual AstType Type() const noexcept = 0;
 
   // we need to know the value type such that we can compare if types are
   // applicable.
-  virtual ValueT ValueType() const noexcept = 0;
+  [[nodiscard]] virtual ValueT ValueType() const noexcept = 0;
 };
 
 class Statement : public Node {
 public:
   virtual void statementNode() = 0;
-  virtual AstType Type() const noexcept = 0;
-  virtual ValueT ValueType() const noexcept = 0;
+  [[nodiscard]] AstType Type() const noexcept override = 0;
+  [[nodiscard]] ValueT ValueType() const noexcept override = 0;
 };
 
 class Expression : public Node {
 public:
   virtual void set_rvalue(bool) = 0;
   virtual bool is_rvalue() = 0;
-  virtual AstType Type() const noexcept = 0;
-  virtual ValueT ValueType() const noexcept = 0;
+  [[nodiscard]] AstType Type() const noexcept override = 0;
+  [[nodiscard]] ValueT ValueType() const noexcept override = 0;
 };
 
 using ExpressionPtr = std::unique_ptr<Expression>;
@@ -116,18 +116,18 @@ using StatementPtr = std::unique_ptr<Statement>;
 
 class Program : public Node {
 public:
-  AstType Type() const noexcept { return AstType::Program; }
-  ValueT ValueType() const noexcept { return TYPE_VOID; }
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::Program; }
+  [[nodiscard]] ValueT ValueType() const noexcept override { return TYPE_VOID; }
 
   std::vector<std::unique_ptr<Statement>> statements_;
 };
 
 class Identifier : public Expression {
 public:
-  void set_rvalue(bool value) { rvalue = value; }
-  bool is_rvalue() { return rvalue; }
-  AstType Type() const noexcept { return AstType::Identifier; }
-  ValueT ValueType() const noexcept { return value_type; }
+  void set_rvalue(bool value) override { rvalue = value; }
+  bool is_rvalue() override { return rvalue; }
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::Identifier; }
+  [[nodiscard]] ValueT ValueType() const noexcept override { return value_type; }
 
   std::string value_;
   ValueT value_type;
@@ -136,9 +136,9 @@ public:
 
 class ReturnStatement : public Statement {
 public:
-  void statementNode() {}
-  AstType Type() const noexcept { return AstType::ReturnStatement; }
-  ValueT ValueType() const noexcept { return TYPE_VOID; }
+  void statementNode() override {}
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::ReturnStatement; }
+  [[nodiscard]] ValueT ValueType() const noexcept override { return TYPE_VOID; }
 
   std::unique_ptr<Expression> return_value_;
   std::string function_identifier_;
@@ -147,20 +147,20 @@ public:
 
 class ExpressionStatement : public Statement {
 public:
-  void statementNode() {}
-  AstType Type() const noexcept { return AstType::ExpressionStatement; }
-  ValueT ValueType() const noexcept { return TYPE_VOID; }
+  void statementNode() override {}
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::ExpressionStatement; }
+  [[nodiscard]] ValueT ValueType() const noexcept override { return TYPE_VOID; }
 
   std::unique_ptr<Expression> expression_;
 };
 
 class IntegerLiteral : public Expression {
 public:
-  bool is_rvalue() { return rvalue; }
-  void set_rvalue(bool value) { rvalue = value; }
-  AstType Type() const noexcept { return AstType::IntegerLiteral; }
+  bool is_rvalue() override { return rvalue; }
+  void set_rvalue(bool value) override { rvalue = value; }
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::IntegerLiteral; }
 
-  ValueT ValueType() const noexcept {
+  [[nodiscard]] ValueT ValueType() const noexcept override {
     if (value_ <= 255 && value_ >= 0) {
       return TYPE_CHAR;
     }
@@ -171,20 +171,20 @@ public:
     return TYPE_INT;
   }
 
-  std::int64_t value_;
+  std::int64_t value_{};
   bool rvalue = false;
 };
 
 class PrefixExpression : public Expression {
 public:
-  bool is_rvalue() { return rvalue; }
-  void set_rvalue(bool value) { rvalue = value; }
-  AstType Type() const noexcept { return AstType::PrefixExpression; }
+  bool is_rvalue() override { return rvalue; }
+  void set_rvalue(bool value) override { rvalue = value; }
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::PrefixExpression; }
 
-  ValueT ValueType() const noexcept {
-    if (opr == TokenType::Amper) {
+  [[nodiscard]] ValueT ValueType() const noexcept override {
+    if (opr_ == TokenType::Amper) {
       return TYPE_PTR_INT;
-    } else if (opr == TokenType::Asterisk) {
+    } else if (opr_ == TokenType::Asterisk) {
       return TYPE_INT;
     }
 
@@ -192,16 +192,16 @@ public:
   }
 
   bool rvalue = false;
-  TokenType opr;
+  TokenType opr_;
   std::unique_ptr<Expression> right_;
 };
 
 class InfixExpression : public Expression {
 public:
-  bool is_rvalue() { return rvalue; }
-  void set_rvalue(bool value) { rvalue = value; }
-  AstType Type() const noexcept { return AstType::InfixExpression; }
-  ValueT ValueType() const noexcept { return v_type_; }
+  bool is_rvalue() override { return rvalue; }
+  void set_rvalue(bool value) override { rvalue = value; }
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::InfixExpression; }
+  [[nodiscard]] ValueT ValueType() const noexcept override { return v_type_; }
 
   TokenType opr;
   std::unique_ptr<Expression> right_;
@@ -210,33 +210,21 @@ public:
   bool rvalue = false;
 };
 
-class BooleanExpression : public Expression {
-public:
-  bool is_rvalue() { return rvalue; }
-  void set_rvalue(bool value) { rvalue = value; }
-  AstType Type() const noexcept { return AstType::BooleanExpression; }
-  ValueT ValueType() const noexcept { return TYPE_VOID; }
-
-  bool value_;
-  bool rvalue = false;
-};
-
 class BlockStatement : public Statement {
 public:
-  void statementNode() {}
-  AstType Type() const noexcept { return AstType::BlockStatement; }
-  ValueT ValueType() const noexcept { return TYPE_VOID; }
+  void statementNode() override {}
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::BlockStatement; }
+  [[nodiscard]] ValueT ValueType() const noexcept override { return TYPE_VOID; }
 
-  Token token;
   std::vector<std::unique_ptr<Statement>> statements_;
 };
 
 class IfExpression : public Expression {
 public:
-  bool is_rvalue() { return rvalue; }
-  void set_rvalue(bool value) { rvalue = value; }
-  AstType Type() const noexcept { return AstType::IfExpression; }
-  ValueT ValueType() const noexcept { return TYPE_VOID; }
+  bool is_rvalue() override { return rvalue; }
+  void set_rvalue(bool value) override { rvalue = value; }
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::IfExpression; }
+  [[nodiscard]] ValueT ValueType() const noexcept override { return TYPE_VOID; }
 
   std::unique_ptr<Expression> cond_;
   std::unique_ptr<BlockStatement> after_;
@@ -246,10 +234,10 @@ public:
 
 class WhileStatement : public Expression {
 public:
-  bool is_rvalue() { return rvalue; }
-  void set_rvalue(bool value) { rvalue = value; }
-  AstType Type() const noexcept { return AstType::WhileStatement; }
-  ValueT ValueType() const noexcept { return TYPE_VOID; }
+  bool is_rvalue() override { return rvalue; }
+  void set_rvalue(bool value) override { rvalue = value; }
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::WhileStatement; }
+  [[nodiscard]] ValueT ValueType() const noexcept override { return TYPE_VOID; }
 
   std::unique_ptr<Expression> cond_;
   std::unique_ptr<BlockStatement> body_;
@@ -258,9 +246,9 @@ public:
 
 class FunctionLiteral : public Statement {
 public:
-  void statementNode() {}
-  AstType Type() const noexcept { return AstType::FunctionLiteral; }
-  ValueT ValueType() const noexcept { return TYPE_VOID; }
+  void statementNode() override {}
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::FunctionLiteral; }
+  [[nodiscard]] ValueT ValueType() const noexcept override { return TYPE_VOID; }
 
   std::vector<std::unique_ptr<Identifier>> params_;
   std::unique_ptr<BlockStatement> body_;
@@ -271,10 +259,10 @@ public:
 
 class CallExpression : public Expression {
 public:
-  bool is_rvalue() { return rvalue; }
-  void set_rvalue(bool value) { rvalue = value; }
-  AstType Type() const noexcept { return AstType::CallExpression; }
-  ValueT ValueType() const noexcept { return func_->ValueType(); }
+  bool is_rvalue() override { return rvalue; }
+  void set_rvalue(bool value) override { rvalue = value; }
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::CallExpression; }
+  [[nodiscard]] ValueT ValueType() const noexcept override { return func_->ValueType(); }
 
   std::vector<std::unique_ptr<Expression>> arguments_;
   std::unique_ptr<Expression> func_;
@@ -283,22 +271,21 @@ public:
 
 class StringLiteral : public Expression {
 public:
-  bool is_rvalue() { return rvalue; }
-  void set_rvalue(bool value) { rvalue = value; }
-  AstType Type() const noexcept { return AstType::StringLiteral; }
-  ValueT ValueType() const noexcept { return TYPE_PTR_CHAR; }
+  bool is_rvalue() override { return rvalue; }
+  void set_rvalue(bool value) override { rvalue = value; }
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::StringLiteral; }
+  [[nodiscard]] ValueT ValueType() const noexcept override { return TYPE_PTR_CHAR; }
 
   bool rvalue = false;
-  std::string value_;
-  int id_;
+  int id_{};
 };
 
 class ForStatement : public Expression {
 public:
-  bool is_rvalue() { return rvalue; }
-  void set_rvalue(bool value) { rvalue = value; }
-  AstType Type() const noexcept { return AstType::ForStatement; }
-  ValueT ValueType() const noexcept { return TYPE_VOID; }
+  bool is_rvalue() override { return rvalue; }
+  void set_rvalue(bool value) override { rvalue = value; }
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::ForStatement; }
+  [[nodiscard]] ValueT ValueType() const noexcept override { return TYPE_VOID; }
 
   std::unique_ptr<Statement> assignment_;
   std::unique_ptr<Expression> cond_;
@@ -309,10 +296,10 @@ public:
 
 class TypeChangeAction : public Expression {
 public:
-  bool is_rvalue() { return rvalue; }
-  void set_rvalue(bool value) { rvalue = value; }
-  ValueT ValueType() const noexcept { return inner_->ValueType(); }
-  AstType Type() const noexcept { return AstType::TypeChangeAction; }
+  bool is_rvalue() override { return rvalue; }
+  void set_rvalue(bool value) override { rvalue = value; }
+  [[nodiscard]] ValueT ValueType() const noexcept override { return inner_->ValueType(); }
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::TypeChangeAction; }
 
   TypeChange action_ = TypeChange::Widen;
   std::unique_ptr<Expression> inner_ = nullptr;
@@ -322,9 +309,9 @@ public:
 
 class GlobalVariable : public Statement {
 public:
-  void statementNode() {}
-  AstType Type() const noexcept { return AstType::GlobalStatement; }
-  ValueT ValueType() const noexcept { return type_; }
+  void statementNode() override {}
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::GlobalStatement; }
+  [[nodiscard]] ValueT ValueType() const noexcept override { return type_; }
 
   ValueT type_;
   std::unique_ptr<Expression> identifier_;
@@ -332,9 +319,9 @@ public:
 
 class VarDecl : public Statement {
 public:
-  void statementNode() {}
-  AstType Type() const noexcept { return AstType::VarDecl; }
-  ValueT ValueType() const noexcept { return type_; }
+  void statementNode() override {}
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::VarDecl; }
+  [[nodiscard]] ValueT ValueType() const noexcept override { return type_; }
 
   ValueT type_;
   std::unique_ptr<Expression> identifier_;
@@ -342,12 +329,12 @@ public:
 
 class Dereference : public Expression {
 public:
-  AstType Type() const noexcept { return AstType::Dereference; }
-  ValueT ValueType() const noexcept {
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::Dereference; }
+  [[nodiscard]] ValueT ValueType() const noexcept override {
     return convert_from_ptr(to_dereference_->ValueType());
   }
-  bool is_rvalue() { return rvalue; }
-  void set_rvalue(bool value) { rvalue = value; }
+  bool is_rvalue() override { return rvalue; }
+  void set_rvalue(bool value) override { rvalue = value; }
 
   std::unique_ptr<Expression> to_dereference_;
   bool rvalue = false;
@@ -355,12 +342,12 @@ public:
 
 class Addr : public Expression {
 public:
-  AstType Type() const noexcept { return AstType::Addr; }
-  ValueT ValueType() const noexcept {
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::Addr; }
+  [[nodiscard]] ValueT ValueType() const noexcept override {
     return convert_to_ptr(to_addr_->ValueType());
   }
-  bool is_rvalue() { return rvalue; }
-  void set_rvalue(bool value) { rvalue = value; }
+  bool is_rvalue() override { return rvalue; }
+  void set_rvalue(bool value) override { rvalue = value; }
 
   std::unique_ptr<Expression> to_addr_;
   bool rvalue = false;
@@ -368,10 +355,10 @@ public:
 
 class IdentifierAction : public Expression {
 public:
-  AstType Type() const noexcept { return AstType::IdentifierAction; }
-  ValueT ValueType() const noexcept { return identifier_->ValueType(); }
-  bool is_rvalue() { return rvalue; }
-  void set_rvalue(bool value) { rvalue = value; }
+  [[nodiscard]] AstType Type() const noexcept override { return AstType::IdentifierAction; }
+  [[nodiscard]] ValueT ValueType() const noexcept override { return identifier_->ValueType(); }
+  bool is_rvalue() override { return rvalue; }
+  void set_rvalue(bool value) override { rvalue = value; }
 
   TokenType action_;
   std::unique_ptr<Expression> identifier_;

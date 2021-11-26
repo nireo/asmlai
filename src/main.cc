@@ -11,6 +11,13 @@ int main(int argc, char *argv[]) {
     return EXIT_FAILURE;
   }
 
+  for (int i = 1; i < argc; ++i) {
+    for (int j = 1; (*argv[i] == '-') && argv[i][j]; ++j) {
+      switch (argv[i][j]) {
+      }
+    }
+  }
+
   std::string as_string = std::string(argv[1]);
   std::ifstream t(as_string);
 

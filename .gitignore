@@ -1,5 +1,8 @@
-./lai
-./a.out
-./out.s
-./test.lai
-./build
+lai
+a.out
+out.s
+test.lai
+build
+.cache
+cmake-build-debug
+

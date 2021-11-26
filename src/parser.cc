@@ -80,8 +80,8 @@ StatementPtr Parser::parse_statement() {
   }
 }
 
-// this cannot really be held inside the typesystem namespace as it needs the
-// parsers local varialbes.
+// this cannot really be held inside the type system namespace as it needs the
+// parsers local variables
 ValueT Parser::parse_type() {
   ValueT type;
 
@@ -103,7 +103,7 @@ ValueT Parser::parse_type() {
     break;
   }
   default:
-    PARSER_ERROR("cannot parser type for token: %s \n", peek_.literal_.c_str());
+    PARSER_ERROR("cannot parse type for token: %s \n", peek_.literal_.c_str());
   }
 
   while (true) {
@@ -117,9 +117,8 @@ ValueT Parser::parse_type() {
   return type;
 }
 
-bool Parser::current_token_is(TokenType tt) { return current_.type == tt; }
-
-bool Parser::peek_token_is(TokenType tt) { return peek_.type == tt; }
+bool Parser::current_token_is(TokenType tt) const { return current_.type == tt; }
+bool Parser::peek_token_is(TokenType tt) const { return peek_.type == tt; }
 
 bool Parser::expect_peek(TokenType tt) {
   if (peek_token_is(tt)) {
@@ -336,7 +335,7 @@ ExpressionPtr Parser::parse_prefix() {
       addr_exp->to_addr_ = std::move(right);
 
       return addr_exp;
-    } else if (type == TokenType::Amper) {
+    } else if (type == TokenType::Asterisk) {
       auto deref_exp = std::make_unique<Dereference>();
       deref_exp->to_dereference_ = std::move(right);
 
@@ -344,9 +343,8 @@ ExpressionPtr Parser::parse_prefix() {
     } else if (type == TokenType::Bang || type == TokenType::Minus) {
       next_token();
 
-      auto right = parse_prefix();
       auto prefix = std::make_unique<PrefixExpression>();
-      prefix->opr = type;
+      prefix->opr_ = type;
       prefix->right_ = std::move(right);
 
       return prefix;
@@ -404,20 +402,20 @@ ExpressionPtr Parser::parse_expression_rec(Precedence prec) {
     return left;
   }
 
-  auto tokentype = current_.type;
+  auto token_type = current_.type;
 
-  while ((prec < precedences[tokentype]) ||
-         (tokentype == TokenType::Assign && precedences[tokentype] == prec)) {
+  while ((prec < precedences[token_type]) ||
+         (token_type == TokenType::Assign && precedences[token_type] == prec)) {
     next_token();
 
-    auto right = parse_expression_rec(precedences[tokentype]);
+    auto right = parse_expression_rec(precedences[token_type]);
     auto left_type = left->ValueType();
 
-    if (tokentype == TokenType::Assign) {
+    if (token_type == TokenType::Assign) {
       right->set_rvalue(true);
 
       auto right_temp =
-          typesystem::change_type(std::move(right), left_type, tokentype);
+          typesystem::change_type(std::move(right), left_type, token_type);
       if (right_temp.second == nullptr) {
         PARSER_ERROR("incompatible type in assingment");
       }
@@ -427,7 +425,7 @@ ExpressionPtr Parser::parse_expression_rec(Precedence prec) {
       infix->right_ = std::move(left);
 
       infix->v_type_ = infix->left_->ValueType();
-      infix->opr = tokentype;
+      infix->opr = token_type;
 
       left = std::move(infix);
     } else {
@@ -435,9 +433,9 @@ ExpressionPtr Parser::parse_expression_rec(Precedence prec) {
       right->set_rvalue(true);
 
       auto left_temp = typesystem::change_type(std::move(left),
-                                               right->ValueType(), tokentype);
+                                               right->ValueType(), token_type);
       auto right_temp =
-          typesystem::change_type(std::move(right), left_type, tokentype);
+          typesystem::change_type(std::move(right), left_type, token_type);
 
       if (left_temp.second == nullptr && right_temp.second == nullptr) {
         PARSER_ERROR("bad types in expression\n");
@@ -457,15 +455,15 @@ ExpressionPtr Parser::parse_expression_rec(Precedence prec) {
       }
 
       infix->v_type_ = infix->left_->ValueType();
-      infix->opr = tokentype;
+      infix->opr = token_type;
 
       left = std::move(infix);
     }
 
-    tokentype = current_.type;
+      token_type = current_.type;
     if (current_token_is(TokenType::Semicolon) ||
         current_token_is(TokenType::RParen) ||
-        tokentype == TokenType::RBracket) {
+        token_type == TokenType::RBracket) {
       left->set_rvalue(true);
       return left;
     }
@@ -475,11 +473,11 @@ ExpressionPtr Parser::parse_expression_rec(Precedence prec) {
   return left;
 }
 
-ExpressionPtr Parser::parse_identifier() {
+ExpressionPtr Parser::parse_identifier() const {
   auto identifier = std::make_unique<Identifier>();
   identifier->value_ = current_.literal_;
 
-  if (latest_function_name != "") {
+  if (!latest_function_name.empty()) {
     const auto &sym =
         get_symbol_w_func(latest_function_name, current_.literal_);
     identifier->value_type = sym.value_type_;
@@ -577,7 +575,7 @@ StatementPtr Parser::parse_function_literal() {
     if (sym.type_ == TYPE_FUNCTION)
       PARSER_ERROR("global variable with same name as function.");
 
-    // since it is a prototype, all of the function local variables, are just
+    // since it is a prototype, all the function local variables, are just
     // parameters so no need to filter
     param_count = (int)get_function_locals(name).size();
   }
@@ -629,13 +627,13 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
 
   next_token();
   while (current_token_is(TokenType::Comma)) {
-    auto type = parse_type();
+    auto type_ = parse_type();
     next_token();
 
-    auto ident = std::make_unique<Identifier>();
-    ident->value_ = current_.literal_;
+    auto ident_ = std::make_unique<Identifier>();
+    ident_->value_ = current_.literal_;
 
-    new_function_param(latest_function_name, ident->value_, type, 0, 1);
+    new_function_param(latest_function_name, ident_->value_, type_, 0, 1);
 
     params.push_back(std::move(ident));
     next_token();
@@ -655,7 +653,7 @@ std::vector<std::unique_ptr<Identifier>> Parser::parse_function_params() {
 
 StatementPtr Parser::parse_var_decl() {
   // cannot use var keyword out of function
-  if (latest_function_name == "")
+  if (latest_function_name.empty())
     PARSER_ERROR("var declarations only inside functions.");
 
   auto var_decl = std::make_unique<VarDecl>();
@@ -676,7 +674,7 @@ StatementPtr Parser::parse_var_decl() {
     if (!expect_peek(TokenType::Int))
       PARSER_ERROR("array declaration needs size.");
 
-    int size = std::stoi(current_.literal_.data());
+    int size = std::stoi(current_.literal_);
     add_new_symbol(name, TYPE_ARRAY,
                    typesystem::convert_to_ptr(var_decl->type_), 0, size);
 
@@ -694,7 +692,7 @@ StatementPtr Parser::parse_var_decl() {
 
 StatementPtr Parser::parse_global_decl() {
   // cannot use global keyword inside function
-  if (latest_function_name != "")
+  if (!latest_function_name.empty())
     PARSER_ERROR("global declarations cannot be inside functions.");
 
   auto globl = std::make_unique<GlobalVariable>();
@@ -704,7 +702,7 @@ StatementPtr Parser::parse_global_decl() {
     PARSER_ERROR("global keyword should be followed by an identifier.");
 
   auto ident = std::make_unique<Identifier>();
-  const std::string name = current_.literal_.data();
+  const std::string name = current_.literal_;
   ident->value_ = name;
   globl->identifier_ = std::move(ident);
 
@@ -717,7 +715,7 @@ StatementPtr Parser::parse_global_decl() {
     if (!expect_peek(TokenType::Int))
       PARSER_ERROR("array declaration needs size.");
 
-    int size = std::stoi(current_.literal_.data());
+    int size = std::stoi(current_.literal_);
     add_new_symbol(name, TYPE_ARRAY, typesystem::convert_to_ptr(globl->type_),
                    0, size);
 

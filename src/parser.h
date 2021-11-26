@@ -56,7 +56,7 @@ private:
   ExpressionPtr parse_postfix();
   ExpressionPtr parse_array(ExpressionPtr);
   ExpressionPtr parse_call(ExpressionPtr);
-  ExpressionPtr parse_identifier();
+  ExpressionPtr parse_identifier() const;
   ExpressionPtr parse_integer_literal();
   ExpressionPtr parse_if_expression();
   std::unique_ptr<BlockStatement> parse_block_statement();
@@ -67,8 +67,8 @@ private:
   ValueT parse_type();
 
   bool expect_peek(TokenType);
-  bool peek_token_is(TokenType);
-  bool current_token_is(TokenType);
+  bool peek_token_is(TokenType) const;
+  bool current_token_is(TokenType) const;
 };
 
 #endif

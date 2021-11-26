@@ -2,7 +2,6 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include <iostream>
 #include <string>
 
 #include "ast.h"
@@ -192,11 +191,6 @@ int codegen::store_global(int r, const Symbol &sym) {
                  sym.name_.c_str());
     break;
   }
-  case TYPE_LONG: {
-    std::fprintf(fp, "\tmovq\t%s, %s(\%%rip)\n", registers[r],
-                 sym.name_.c_str());
-    break;
-  }
   case TYPE_PTR_CHAR:
   case TYPE_PTR_LONG:
   case TYPE_PTR_INT: {
@@ -346,7 +340,7 @@ int codegen::codegen_compare_jump(int reg1, int reg2, int label,
 
 void codegen::gen_label(int label) {
   if (fp == nullptr) {
-    if ((fp = fopen("out.s", "a")) == NULL) {
+    if ((fp = fopen("out.s", "a")) == nullptr) {
       std::fprintf(stderr, "unable to reopen out file\n");
       std::exit(1);
     }
@@ -412,7 +406,6 @@ void codegen::codegen_return(int reg, const Symbol &sym) {
 
 int codegen::codegen_call(const std::string &name, int argument_count) {
   int outer = get_register();
-  // std::fprintf(fp, "\tmovq\t%s, %%rdi\n", registers[reg]);
   std::fprintf(fp, "\tcall\t%s@PLT\n", name.c_str());
   if (argument_count > 6)
     std::fprintf(fp, "\taddq\t$%d, %%rsp\n", 8 * (argument_count - 6));
@@ -536,7 +529,7 @@ int codegen::store_dereference(int reg1, int reg2, ValueT type) {
     std::fprintf(fp, "\tmovb\t%s, (%s)\n", b_registers[reg1], registers[reg2]);
     break;
   case TYPE_INT:
-    std::fprintf(fp, "\tmovq\t%s, (%s)\n", registers[reg1], registers[reg2]);
+    std::fprintf(fp, "\tmovl\t%s, (%s)\n", registers[reg1], registers[reg2]);
     break;
   case TYPE_LONG:
     std::fprintf(fp, "\tmovq\t%s, (%s)\n", registers[reg1], registers[reg2]);
@@ -551,8 +544,8 @@ int codegen::store_dereference(int reg1, int reg2, ValueT type) {
 
 void codegen::global_str(int l, const std::string &value) {
   gen_label(l);
-  for (size_t i = 0; i < value.length(); i++) {
-    std::fprintf(fp, "\t.byte\t%d\n", value[i]);
+  for (char i : value) {
+    std::fprintf(fp, "\t.byte\t%d\n", i);
   }
 
   std::fprintf(fp, "\t.byte\t0\n");
