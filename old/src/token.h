@@ -55,6 +55,7 @@ enum class TokenType {
   Dec,
   Invert,
 
+  Struct,
   IntType,
   CharType,
   StringType,

@@ -117,7 +117,9 @@ ValueT Parser::parse_type() {
   return type;
 }
 
-bool Parser::current_token_is(TokenType tt) const { return current_.type == tt; }
+bool Parser::current_token_is(TokenType tt) const {
+  return current_.type == tt;
+}
 bool Parser::peek_token_is(TokenType tt) const { return peek_.type == tt; }
 
 bool Parser::expect_peek(TokenType tt) {
@@ -259,7 +261,6 @@ ExpressionPtr Parser::parse_primary() {
 
     codegen::global_str(label, value);
 
-    strlit->value_ = value;
     strlit->id_ = label;
     result = std::move(strlit);
 
@@ -460,7 +461,7 @@ ExpressionPtr Parser::parse_expression_rec(Precedence prec) {
       left = std::move(infix);
     }
 
-      token_type = current_.type;
+    token_type = current_.type;
     if (current_token_is(TokenType::Semicolon) ||
         current_token_is(TokenType::RParen) ||
         token_type == TokenType::RBracket) {

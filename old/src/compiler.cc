@@ -295,7 +295,7 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
     int size = 1;
     for (int i = sz - 1; i >= 0; --i) {
       int r = compile_ast_node(*call_exp.arguments_[i], -1,
-                                 call_exp.arguments_[i]->Type());
+                               call_exp.arguments_[i]->Type());
       codegen::copy_argument(r, size++);
 
       codegen::free_all_registers();
@@ -304,7 +304,6 @@ int compile_ast_node(const Node &node, int reg, const AstType top_type) {
   }
   case AstType::Identifier: {
     const auto &identifier = CAST(Identifier, node);
-
 
     if (identifier.rvalue || top_type == AstType::Dereference) {
       if (function_locals[current_function].find(identifier.value_) !=

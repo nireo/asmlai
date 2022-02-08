@@ -190,7 +190,7 @@ TokenType LLexer::ident_type() const {
   case 'g':
     return check_keyword(1, 5, "lobal", TokenType::Global);
   case 's':
-    return check_keyword(1, 5, "tring", TokenType::StringType);
+    return check_keyword(1, 5, "truct", TokenType::Struct);
   case 'w':
     return check_keyword(1, 4, "hile", TokenType::While);
   default:
@@ -200,8 +200,8 @@ TokenType LLexer::ident_type() const {
   return TokenType::Ident;
 }
 
-TokenType LLexer::check_keyword(size_t begin, size_t length, const std::string& rest,
-                                TokenType type) const {
+TokenType LLexer::check_keyword(size_t begin, size_t length,
+                                const std::string &rest, TokenType type) const {
   if (curr_ - start_ == begin + length &&
       src.substr(start_ + begin, length) == rest)
     return type;
