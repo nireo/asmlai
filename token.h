@@ -2,6 +2,7 @@
 #define _ASMLAI_TOKEN_H
 
 #include "types.h"
+#include <memory.h>
 #include <string>
 #include <variant>
 
@@ -14,8 +15,11 @@ enum class TokenType {
 };
 
 struct Token {
-  TokenType type_;
+  bool operator==(const char *val) const {
+    return memcmp(this->loc, val, this->len_) == 0 && val[this->len_] == '\0';
+  }
 
+  TokenType type_;
   // variat because in the future there will be more stuff here.
   std::variant<std::monostate, i64> data_;
   i64 len_{0};

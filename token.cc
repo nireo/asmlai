@@ -10,6 +10,30 @@
 namespace token {
 static char *curr_input;
 
+template <typename... Args>
+static void error(const char *format_string, Args... args) {
+  std::fprintf(stderr, format_string, args...);
+  return;
+}
+
+template <typename... Args>
+void error_at(char *location, const char *format_string, Args... args) {
+  i64 pos = location - curr_input;
+
+  std::fprintf(stderr, "%s\n", curr_input);
+  std::fprintf(stderr, "%*s", pos, "");
+  std::fprintf(stderr, "^ ");
+  std::fprintf(stderr, format_string, args...);
+  std::fprintf(stderr, "\n");
+
+  std::exit(1);
+}
+
+template <typename... Args>
+void error_token(const Token &tok, const char *format_string, Args... args) {
+  error_at(tok.loc, format_string, args...);
+}
+
 static Token new_token(char *start, char *end, TokenType type) {
   return Token{
       .type_ = type,
