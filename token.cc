@@ -2,6 +2,7 @@
 
 #include <cctype>
 #include <cstdlib>
+#include <iostream>
 #include <string.h>
 #include <variant>
 #include <vector>
@@ -18,8 +19,16 @@ static Token new_token(char *start, char *end, TokenType type) {
   };
 }
 
-static bool starts_with(char *p, char *start) {
+static bool starts_with(char *p, const char *start) {
   return strncmp(p, start, strlen(start)) == 0;
+}
+
+static int read_punctuator(char *p) {
+  if (starts_with(p, "==") || starts_with(p, "!=") || starts_with(p, "<=") ||
+      starts_with(p, ">="))
+    return 2;
+
+  return std::ispunct(*p) ? 1 : 0;
 }
 
 std::vector<Token> tokenize_input(char *p) {
@@ -36,8 +45,18 @@ std::vector<Token> tokenize_input(char *p) {
       Token tok = new_token(p, p, TokenType::Num);
       tok.data_ = static_cast<i64>(strtoul(p, &p, 10));
       tok.len_ = p - ss;
+      res.push_back(std::move(tok));
+
       continue;
     }
+
+    int p_len = read_punctuator(p);
+    if (p_len) {
+      auto tok = new_token(p, p + p_len, TokenType::Common);
+      p += tok.len_;
+      continue;
+    }
+    std::cerr << "invalid token\n";
   }
 
   return res;
