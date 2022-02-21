@@ -8,7 +8,7 @@
 
 namespace parser {
 
-enum class NodeType { Add, Sub, Mul, Div, Neg, EQ, NE, LT, LE, Num };
+enum class NodeType { Add, Sub, Mul, Div, Neg, EQ, NE, LT, LE, Num, ExprStmt };
 struct Node {
   NodeType type_ = NodeType::Add; // default type
   std::unique_ptr<Node> lhs_ = nullptr;
@@ -17,7 +17,7 @@ struct Node {
 };
 
 using NodePtr = std::unique_ptr<Node>;
-NodePtr parse_tokens(const std::vector<token::Token> &tokens);
+std::vector<NodePtr> parse_tokens(const std::vector<token::Token> &tokens);
 } // namespace parser
 
 #endif

@@ -4,7 +4,7 @@
 #include "parser.h"
 
 namespace codegen {
-void gen_code(parser::NodePtr nodes);
+void gen_code(const std::vector<parser::NodePtr> &nodes);
 };
 
 #endif

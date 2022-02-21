@@ -1,4 +1,4 @@
   .globl main
 main:
-  mov $42, %rax
+  mov $1, %rax
   ret

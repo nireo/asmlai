@@ -1,4 +1,5 @@
 #include "codegen.h"
+#include "parser.h"
 #include <cassert>
 #include <cstdio>
 
@@ -76,13 +77,23 @@ static void gen_expression(const parser::Node &node) {
   }
 }
 
-void gen_code(parser::NodePtr root) {
+static void gen_stmt(const parser::Node &node) {
+  if (node.type_ == parser::NodeType::ExprStmt) {
+    gen_expression(*node.lhs_);
+    return;
+  }
+
+  std::fprintf(stderr, "invalid statement\n");
+}
+
+void gen_code(const std::vector<parser::NodePtr> &root) {
   printf("  .globl main\n");
   printf("main:\n");
-
-  gen_expression(*root);
+  for (const auto &stmt : root) {
+    gen_stmt(*stmt);
+    assert(depth == 0);
+  }
 
   printf("  ret\n");
-  assert(depth == 0);
 }
 } // namespace codegen
