@@ -35,9 +35,9 @@ void error_token(const Token &tok, const char *format_string, Args... args) {
   error_at(tok.loc, format_string, args...);
 }
 
-static Token new_token(char *start, char *end, TokenType type) {
+static Token new_token(char *start, char *end, TokenType type_) {
   return Token{
-      .type_ = type,
+      .type_ = type_,
       .data_ = std::monostate{},
       .len_ = end - start,
       .loc = start,
@@ -79,11 +79,14 @@ std::vector<Token> tokenize_input(char *p) {
     if (p_len) {
       auto tok = new_token(p, p + p_len, TokenType::Common);
       p += tok.len_;
+      res.push_back(tok);
       continue;
     }
+
     std::cerr << "invalid token\n";
   }
 
+  res.push_back(new_token(p, p, TokenType::Eof));
   return res;
 }
 } // namespace token

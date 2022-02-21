@@ -197,7 +197,7 @@ NodePtr parse_tokens(const std::vector<token::Token> &tokens) {
   u64 pos = 0;
   auto expr = parse_expression(tokens, pos);
   if (tokens[pos].type_ != token::TokenType::Eof) {
-    std::fprintf(stderr, "error parsing\n");
+    std::fprintf(stderr, "error parsing at pos: %ld\n", pos);
   }
 
   return expr;
