@@ -5,6 +5,7 @@
 #include <memory.h>
 #include <string>
 #include <variant>
+#include <vector>
 
 namespace token {
 
@@ -25,6 +26,13 @@ struct Token {
   i64 len_{0};
   char *loc = nullptr;
 };
+
+template <typename... Args> void error(const char *format_string, Args... args);
+
+template <typename... Args>
+void error_at(char *location, const char *format_string, Args... args);
+
+std::vector<Token> tokenize_input(char *p);
 
 } // namespace token
 

@@ -193,4 +193,14 @@ static NodePtr parse_primary(const std::vector<token::Token> &tokens,
   return nullptr;
 }
 
+NodePtr parse_tokens(const std::vector<token::Token> &tokens) {
+  u64 pos = 0;
+  auto expr = parse_expression(tokens, pos);
+  if (tokens[pos].type_ != token::TokenType::Eof) {
+    std::fprintf(stderr, "error parsing\n");
+  }
+
+  return expr;
+}
+
 } // namespace parser

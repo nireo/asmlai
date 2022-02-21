@@ -11,8 +11,9 @@ namespace token {
 static char *curr_input;
 
 template <typename... Args>
-static void error(const char *format_string, Args... args) {
+void error(const char *format_string, Args... args) {
   std::fprintf(stderr, format_string, args...);
+  std::fprintf(stderr, "\n");
   return;
 }
 

@@ -17,7 +17,7 @@ struct Node {
 };
 
 using NodePtr = std::unique_ptr<Node>;
-std::vector<NodePtr> parse_tokens(const std::vector<token::Token> &tokens);
+NodePtr parse_tokens(const std::vector<token::Token> &tokens);
 } // namespace parser
 
 #endif
