@@ -6,6 +6,10 @@
 namespace codegen {
 static i64 depth{};
 
+static i64 align_to(i64 n, i64 align) {
+  return (n + align - 1) / align * align;
+}
+
 static void push() {
   printf("  push %%rax\n");
   ++depth;
@@ -18,12 +22,21 @@ static void pop(const char *argument) {
 
 static void gen_address(const parser::Node &node) {
   if (node.type_ == parser::NodeType::Variable) {
-    int offset = (std::get<char>(node.data_) - 'a' + 1) * 8;
+    int offset = std::get<parser::Object>(node.data_).offset_;
     printf("  lea %d(%%rbp), %%rax\n", -offset);
     return;
   }
 
   std::fprintf(stderr, "non-lvalue\n");
+}
+
+static void assign_lvar_offsets(parser::Function &func) {
+  i64 offset = 0;
+  for (auto &obj : func.locals_) {
+    offset += 8;
+    obj.offset_ = -offset;
+  }
+  func.stack_sz_ = align_to(offset, (i64)16);
 }
 
 static void gen_expression(const parser::Node &node) {
@@ -114,16 +127,18 @@ static void gen_stmt(const parser::Node &node) {
   std::fprintf(stderr, "invalid statement\n");
 }
 
-void gen_code(const std::vector<parser::NodePtr> &root) {
+void gen_code(parser::Function &root) {
+  assign_lvar_offsets(root);
+
   printf("  .globl main\n");
   printf("main:\n");
 
   printf("  push %%rbp\n");
   printf("  mov %%rsp, %%rbp\n");
-  printf("  sub $208, %%rsp\n");
+  printf("  sub $%ld, %%rsp\n", root.stack_sz_);
 
-  for (const auto &stmt : root) {
-    gen_stmt(*stmt);
+  for (const auto &node : root.body_) {
+    gen_stmt(*node);
     assert(depth == 0);
   }
 

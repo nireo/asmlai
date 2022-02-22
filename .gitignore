@@ -5,4 +5,4 @@ test.lai
 build
 .cache
 cmake-build-debug
-
+tmp*

@@ -32,7 +32,7 @@ void error_at(char *location, const char *format_string, Args... args) {
 
 template <typename... Args>
 void error_token(const Token &tok, const char *format_string, Args... args) {
-  error_at(tok.loc, format_string, args...);
+  error_at(tok.loc_, format_string, args...);
 }
 
 static Token new_token(char *start, char *end, TokenType type_) {
@@ -40,8 +40,16 @@ static Token new_token(char *start, char *end, TokenType type_) {
       .type_ = type_,
       .data_ = std::monostate{},
       .len_ = end - start,
-      .loc = start,
+      .loc_ = start,
   };
+}
+
+static bool is_ident_char(char c) {
+  return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
+}
+
+static bool is_ident_any(char c) {
+  return is_ident_char(c) || ('0' <= c && c <= '9');
 }
 
 static bool starts_with(char *p, const char *start) {
@@ -75,10 +83,12 @@ std::vector<Token> tokenize_input(char *p) {
       continue;
     }
 
-    if ('a' <= *p && *p <= 'z') {
-      auto tok = new_token(p, p + 1, TokenType::Identifier);
-      p++;
-      res.push_back(tok);
+    if (is_ident_char(*p)) {
+      char *start = p;
+      do {
+        p++;
+      } while (is_ident_any(*p));
+      res.push_back(new_token(start, p, TokenType::Identifier));
       continue;
     }
 

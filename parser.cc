@@ -1,13 +1,30 @@
 #include "parser.h"
 #include "token.h"
+#include <cstdio>
+#include <optional>
+#include <unordered_map>
 
 namespace parser {
+template <typename... Args> static void error(const char *fmt, Args... args) {
+  std::fprintf(stderr, fmt, args...);
+  std::fprintf(stderr, "\n");
+  std::exit(1);
+}
+
+static std::unordered_map<std::string, Object> locals_;
 
 static NodePtr new_node(NodeType type_) {
   auto node = std::make_unique<Node>();
   node->type_ = type_;
 
   return node;
+}
+
+static std::optional<Object> find_var(const std::string &name) {
+  if (locals_.find(name) == locals_.end()) {
+    return std::nullopt;
+  }
+  return locals_[name];
 }
 
 static NodePtr new_single(NodeType type_, NodePtr expr) {
@@ -25,9 +42,9 @@ static NodePtr new_binary_node(NodeType type_, NodePtr lhs, NodePtr rhs) {
   return node;
 }
 
-static NodePtr new_variable_node(char name) {
+static NodePtr new_variable_node(const Object &variable) {
   auto node = new_node(NodeType::Variable);
-  node->data_ = name;
+  node->data_ = variable;
 
   return node;
 }
@@ -37,6 +54,15 @@ static NodePtr new_number(i64 value) {
   node->data_ = value;
 
   return node;
+}
+
+static Object new_lvar(const std::string &name) {
+  auto obj = Object{
+      .name_ = name,
+      .offset_ = 0,
+  };
+  locals_[name] = obj;
+  return obj;
 }
 
 static void skip_until(const std::vector<token::Token> &tokens, const char *tok,
@@ -207,9 +233,11 @@ static NodePtr parse_primary(const std::vector<token::Token> &tokens,
   }
 
   if (tokens[pos].type_ == token::TokenType::Identifier) {
-    auto node = new_variable_node(*tokens[pos].loc);
-    ++pos;
-    return node;
+    auto obj = find_var(tokens[pos].loc_);
+    if (!obj.has_value()) {
+      return new_variable_node(new_lvar(tokens[pos].loc_));
+    }
+    return new_variable_node(obj.value());
   }
 
   if (tokens[pos].type_ == token::TokenType::Num) {
@@ -218,17 +246,28 @@ static NodePtr parse_primary(const std::vector<token::Token> &tokens,
     return node;
   }
 
+  error("expected primary expression.");
   return nullptr;
 }
 
-std::vector<NodePtr> parse_tokens(const std::vector<token::Token> &tokens) {
+Function parse_tokens(const std::vector<token::Token> &tokens) {
   u64 pos = 0;
   std::vector<NodePtr> nodes;
   while (tokens[pos].type_ != token::TokenType::Eof) {
     nodes.push_back(std::move(parse_stmt(tokens, pos)));
   }
 
-  return nodes;
-}
+  std::vector<Object> objects_;
+  for (const auto &[_, obj] : locals_) {
+    objects_.push_back(obj);
+  }
 
+  auto func = Function{
+      .stack_sz_ = 0,
+      .body_ = std::move(nodes),
+      .locals_ = std::move(objects_),
+  };
+
+  return func;
+}
 } // namespace parser

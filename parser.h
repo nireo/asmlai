@@ -24,15 +24,26 @@ enum class NodeType {
   Variable
 };
 
+struct Object {
+  std::string name_;
+  i64 offset_;
+};
+
 struct Node {
   NodeType type_ = NodeType::Add; // default type
   std::unique_ptr<Node> lhs_ = nullptr;
   std::unique_ptr<Node> rhs_ = nullptr;
-  std::variant<i64, char, std::monostate> data_ = std::monostate{};
+  std::variant<i64, Object, std::monostate> data_ = std::monostate{};
 };
 
 using NodePtr = std::unique_ptr<Node>;
-std::vector<NodePtr> parse_tokens(const std::vector<token::Token> &tokens);
+struct Function {
+  i64 stack_sz_;
+  std::vector<NodePtr> body_;
+  std::vector<Object> locals_;
+};
+
+Function parse_tokens(const std::vector<token::Token> &tokens);
 } // namespace parser
 
 #endif
