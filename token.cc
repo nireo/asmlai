@@ -75,6 +75,13 @@ std::vector<Token> tokenize_input(char *p) {
       continue;
     }
 
+    if ('a' <= *p && *p <= 'z') {
+      auto tok = new_token(p, p + 1, TokenType::Identifier);
+      res.push_back(tok);
+      p++;
+      continue;
+    }
+
     int p_len = read_punctuator(p);
     if (p_len) {
       auto tok = new_token(p, p + p_len, TokenType::Common);

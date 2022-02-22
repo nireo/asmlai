@@ -13,6 +13,7 @@ enum class TokenType {
   Num,
   Eof,
   Common,
+  Identifier,
 };
 
 struct Token {
@@ -28,7 +29,6 @@ struct Token {
 };
 
 template <typename... Args> void error(const char *format_string, Args... args);
-
 template <typename... Args>
 void error_at(char *location, const char *format_string, Args... args);
 

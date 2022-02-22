@@ -26,6 +26,13 @@ static NodePtr new_binary_node(NodeType type_, NodePtr lhs, NodePtr rhs) {
   return node;
 }
 
+static NodePtr new_variable_node(char name) {
+  auto node = new_node(NodeType::Variable);
+  node->data_ = name;
+
+  return node;
+}
+
 static NodePtr new_number(i64 value) {
   auto node = new_node(NodeType::Num);
   node->data_ = value;
@@ -39,8 +46,6 @@ static void skip_until(const std::vector<token::Token> &tokens, const char *tok,
     ++pos;
   }
   ++pos; // skip the wanted token
-
-  return;
 }
 
 static NodePtr parse_expression(const std::vector<token::Token> &, u64 &);
@@ -50,6 +55,7 @@ static NodePtr parse_add(const std::vector<token::Token> &, u64 &);
 static NodePtr parse_unary(const std::vector<token::Token> &, u64 &);
 static NodePtr parse_primary(const std::vector<token::Token> &, u64 &);
 static NodePtr parse_relational(const std::vector<token::Token> &, u64 &);
+static NodePtr parse_assign(const std::vector<token::Token> &, u64 &);
 
 static NodePtr parse_expr_stmt(const std::vector<token::Token> &tokens,
                                u64 &pos) {
@@ -64,7 +70,7 @@ static NodePtr parse_stmt(const std::vector<token::Token> &tokens, u64 &pos) {
 
 static NodePtr parse_expression(const std::vector<token::Token> &tokens,
                                 u64 &pos) {
-  return parse_equal(tokens, pos);
+  return parse_assign(tokens, pos);
 }
 
 static NodePtr parse_equal(const std::vector<token::Token> &tokens, u64 &pos) {
@@ -86,6 +92,16 @@ static NodePtr parse_equal(const std::vector<token::Token> &tokens, u64 &pos) {
 
     return node;
   }
+}
+
+static NodePtr parse_assign(const std::vector<token::Token> &tokens, u64 &pos) {
+  auto node = parse_equal(tokens, pos);
+  if (tokens[pos] == "=") {
+    ++pos;
+    node = new_binary_node(NodeType::Assign, std::move(node),
+                           parse_assign(tokens, pos));
+  }
+  return node;
 }
 
 static NodePtr parse_relational(const std::vector<token::Token> &tokens,
@@ -188,6 +204,12 @@ static NodePtr parse_primary(const std::vector<token::Token> &tokens,
     auto node = parse_expression(tokens, pos);
     skip_until(tokens, ")", pos);
 
+    return node;
+  }
+
+  if (tokens[pos].type_ == token::TokenType::Identifier) {
+    auto node = new_variable_node(*tokens[pos].loc);
+    ++pos;
     return node;
   }
 

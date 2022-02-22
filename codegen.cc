@@ -16,15 +16,42 @@ static void pop(const char *argument) {
   --depth;
 }
 
+static void gen_address(const parser::Node &node) {
+  if (node.type_ == parser::NodeType::Variable) {
+    int offset = (std::get<char>(node.data_) - 'a' + 1) * 8;
+    printf("  lea %d(%%rbp), %%rax\n", -offset);
+    return;
+  }
+
+  std::fprintf(stderr, "non-lvalue\n");
+}
+
 static void gen_expression(const parser::Node &node) {
   using NodeType = parser::NodeType;
-  if (node.type_ == NodeType::Num) {
+  switch (node.type_) {
+  case NodeType::Num: {
     printf("  mov $%ld, %%rax\n", std::get<i64>(node.data_));
     return;
-  } else if (node.type_ == NodeType::Neg) {
+  }
+  case NodeType::Neg: {
     gen_expression(*node.lhs_);
     printf("  neg %%rax\n");
     return;
+  }
+  case NodeType::Variable: {
+    gen_address(node);
+    printf("  mov (%%rax), %%rax\n");
+    return;
+  }
+  case NodeType::Assign: {
+    gen_address(*node.lhs_);
+    push();
+    gen_expression(*node.rhs_);
+    pop("%rdi");
+    printf("  mov %%rax, (%%rdi)\n");
+  }
+  default: {
+  }
   }
 
   gen_expression(*node.rhs_);
@@ -89,6 +116,11 @@ static void gen_stmt(const parser::Node &node) {
 void gen_code(const std::vector<parser::NodePtr> &root) {
   printf("  .globl main\n");
   printf("main:\n");
+
+  printf("  push %%rbp\n");
+  printf("  mov %%rsp, %%rbp\n");
+  printf("  sub $208, %%rsp\n");
+
   for (const auto &stmt : root) {
     gen_stmt(*stmt);
     assert(depth == 0);

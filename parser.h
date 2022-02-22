@@ -8,12 +8,27 @@
 
 namespace parser {
 
-enum class NodeType { Add, Sub, Mul, Div, Neg, EQ, NE, LT, LE, Num, ExprStmt };
+enum class NodeType {
+  Add,
+  Sub,
+  Mul,
+  Div,
+  Neg,
+  EQ,
+  NE,
+  LT,
+  LE,
+  Num,
+  ExprStmt,
+  Assign,
+  Variable
+};
+
 struct Node {
   NodeType type_ = NodeType::Add; // default type
   std::unique_ptr<Node> lhs_ = nullptr;
   std::unique_ptr<Node> rhs_ = nullptr;
-  std::variant<i64, std::monostate> data_ = std::monostate{};
+  std::variant<i64, char, std::monostate> data_ = std::monostate{};
 };
 
 using NodePtr = std::unique_ptr<Node>;

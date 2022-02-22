@@ -1,4 +1,7 @@
   .globl main
 main:
-  mov $1, %rax
+  push %rbp
+  mov %rsp, %rbp
+  sub $208, %rsp
+  mov $0, %rax
   ret
