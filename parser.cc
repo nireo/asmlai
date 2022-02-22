@@ -2,7 +2,6 @@
 #include "token.h"
 
 namespace parser {
-#define CURR tokens[token_pos];
 
 static NodePtr new_node(NodeType type_) {
   auto node = std::make_unique<Node>();

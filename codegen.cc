@@ -49,6 +49,7 @@ static void gen_expression(const parser::Node &node) {
     gen_expression(*node.rhs_);
     pop("%rdi");
     printf("  mov %%rax, (%%rdi)\n");
+    return;
   }
   default: {
   }
@@ -126,6 +127,8 @@ void gen_code(const std::vector<parser::NodePtr> &root) {
     assert(depth == 0);
   }
 
+  printf("  mov %%rbp, %%rsp\n");
+  printf("  pop %%rbp\n");
   printf("  ret\n");
 }
 } // namespace codegen

@@ -77,8 +77,8 @@ std::vector<Token> tokenize_input(char *p) {
 
     if ('a' <= *p && *p <= 'z') {
       auto tok = new_token(p, p + 1, TokenType::Identifier);
-      res.push_back(tok);
       p++;
+      res.push_back(tok);
       continue;
     }
 
