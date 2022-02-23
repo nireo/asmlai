@@ -95,6 +95,13 @@ static NodePtr parse_expr_stmt(const std::vector<token::Token> &tokens,
 }
 
 static NodePtr parse_stmt(const std::vector<token::Token> &tokens, u64 &pos) {
+  if (tokens[pos] == "return") {
+    ++pos;
+    auto node = new_single(NodeType::Return, parse_expression(tokens, pos));
+    skip_until(tokens, ";", pos);
+    return node;
+  }
+
   return parse_expr_stmt(tokens, pos);
 }
 

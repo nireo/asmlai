@@ -104,6 +104,12 @@ std::vector<Token> tokenize_input(char *p) {
     std::cerr << "invalid token\n";
   }
 
+  for (auto &tok : res) {
+    if (tok == "return") {
+      tok.type_ = TokenType::Keyword;
+    }
+  }
+
   res.push_back(new_token(p, p, TokenType::Eof));
   return res;
 }

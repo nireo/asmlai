@@ -124,6 +124,10 @@ static void gen_stmt(const parser::Node &node) {
   if (node.type_ == parser::NodeType::ExprStmt) {
     gen_expression(*node.lhs_);
     return;
+  } else if (node.type_ == parser::NodeType::Return) {
+    gen_expression(*node.lhs_);
+    printf("  jmp .L.return\n");
+    return;
   }
 
   std::fprintf(stderr, "invalid statement\n");
@@ -144,6 +148,7 @@ void gen_code(parser::Function &root) {
     assert(depth == 0);
   }
 
+  printf(".L.return:\n");
   printf("  mov %%rbp, %%rsp\n");
   printf("  pop %%rbp\n");
   printf("  ret\n");

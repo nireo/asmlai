@@ -21,7 +21,8 @@ enum class NodeType {
   Num,
   ExprStmt,
   Assign,
-  Variable
+  Variable,
+  Return,
 };
 
 struct Object {

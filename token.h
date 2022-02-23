@@ -14,6 +14,7 @@ enum class TokenType {
   Eof,
   Common,
   Identifier,
+  Keyword,
 };
 
 struct Token {
