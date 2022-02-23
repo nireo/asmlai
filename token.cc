@@ -88,7 +88,8 @@ std::vector<Token> tokenize_input(char *p) {
       do {
         p++;
       } while (is_ident_any(*p));
-      res.push_back(new_token(start, p, TokenType::Identifier));
+      auto tok = new_token(start, p, TokenType::Identifier);
+      res.push_back(tok);
       continue;
     }
 

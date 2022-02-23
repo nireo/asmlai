@@ -36,6 +36,7 @@ static void assign_lvar_offsets(parser::Function &func) {
     offset += 8;
     obj.offset_ = -offset;
   }
+
   func.stack_sz_ = align_to(offset, (i64)16);
 }
 

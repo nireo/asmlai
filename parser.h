@@ -25,7 +25,7 @@ enum class NodeType {
 };
 
 struct Object {
-  std::string name_;
+  char *name_;
   i64 offset_;
 };
 

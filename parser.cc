@@ -1,6 +1,8 @@
 #include "parser.h"
 #include "token.h"
 #include <cstdio>
+#include <cstring>
+#include <iostream>
 #include <optional>
 #include <unordered_map>
 
@@ -11,7 +13,7 @@ template <typename... Args> static void error(const char *fmt, Args... args) {
   std::exit(1);
 }
 
-static std::unordered_map<std::string, Object> locals_;
+static std::vector<Object> locals_;
 
 static NodePtr new_node(NodeType type_) {
   auto node = std::make_unique<Node>();
@@ -20,11 +22,14 @@ static NodePtr new_node(NodeType type_) {
   return node;
 }
 
-static std::optional<Object> find_var(const std::string &name) {
-  if (locals_.find(name) == locals_.end()) {
-    return std::nullopt;
+static std::optional<Object> find_var(const token::Token &tok) {
+  for (const auto &obj : locals_) {
+    if (!strncmp(tok.loc_, obj.name_, tok.len_)) {
+      return obj;
+    }
   }
-  return locals_[name];
+
+  return std::nullopt;
 }
 
 static NodePtr new_single(NodeType type_, NodePtr expr) {
@@ -56,12 +61,13 @@ static NodePtr new_number(i64 value) {
   return node;
 }
 
-static Object new_lvar(const std::string &name) {
+static Object new_lvar(char *name) {
   auto obj = Object{
       .name_ = name,
       .offset_ = 0,
   };
-  locals_[name] = obj;
+  locals_.push_back(obj);
+
   return obj;
 }
 
@@ -126,6 +132,7 @@ static NodePtr parse_assign(const std::vector<token::Token> &tokens, u64 &pos) {
     node = new_binary_node(NodeType::Assign, std::move(node),
                            parse_assign(tokens, pos));
   }
+
   return node;
 }
 
@@ -233,10 +240,13 @@ static NodePtr parse_primary(const std::vector<token::Token> &tokens,
   }
 
   if (tokens[pos].type_ == token::TokenType::Identifier) {
-    auto obj = find_var(tokens[pos].loc_);
+    const auto &token = tokens[pos];
+    ++pos;
+    auto obj = find_var(token);
     if (!obj.has_value()) {
-      return new_variable_node(new_lvar(tokens[pos].loc_));
+      return new_variable_node(new_lvar(strndup(token.loc_, token.len_)));
     }
+
     return new_variable_node(obj.value());
   }
 
@@ -257,15 +267,10 @@ Function parse_tokens(const std::vector<token::Token> &tokens) {
     nodes.push_back(std::move(parse_stmt(tokens, pos)));
   }
 
-  std::vector<Object> objects_;
-  for (const auto &[_, obj] : locals_) {
-    objects_.push_back(obj);
-  }
-
   auto func = Function{
       .stack_sz_ = 0,
       .body_ = std::move(nodes),
-      .locals_ = std::move(objects_),
+      .locals_ = std::move(locals_),
   };
 
   return func;
