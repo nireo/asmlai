@@ -78,6 +78,7 @@ static void skip_until(const std::vector<token::Token> &tokens, const char *tok,
   ++pos; // skip the wanted token
 }
 
+static NodePtr parse_compound_stmt(const std::vector<token::Token> &, u64 &);
 static NodePtr parse_expression(const std::vector<token::Token> &, u64 &);
 static NodePtr parse_equal(const std::vector<token::Token> &, u64 &);
 static NodePtr parse_mul(const std::vector<token::Token> &, u64 &);
@@ -100,6 +101,11 @@ static NodePtr parse_stmt(const std::vector<token::Token> &tokens, u64 &pos) {
     auto node = new_single(NodeType::Return, parse_expression(tokens, pos));
     skip_until(tokens, ";", pos);
     return node;
+  }
+
+  if (tokens[pos] == "{") {
+    ++pos;
+    return parse_compound_stmt(tokens, pos);
   }
 
   return parse_expr_stmt(tokens, pos);
@@ -264,6 +270,20 @@ static NodePtr parse_primary(const std::vector<token::Token> &tokens,
 
   error("expected primary expression.");
   return nullptr;
+}
+
+static NodePtr parse_compound_stmt(const std::vector<token::Token> &tokens,
+                                   u64 &pos) {
+  std::vector<NodePtr> nodes;
+  while (tokens[pos] != "}") {
+    nodes.push_back(std::move(parse_stmt(tokens, pos)));
+  }
+
+  auto node = new_node(NodeType::Block);
+  node->data_ = std::move(nodes);
+  ++pos;
+
+  return node;
 }
 
 Function parse_tokens(const std::vector<token::Token> &tokens) {

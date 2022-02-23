@@ -128,6 +128,14 @@ static void gen_stmt(const parser::Node &node) {
     gen_expression(*node.lhs_);
     printf("  jmp .L.return\n");
     return;
+  } else if (node.type_ == parser::NodeType::Block) {
+    const auto &nodes =
+        std::get<std::vector<std::unique_ptr<parser::Node>>>(node.data_);
+    for (const auto &node : nodes) {
+      gen_stmt(*node);
+    }
+
+    return;
   }
 
   std::fprintf(stderr, "invalid statement\n");

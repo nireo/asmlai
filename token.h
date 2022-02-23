@@ -21,6 +21,7 @@ struct Token {
   bool operator==(const char *val) const {
     return memcmp(this->loc_, val, this->len_) == 0 && val[this->len_] == '\0';
   }
+  bool operator!=(const char *val) const { return !(*this == val); }
 
   TokenType type_;
   // variat because in the future there will be more stuff here.
