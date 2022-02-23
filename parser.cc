@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstring>
 #include <iostream>
+#include <memory>
 #include <optional>
 #include <unordered_map>
 
@@ -13,7 +14,7 @@ template <typename... Args> static void error(const char *fmt, Args... args) {
   std::exit(1);
 }
 
-static std::vector<Object> locals_;
+static std::vector<std::shared_ptr<Object>> locals_;
 
 static NodePtr new_node(NodeType type_) {
   auto node = std::make_unique<Node>();
@@ -22,14 +23,14 @@ static NodePtr new_node(NodeType type_) {
   return node;
 }
 
-static std::optional<Object> find_var(const token::Token &tok) {
+static std::shared_ptr<Object> find_var(const token::Token &tok) {
   for (const auto &obj : locals_) {
-    if (!strncmp(tok.loc_, obj.name_, tok.len_)) {
+    if (!strncmp(tok.loc_, obj->name_, tok.len_)) {
       return obj;
     }
   }
 
-  return std::nullopt;
+  return nullptr;
 }
 
 static NodePtr new_single(NodeType type_, NodePtr expr) {
@@ -47,9 +48,9 @@ static NodePtr new_binary_node(NodeType type_, NodePtr lhs, NodePtr rhs) {
   return node;
 }
 
-static NodePtr new_variable_node(const Object &variable) {
+static NodePtr new_variable_node(std::shared_ptr<Object> variable) {
   auto node = new_node(NodeType::Variable);
-  node->data_ = variable;
+  node->data_ = std::move(variable);
 
   return node;
 }
@@ -61,11 +62,9 @@ static NodePtr new_number(i64 value) {
   return node;
 }
 
-static Object new_lvar(char *name) {
-  auto obj = Object{
-      .name_ = name,
-      .offset_ = 0,
-  };
+// it needs to be pointer so that we can change the
+static std::shared_ptr<Object> new_lvar(char *name) {
+  std::shared_ptr<Object> obj = std::make_shared<Object>(name, 0);
   locals_.push_back(obj);
 
   return obj;
@@ -243,11 +242,11 @@ static NodePtr parse_primary(const std::vector<token::Token> &tokens,
     const auto &token = tokens[pos];
     ++pos;
     auto obj = find_var(token);
-    if (!obj.has_value()) {
+    if (obj == nullptr) {
       return new_variable_node(new_lvar(strndup(token.loc_, token.len_)));
     }
 
-    return new_variable_node(obj.value());
+    return new_variable_node(std::move(obj));
   }
 
   if (tokens[pos].type_ == token::TokenType::Num) {

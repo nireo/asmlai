@@ -25,6 +25,7 @@ enum class NodeType {
 };
 
 struct Object {
+  Object(char *name, i64 offset) : name_(name), offset_(offset) {}
   char *name_;
   i64 offset_;
 };
@@ -33,14 +34,15 @@ struct Node {
   NodeType type_ = NodeType::Add; // default type
   std::unique_ptr<Node> lhs_ = nullptr;
   std::unique_ptr<Node> rhs_ = nullptr;
-  std::variant<i64, Object, std::monostate> data_ = std::monostate{};
+  std::variant<i64, std::shared_ptr<Object>, std::monostate> data_ =
+      std::monostate{};
 };
 
 using NodePtr = std::unique_ptr<Node>;
 struct Function {
   i64 stack_sz_;
   std::vector<NodePtr> body_;
-  std::vector<Object> locals_;
+  std::vector<std::shared_ptr<Object>> locals_;
 };
 
 Function parse_tokens(const std::vector<token::Token> &tokens);

@@ -2,6 +2,7 @@
 #include "parser.h"
 #include <cassert>
 #include <cstdio>
+#include <iostream>
 
 namespace codegen {
 static i64 depth{};
@@ -22,8 +23,8 @@ static void pop(const char *argument) {
 
 static void gen_address(const parser::Node &node) {
   if (node.type_ == parser::NodeType::Variable) {
-    int offset = std::get<parser::Object>(node.data_).offset_;
-    printf("  lea %d(%%rbp), %%rax\n", -offset);
+    int offset = std::get<std::shared_ptr<parser::Object>>(node.data_)->offset_;
+    printf("  lea %d(%%rbp), %%rax\n", offset);
     return;
   }
 
@@ -34,7 +35,7 @@ static void assign_lvar_offsets(parser::Function &func) {
   i64 offset = 0;
   for (auto &obj : func.locals_) {
     offset += 8;
-    obj.offset_ = -offset;
+    obj->offset_ = -offset;
   }
 
   func.stack_sz_ = align_to(offset, (i64)16);
