@@ -8,6 +8,16 @@
 
 namespace parser {
 
+enum class Types {
+  Int,
+  Ptr,
+};
+
+struct Type {
+  Types type_;
+  std::unique_ptr<Type> base_type_ = nullptr;
+};
+
 enum class NodeType {
   Add,
   Sub,
@@ -56,6 +66,7 @@ struct Node {
   NodeType type_ = NodeType::Add; // default type
   std::unique_ptr<Node> lhs_ = nullptr;
   std::unique_ptr<Node> rhs_ = nullptr;
+  std::unique_ptr<Type> tt_ = nullptr;
 
   std::variant<i64, std::shared_ptr<Object>, std::vector<std::unique_ptr<Node>>,
                IfNode, ForNode, std::monostate>
