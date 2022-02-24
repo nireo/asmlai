@@ -147,6 +147,19 @@ static NodePtr parse_stmt(const std::vector<token::Token> &tokens, u64 &pos) {
     return node;
   }
 
+  if (tokens[pos] == "while") {
+    auto node = new_node(NodeType::For);
+    skip_until(tokens, "(", pos);
+    ForNode for_node{};
+    for_node.condition_ = parse_expression(tokens, pos);
+    skip_until(tokens, ")", pos);
+    for_node.body_ = parse_stmt(tokens, pos);
+
+    node->data_ = std::move(for_node);
+
+    return node;
+  }
+
   if (tokens[pos] == "{") {
     ++pos;
     return parse_compound_stmt(tokens, pos);
@@ -271,7 +284,6 @@ static NodePtr parse_mul(const std::vector<token::Token> &tokens, u64 &pos) {
 }
 
 static NodePtr parse_unary(const std::vector<token::Token> &tokens, u64 &pos) {
-
   if (tokens[pos] == "+") {
     ++pos;
     return parse_unary(tokens, pos);
@@ -280,6 +292,16 @@ static NodePtr parse_unary(const std::vector<token::Token> &tokens, u64 &pos) {
   if (tokens[pos] == "-") {
     ++pos;
     return new_single(NodeType::Neg, parse_unary(tokens, pos));
+  }
+
+  if (tokens[pos] == "&") {
+    ++pos;
+    return new_single(NodeType::Addr, parse_unary(tokens, pos));
+  }
+
+  if (tokens[pos] == "*") {
+    ++pos;
+    return new_single(NodeType::Derefence, parse_unary(tokens, pos));
   }
 
   return parse_primary(tokens, pos);

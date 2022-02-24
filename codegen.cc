@@ -27,10 +27,14 @@ static void pop(const char *argument) {
   --depth;
 }
 
+static void gen_expression(const parser::Node &node);
 static void gen_address(const parser::Node &node) {
   if (node.type_ == parser::NodeType::Variable) {
     int offset = std::get<std::shared_ptr<parser::Object>>(node.data_)->offset_;
     printf("  lea %d(%%rbp), %%rax\n", offset);
+    return;
+  } else if (node.type_ == parser::NodeType::Derefence) {
+    gen_expression(*node.lhs_);
     return;
   }
 
@@ -64,6 +68,13 @@ static void gen_expression(const parser::Node &node) {
     printf("  mov (%%rax), %%rax\n");
     return;
   }
+  case NodeType::Derefence:
+    gen_expression(*node.lhs_);
+    printf("  mov (%%rax), %%rax\n");
+    return;
+  case NodeType::Addr:
+    gen_address(*node.lhs_);
+    return;
   case NodeType::Assign: {
     gen_address(*node.lhs_);
     push();

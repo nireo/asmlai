@@ -25,7 +25,9 @@ enum class NodeType {
   Return,
   Block,
   If,
-  For
+  For,
+  Addr,
+  Derefence,
 };
 
 struct Node;
