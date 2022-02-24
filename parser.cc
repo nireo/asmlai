@@ -125,6 +125,28 @@ static NodePtr parse_stmt(const std::vector<token::Token> &tokens, u64 &pos) {
     return node;
   }
 
+  if (tokens[pos] == "for") {
+    auto node = new_node(NodeType::For);
+    skip_until(tokens, "(", pos);
+
+    ForNode for_node{};
+    for_node.initialization_ = parse_expr_stmt(tokens, pos);
+
+    if (tokens[pos] != ";") {
+      for_node.condition_ = parse_expression(tokens, pos);
+    }
+    skip_until(tokens, ";", pos);
+
+    if (tokens[pos] != ")") {
+      for_node.increment_ = parse_expression(tokens, pos);
+    }
+    skip_until(tokens, ")", pos);
+
+    for_node.body_ = parse_stmt(tokens, pos);
+    node->data_ = std::move(for_node);
+    return node;
+  }
+
   if (tokens[pos] == "{") {
     ++pos;
     return parse_compound_stmt(tokens, pos);

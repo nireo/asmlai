@@ -24,7 +24,8 @@ enum class NodeType {
   Variable,
   Return,
   Block,
-  If
+  If,
+  For
 };
 
 struct Node;
@@ -42,13 +43,20 @@ struct IfNode {
   NodePtr else_ = nullptr;
 };
 
+struct ForNode {
+  NodePtr condition_ = nullptr;
+  NodePtr initialization_ = nullptr;
+  NodePtr increment_ = nullptr;
+  NodePtr body_ = nullptr;
+};
+
 struct Node {
   NodeType type_ = NodeType::Add; // default type
   std::unique_ptr<Node> lhs_ = nullptr;
   std::unique_ptr<Node> rhs_ = nullptr;
 
   std::variant<i64, std::shared_ptr<Object>, std::vector<std::unique_ptr<Node>>,
-               IfNode, std::monostate>
+               IfNode, ForNode, std::monostate>
       data_ = std::monostate{};
 };
 

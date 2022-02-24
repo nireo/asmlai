@@ -127,14 +127,18 @@ static void gen_expression(const parser::Node &node) {
 }
 
 static void gen_stmt(const parser::Node &node) {
-  if (node.type_ == parser::NodeType::ExprStmt) {
+
+  switch (node.type_) {
+  case parser::NodeType::ExprStmt: {
     gen_expression(*node.lhs_);
     return;
-  } else if (node.type_ == parser::NodeType::Return) {
+  }
+  case parser::NodeType::Return: {
     gen_expression(*node.lhs_);
     printf("  jmp .L.return\n");
     return;
-  } else if (node.type_ == parser::NodeType::Block) {
+  }
+  case parser::NodeType::Block: {
     try {
       const auto &nodes =
           std::get<std::vector<std::unique_ptr<parser::Node>>>(node.data_);
@@ -148,7 +152,8 @@ static void gen_stmt(const parser::Node &node) {
 
       return;
     }
-  } else if (node.type_ == parser::NodeType::If) {
+  }
+  case parser::NodeType::If: {
     i64 L = count();
     const auto &if_node = std::get<parser::IfNode>(node.data_);
     gen_expression(*if_node.condition_);
@@ -163,8 +168,30 @@ static void gen_stmt(const parser::Node &node) {
     printf(".L.end.%ld:\n", L);
     return;
   }
+  case parser::NodeType::For: {
+    i64 L = count();
+    const auto &for_node = std::get<parser::ForNode>(node.data_);
 
-  std::fprintf(stderr, "invalid statement\n");
+    gen_stmt(*for_node.initialization_);
+    printf(".L.begin.%ld:\n", L);
+    if (for_node.condition_ != nullptr) {
+      gen_expression(*for_node.condition_);
+      printf("  cmp $0, %%rax\n");
+      printf("  je  .L.end.%ld\n", L);
+    }
+
+    gen_stmt(*for_node.body_);
+    if (for_node.increment_ != nullptr)
+      gen_expression(*for_node.increment_);
+    printf("  jmp .L.begin.%ld\n", L);
+    printf(".L.end.%ld:\n", L);
+    return;
+  }
+  default: {
+    std::fprintf(stderr, "invalid statement\n");
+    std::exit(1);
+  }
+  }
 }
 
 void gen_code(parser::Function &root) {
