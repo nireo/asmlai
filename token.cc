@@ -105,7 +105,7 @@ std::vector<Token> tokenize_input(char *p) {
   }
 
   for (auto &tok : res) {
-    if (tok == "return") {
+    if (tok == "return" || tok == "else" || tok == "if") {
       tok.type_ = TokenType::Keyword;
     }
   }

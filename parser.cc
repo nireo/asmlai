@@ -90,6 +90,11 @@ static NodePtr parse_assign(const std::vector<token::Token> &, u64 &);
 
 static NodePtr parse_expr_stmt(const std::vector<token::Token> &tokens,
                                u64 &pos) {
+  if (tokens[pos] == ";") { // encountered a empty statement
+    ++pos;
+    return new_node(NodeType::Block);
+  }
+
   auto node = new_single(NodeType::ExprStmt, parse_expression(tokens, pos));
   skip_until(tokens, ";", pos);
   return node;
@@ -100,6 +105,23 @@ static NodePtr parse_stmt(const std::vector<token::Token> &tokens, u64 &pos) {
     ++pos;
     auto node = new_single(NodeType::Return, parse_expression(tokens, pos));
     skip_until(tokens, ";", pos);
+    return node;
+  }
+
+  if (tokens[pos] == "if") {
+    auto node = new_node(NodeType::If);
+    skip_until(tokens, "(", pos);
+
+    IfNode if_node;
+    if_node.condition_ = parse_expression(tokens, pos);
+    skip_until(tokens, ")", pos);
+    if_node.then_ = parse_stmt(tokens, pos);
+    if (tokens[pos] == "else") {
+      ++pos;
+      if_node.else_ = parse_stmt(tokens, pos);
+    }
+    node->data_ = std::move(if_node);
+
     return node;
   }
 

@@ -3,9 +3,15 @@
 #include <cassert>
 #include <cstdio>
 #include <iostream>
+#include <variant>
 
 namespace codegen {
 static i64 depth{};
+
+static i64 count() {
+  static i64 i = i;
+  return i++;
+}
 
 static i64 align_to(i64 n, i64 align) {
   return (n + align - 1) / align * align;
@@ -129,12 +135,32 @@ static void gen_stmt(const parser::Node &node) {
     printf("  jmp .L.return\n");
     return;
   } else if (node.type_ == parser::NodeType::Block) {
-    const auto &nodes =
-        std::get<std::vector<std::unique_ptr<parser::Node>>>(node.data_);
-    for (const auto &node : nodes) {
-      gen_stmt(*node);
-    }
+    try {
+      const auto &nodes =
+          std::get<std::vector<std::unique_ptr<parser::Node>>>(node.data_);
+      for (const auto &node : nodes) {
+        gen_stmt(*node);
+      }
 
+      return;
+    } catch (const std::bad_variant_access &e) {
+      // we have encountered a null statement
+
+      return;
+    }
+  } else if (node.type_ == parser::NodeType::If) {
+    i64 L = count();
+    const auto &if_node = std::get<parser::IfNode>(node.data_);
+    gen_expression(*if_node.condition_);
+    printf("  cmp $0, %%rax\n");
+    printf("  je .L.else.%ld\n", L);
+    gen_stmt(*if_node.then_);
+    printf("  jmp .L.end.%ld\n", L);
+    printf(".L.else.%ld:\n", L);
+    if (if_node.else_ != nullptr) {
+      gen_stmt(*if_node.else_);
+    }
+    printf(".L.end.%ld:\n", L);
     return;
   }
 

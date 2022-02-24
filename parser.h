@@ -24,12 +24,22 @@ enum class NodeType {
   Variable,
   Return,
   Block,
+  If
 };
+
+struct Node;
+using NodePtr = std::unique_ptr<Node>;
 
 struct Object {
   Object(char *name, i64 offset) : name_(name), offset_(offset) {}
   char *name_;
   i64 offset_;
+};
+
+struct IfNode {
+  NodePtr condition_ = nullptr;
+  NodePtr then_ = nullptr;
+  NodePtr else_ = nullptr;
 };
 
 struct Node {
@@ -38,11 +48,10 @@ struct Node {
   std::unique_ptr<Node> rhs_ = nullptr;
 
   std::variant<i64, std::shared_ptr<Object>, std::vector<std::unique_ptr<Node>>,
-               std::monostate>
+               IfNode, std::monostate>
       data_ = std::monostate{};
 };
 
-using NodePtr = std::unique_ptr<Node>;
 struct Function {
   i64 stack_sz_;
   std::vector<NodePtr> body_;
