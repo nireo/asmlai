@@ -4,7 +4,7 @@
 #include "parser.h"
 #include <memory>
 namespace typesystem {
-void add_type(parser::Node *node);
+void add_type(parser::Node &node);
 } // namespace typesystem
 
 #endif

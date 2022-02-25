@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "token.h"
+#include "typesystem.h"
 #include <cstdio>
 #include <cstring>
 #include <iostream>
@@ -62,7 +63,8 @@ static NodePtr new_number(i64 value) {
   return node;
 }
 
-// it needs to be pointer so that we can change the
+// it needs to be pointer so that we can change the offset stored in the object
+// more easily
 static std::shared_ptr<Object> new_lvar(char *name) {
   std::shared_ptr<Object> obj = std::make_shared<Object>(name, 0);
   locals_.push_back(obj);
@@ -76,6 +78,45 @@ static void skip_until(const std::vector<token::Token> &tokens, const char *tok,
     ++pos;
   }
   ++pos; // skip the wanted token
+}
+
+static NodePtr new_subtraction(NodePtr node) {
+  if (node->lhs_ == nullptr || node->rhs_ == nullptr) {
+    error("either lhs or rhs nullptr");
+    return nullptr;
+  }
+
+  typesystem::add_type(*node->lhs_);
+  typesystem::add_type(*node->rhs_);
+
+  if (node->lhs_->tt_->type_ == parser::Types::Int &&
+      node->rhs_->tt_->type_ == parser::Types::Int) {
+    return new_binary_node(NodeType::Sub, std::move(node->lhs_),
+                           std::move(node->rhs_));
+  }
+
+  if (node->lhs_->tt_->base_type_ != nullptr &&
+      node->rhs_->tt_->type_ == parser::Types::Int) {
+    auto rhs =
+        new_binary_node(NodeType::Mul, std::move(node->rhs_), new_number(8));
+    typesystem::add_type(*rhs);
+
+    auto n =
+        new_binary_node(NodeType::Sub, std::move(node->lhs_), std::move(rhs));
+    n->tt_ = node->lhs_->tt_;
+    return n;
+  }
+
+  if (node->lhs_->tt_->base_type_ != nullptr &&
+      node->rhs_->tt_->base_type_ != nullptr) {
+    auto n = new_binary_node(NodeType::Sub, std::move(node->lhs_),
+                             std::move(node->rhs_));
+    n->tt_ = std::make_shared<Type>(Types::Int);
+    return new_binary_node(NodeType::Div, std::move(n), new_number(8));
+  }
+
+  error("invalid subtraction operation.");
+  return nullptr;
 }
 
 static NodePtr parse_compound_stmt(const std::vector<token::Token> &, u64 &);
