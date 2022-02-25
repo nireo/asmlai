@@ -85,6 +85,8 @@ static NodePtr new_addition(NodePtr node) {
     error("either lhs or rhs nullptr");
     return nullptr;
   }
+  typesystem::add_type(*node->lhs_);
+  typesystem::add_type(*node->rhs_);
 
   if (node->lhs_->tt_->type_ == parser::Types::Int &&
       node->rhs_->tt_->type_ == parser::Types::Int) {
@@ -141,7 +143,7 @@ static NodePtr new_subtraction(NodePtr node) {
       node->rhs_->tt_->base_type_ != nullptr) {
     auto n = new_binary_node(NodeType::Sub, std::move(node->lhs_),
                              std::move(node->rhs_));
-    n->tt_ = std::make_shared<Type>(Types::Int);
+    n->tt_ = new parser::Type(Types::Int);
     return new_binary_node(NodeType::Div, std::move(n), new_number(8));
   }
 
@@ -417,6 +419,7 @@ static NodePtr parse_compound_stmt(const std::vector<token::Token> &tokens,
   std::vector<NodePtr> nodes;
   while (tokens[pos] != "}") {
     nodes.push_back(std::move(parse_stmt(tokens, pos)));
+    typesystem::add_type(*nodes[nodes.size() - 1]);
   }
 
   auto node = new_node(NodeType::Block);

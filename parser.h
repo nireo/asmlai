@@ -17,7 +17,7 @@ struct Type {
   Type(Types tt) : type_(tt) {}
 
   Types type_;
-  std::shared_ptr<Type> base_type_ = nullptr;
+  Type *base_type_ = nullptr;
 };
 
 enum class NodeType {
@@ -65,10 +65,11 @@ struct ForNode {
 };
 
 struct Node {
+  Node() : tt_(new Type(Types::Int)) {}
   NodeType type_ = NodeType::Add; // default type
   std::unique_ptr<Node> lhs_ = nullptr;
   std::unique_ptr<Node> rhs_ = nullptr;
-  std::shared_ptr<Type> tt_ = nullptr;
+  Type *tt_ = nullptr;
 
   std::variant<i64, std::shared_ptr<Object>, std::vector<std::unique_ptr<Node>>,
                IfNode, ForNode, std::monostate>

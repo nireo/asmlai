@@ -1,4 +1,8 @@
 #!/bin/bash
+
+rm -rf asmlai
+make asmlai
+
 assert() {
   expected="$1"
   input="$2"
