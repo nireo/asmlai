@@ -160,7 +160,6 @@ static void gen_stmt(const parser::Node &node) {
       return;
     } catch (const std::bad_variant_access &e) {
       // we have encountered a null statement
-
       return;
     }
   }
