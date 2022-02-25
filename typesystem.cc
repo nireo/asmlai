@@ -17,7 +17,7 @@ parser::Type *ptr_to(parser::Type *base) {
 }
 
 void add_type(parser::Node &node) {
-  if (node.tt_ != nullptr)
+  if (node.tt_->type_ == parser::Types::Empty)
     return;
 
   ADD_NOT_NULL(node.lhs_);
@@ -36,8 +36,8 @@ void add_type(parser::Node &node) {
     ADD_NOT_NULL(if_node.else_);
   } else if (node.type_ == parser::NodeType::Block) {
     auto &vec = std::get<std::vector<parser::NodePtr>>(node.data_);
-    for (size_t i = 0; i < vec.size(); ++i) {
-      ADD_NOT_NULL(vec[i]);
+    for (auto &d : vec) {
+      add_type(*d);
     }
   }
 

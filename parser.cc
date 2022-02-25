@@ -80,69 +80,54 @@ static void skip_until(const std::vector<token::Token> &tokens, const char *tok,
   ++pos; // skip the wanted token
 }
 
-static NodePtr new_addition(NodePtr node) {
-  if (node->lhs_ == nullptr || node->rhs_ == nullptr) {
-    error("either lhs or rhs nullptr");
-    return nullptr;
-  }
-  typesystem::add_type(*node->lhs_);
-  typesystem::add_type(*node->rhs_);
+static NodePtr new_addition(NodePtr lhs_, NodePtr rhs_) {
+  auto lhs = std::move(lhs_);
+  auto rhs = std::move(rhs_);
 
-  if (node->lhs_->tt_->type_ == parser::Types::Int &&
-      node->rhs_->tt_->type_ == parser::Types::Int) {
-    return new_binary_node(NodeType::Add, std::move(node->lhs_),
-                           std::move(node->rhs_));
+  typesystem::add_type(*lhs);
+  typesystem::add_type(*rhs);
+
+  if (lhs->tt_->type_ == parser::Types::Int &&
+      rhs->tt_->type_ == parser::Types::Int) {
+    return new_binary_node(NodeType::Add, std::move(lhs), std::move(rhs));
   }
 
-  if (node->lhs_->tt_->base_type_ != nullptr &&
-      node->rhs_->tt_->base_type_ != nullptr) {
+  if (lhs->tt_->base_type_ != nullptr && rhs->tt_->base_type_ != nullptr) {
     error("invalid operands");
     return nullptr;
   }
 
-  if (node->lhs_->tt_->base_type_ == nullptr &&
-      node->rhs_->tt_->base_type_ != nullptr) {
-    auto tmp = std::move(node->lhs_);
-    node->lhs_ = std::move(node->rhs_);
-    node->rhs_ = std::move(tmp);
+  if (lhs->tt_->base_type_ == nullptr && rhs->tt_->base_type_ != nullptr) {
+    auto tmp = std::move(lhs);
+    lhs = std::move(rhs);
+    rhs = std::move(tmp);
   }
 
-  auto rhs =
-      new_binary_node(NodeType::Mul, std::move(node->rhs_), new_number(8));
-  return new_binary_node(NodeType::Add, std::move(node->lhs_), std::move(rhs));
+  rhs = new_binary_node(NodeType::Mul, std::move(rhs), new_number(8));
+  return new_binary_node(NodeType::Add, std::move(lhs), std::move(rhs));
 }
 
-static NodePtr new_subtraction(NodePtr node) {
-  if (node->lhs_ == nullptr || node->rhs_ == nullptr) {
-    error("either lhs or rhs nullptr");
-    return nullptr;
+static NodePtr new_subtraction(NodePtr lhs, NodePtr rhs) {
+  typesystem::add_type(*lhs);
+  typesystem::add_type(*rhs);
+
+  if (lhs->tt_->type_ == parser::Types::Int &&
+      rhs->tt_->type_ == parser::Types::Int) {
+    return new_binary_node(NodeType::Sub, std::move(lhs), std::move(rhs));
   }
 
-  typesystem::add_type(*node->lhs_);
-  typesystem::add_type(*node->rhs_);
-
-  if (node->lhs_->tt_->type_ == parser::Types::Int &&
-      node->rhs_->tt_->type_ == parser::Types::Int) {
-    return new_binary_node(NodeType::Sub, std::move(node->lhs_),
-                           std::move(node->rhs_));
-  }
-
-  if (node->lhs_->tt_->base_type_ != nullptr &&
-      node->rhs_->tt_->type_ == parser::Types::Int) {
-    auto rhs =
-        new_binary_node(NodeType::Mul, std::move(node->rhs_), new_number(8));
+  if (lhs->tt_->base_type_ != nullptr &&
+      rhs->tt_->type_ == parser::Types::Int) {
+    rhs = new_binary_node(NodeType::Mul, std::move(rhs), new_number(8));
     typesystem::add_type(*rhs);
 
-    auto n =
-        new_binary_node(NodeType::Sub, std::move(node->lhs_), std::move(rhs));
-    n->tt_ = node->lhs_->tt_;
+    auto n = new_binary_node(NodeType::Sub, std::move(lhs), std::move(rhs));
+    n->tt_ = lhs->tt_;
     return n;
   }
 
-  if (node->lhs_->tt_->base_type_ != nullptr &&
-      node->rhs_->tt_->base_type_ != nullptr) {
-    auto n = new_binary_node(NodeType::Sub, std::move(node->lhs_),
-                             std::move(node->rhs_));
+  if (lhs->tt_->base_type_ != nullptr && rhs->tt_->base_type_ != nullptr) {
+    auto n = new_binary_node(NodeType::Sub, std::move(lhs), std::move(rhs));
     n->tt_ = new parser::Type(Types::Int);
     return new_binary_node(NodeType::Div, std::move(n), new_number(8));
   }
@@ -319,18 +304,13 @@ static NodePtr parse_add(const std::vector<token::Token> &tokens, u64 &pos) {
   for (;;) {
     if (tokens[pos] == "+") {
       ++pos;
-      node = new_binary_node(NodeType::Add, std::move(node),
-                             parse_mul(tokens, pos));
-
-      node = new_addition(std::move(node));
+      node = new_addition(std::move(node), parse_mul(tokens, pos));
       continue;
     }
 
     if (tokens[pos] == "-") {
       ++pos;
-      node = new_binary_node(NodeType::Sub, std::move(node),
-                             parse_mul(tokens, pos));
-      node = new_subtraction(std::move(node));
+      node = new_subtraction(std::move(node), parse_mul(tokens, pos));
       continue;
     }
 
@@ -431,14 +411,13 @@ static NodePtr parse_compound_stmt(const std::vector<token::Token> &tokens,
 
 Function parse_tokens(const std::vector<token::Token> &tokens) {
   u64 pos = 0;
-  std::vector<NodePtr> nodes;
-  while (tokens[pos].type_ != token::TokenType::Eof) {
-    nodes.push_back(std::move(parse_stmt(tokens, pos)));
-  }
+
+  skip_until(tokens, "{", pos);
+  auto node = parse_compound_stmt(tokens, pos);
 
   auto func = Function{
       .stack_sz_ = 0,
-      .body_ = std::move(nodes),
+      .body_ = std::move(node),
       .locals_ = std::move(locals_),
   };
 

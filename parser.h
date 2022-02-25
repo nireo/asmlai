@@ -9,6 +9,7 @@
 namespace parser {
 
 enum class Types {
+  Empty,
   Int,
   Ptr,
 };
@@ -65,11 +66,11 @@ struct ForNode {
 };
 
 struct Node {
-  Node() : tt_(new Type(Types::Int)) {}
+  Node() : tt_(new Type(Types::Empty)) {}
   NodeType type_ = NodeType::Add; // default type
   std::unique_ptr<Node> lhs_ = nullptr;
   std::unique_ptr<Node> rhs_ = nullptr;
-  Type *tt_ = nullptr;
+  Type *tt_ = NULL;
 
   std::variant<i64, std::shared_ptr<Object>, std::vector<std::unique_ptr<Node>>,
                IfNode, ForNode, std::monostate>
@@ -78,7 +79,7 @@ struct Node {
 
 struct Function {
   i64 stack_sz_;
-  std::vector<NodePtr> body_;
+  NodePtr body_;
   std::vector<std::shared_ptr<Object>> locals_;
 };
 

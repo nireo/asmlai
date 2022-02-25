@@ -183,7 +183,10 @@ static void gen_stmt(const parser::Node &node) {
     i64 L = count();
     const auto &for_node = std::get<parser::ForNode>(node.data_);
 
-    gen_stmt(*for_node.initialization_);
+    if (for_node.initialization_ != nullptr) {
+      gen_stmt(*for_node.initialization_);
+    }
+
     printf(".L.begin.%ld:\n", L);
     if (for_node.condition_ != nullptr) {
       gen_expression(*for_node.condition_);
@@ -215,10 +218,8 @@ void gen_code(parser::Function &root) {
   printf("  mov %%rsp, %%rbp\n");
   printf("  sub $%ld, %%rsp\n", root.stack_sz_);
 
-  for (const auto &node : root.body_) {
-    gen_stmt(*node);
-    assert(depth == 0);
-  }
+  gen_stmt(*root.body_);
+  assert(depth == 0);
 
   printf(".L.return:\n");
   printf("  mov %%rbp, %%rsp\n");
