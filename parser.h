@@ -19,6 +19,7 @@ struct Type {
 
   Types type_;
   Type *base_type_ = nullptr;
+  char *name_ = nullptr;
 };
 
 extern parser::Type *default_int;
@@ -53,6 +54,7 @@ struct Object {
   Object(char *name, i64 offset) : name_(name), offset_(offset) {}
   char *name_;
   i64 offset_;
+  Type *ty_;
 };
 
 struct IfNode {

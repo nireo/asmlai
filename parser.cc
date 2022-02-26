@@ -16,6 +16,7 @@ template <typename... Args> static void error(const char *fmt, Args... args) {
 }
 
 static std::vector<std::shared_ptr<Object>> locals_;
+using TokenList = std::vector<token::Token>;
 
 static NodePtr new_node(NodeType type_) {
   auto node = std::make_unique<Node>();
@@ -34,8 +35,7 @@ static std::shared_ptr<Object> find_var(const token::Token &tok) {
   return nullptr;
 }
 
-static bool consume(const std::vector<token::Token> &tokens, u64 &pos,
-                    const char *str) {
+static bool consume(const TokenList &tokens, u64 &pos, const char *str) {
   if (tokens[pos] == str) {
     ++pos;
     return true;
@@ -75,15 +75,15 @@ static NodePtr new_number(i64 value) {
 
 // it needs to be a pointer so that we can change the offset stored in the
 // object more easily
-static std::shared_ptr<Object> new_lvar(char *name) {
+static std::shared_ptr<Object> new_lvar(char *name, Type *ty) {
   std::shared_ptr<Object> obj = std::make_shared<Object>(name, 0);
+  obj->ty_ = ty;
   locals_.push_back(obj);
 
   return obj;
 }
 
-static void skip_until(const std::vector<token::Token> &tokens, const char *tok,
-                       u64 &pos) {
+static void skip_until(const TokenList &tokens, const char *tok, u64 &pos) {
   while (!(tokens[pos] == tok)) {
     ++pos;
   }
@@ -154,18 +154,17 @@ static NodePtr new_subtraction(NodePtr lhs_, NodePtr rhs_) {
   return nullptr;
 }
 
-static NodePtr parse_compound_stmt(const std::vector<token::Token> &, u64 &);
-static NodePtr parse_expression(const std::vector<token::Token> &, u64 &);
-static NodePtr parse_equal(const std::vector<token::Token> &, u64 &);
-static NodePtr parse_mul(const std::vector<token::Token> &, u64 &);
-static NodePtr parse_add(const std::vector<token::Token> &, u64 &);
-static NodePtr parse_unary(const std::vector<token::Token> &, u64 &);
-static NodePtr parse_primary(const std::vector<token::Token> &, u64 &);
-static NodePtr parse_relational(const std::vector<token::Token> &, u64 &);
-static NodePtr parse_assign(const std::vector<token::Token> &, u64 &);
+static NodePtr parse_compound_stmt(const TokenList &, u64 &);
+static NodePtr parse_expression(const TokenList &, u64 &);
+static NodePtr parse_equal(const TokenList &, u64 &);
+static NodePtr parse_mul(const TokenList &, u64 &);
+static NodePtr parse_add(const TokenList &, u64 &);
+static NodePtr parse_unary(const TokenList &, u64 &);
+static NodePtr parse_primary(const TokenList &, u64 &);
+static NodePtr parse_relational(const TokenList &, u64 &);
+static NodePtr parse_assign(const TokenList &, u64 &);
 
-static NodePtr parse_expr_stmt(const std::vector<token::Token> &tokens,
-                               u64 &pos) {
+static NodePtr parse_expr_stmt(const TokenList &tokens, u64 &pos) {
   if (tokens[pos] == ";") { // encountered a empty statement
     ++pos;
     return new_node(NodeType::Block);
@@ -176,19 +175,54 @@ static NodePtr parse_expr_stmt(const std::vector<token::Token> &tokens,
   return node;
 }
 
-static char *gen_identifier(const token::Token &tok) {
-  if (tok.type_ != token::TokenType::Identifier) {
-    error("expecting identifier");
-  }
-  return strndup(tok.loc_, tok.len_);
+static Type *decl_type(const TokenList &tokens, u64 &pos) {
+  skip_until(tokens, "int", pos);
+  return default_int;
 }
 
-static Type *decl_type() {}
+static Type *declarator(const TokenList &tokens, u64 &pos, Type *ty) {
+  while (consume(tokens, pos, "*")) {
+    ty = typesystem::ptr_to(ty);
+  }
 
-static NodePtr parse_declaration(const std::vector<token::Token> &tokens,
-                                 u64 &pos) {}
+  if (tokens[pos].type_ != token::TokenType::Identifier) {
+    error("expected a variable name");
+  }
+  ty->name_ = strndup(tokens[pos].loc_, tokens[pos].len_);
+  ++pos;
+  return ty;
+}
 
-static NodePtr parse_stmt(const std::vector<token::Token> &tokens, u64 &pos) {
+static NodePtr parse_declaration(const TokenList &tokens, u64 &pos) {
+  Type *base = decl_type(tokens, pos);
+  int i = 0;
+  std::vector<NodePtr> nodes;
+
+  while (tokens[pos] != ";") {
+    if (i++ > 0)
+      skip_until(tokens, ",", pos);
+    Type *ty = declarator(tokens, pos, base);
+    auto obj = new_lvar(ty->name_, ty);
+
+    if (tokens[pos] != "=")
+      continue;
+
+    auto lhs = new_variable_node(obj);
+    ++pos;
+    auto rhs = parse_assign(tokens, pos);
+    auto node =
+        new_binary_node(NodeType::Assign, std::move(lhs), std::move(rhs));
+    nodes.push_back(new_single(NodeType::ExprStmt, std::move(node)));
+  }
+
+  auto node = new_node(NodeType::Block);
+  node->data_ = std::move(nodes);
+  ++pos;
+
+  return node;
+}
+
+static NodePtr parse_stmt(const TokenList &tokens, u64 &pos) {
   if (tokens[pos] == "return") {
     ++pos;
     auto node = new_single(NodeType::Return, parse_expression(tokens, pos));
@@ -256,12 +290,11 @@ static NodePtr parse_stmt(const std::vector<token::Token> &tokens, u64 &pos) {
   return parse_expr_stmt(tokens, pos);
 }
 
-static NodePtr parse_expression(const std::vector<token::Token> &tokens,
-                                u64 &pos) {
+static NodePtr parse_expression(const TokenList &tokens, u64 &pos) {
   return parse_assign(tokens, pos);
 }
 
-static NodePtr parse_equal(const std::vector<token::Token> &tokens, u64 &pos) {
+static NodePtr parse_equal(const TokenList &tokens, u64 &pos) {
   auto node = parse_relational(tokens, pos);
   for (;;) {
     if (tokens[pos] == "==") {
@@ -282,7 +315,7 @@ static NodePtr parse_equal(const std::vector<token::Token> &tokens, u64 &pos) {
   }
 }
 
-static NodePtr parse_assign(const std::vector<token::Token> &tokens, u64 &pos) {
+static NodePtr parse_assign(const TokenList &tokens, u64 &pos) {
   auto node = parse_equal(tokens, pos);
   if (tokens[pos] == "=") {
     ++pos;
@@ -293,8 +326,7 @@ static NodePtr parse_assign(const std::vector<token::Token> &tokens, u64 &pos) {
   return node;
 }
 
-static NodePtr parse_relational(const std::vector<token::Token> &tokens,
-                                u64 &pos) {
+static NodePtr parse_relational(const TokenList &tokens, u64 &pos) {
   auto node = parse_add(tokens, pos);
   for (;;) {
     if (tokens[pos] == "<") {
@@ -329,7 +361,7 @@ static NodePtr parse_relational(const std::vector<token::Token> &tokens,
   }
 }
 
-static NodePtr parse_add(const std::vector<token::Token> &tokens, u64 &pos) {
+static NodePtr parse_add(const TokenList &tokens, u64 &pos) {
   auto node = parse_mul(tokens, pos);
   for (;;) {
     if (tokens[pos] == "+") {
@@ -348,7 +380,7 @@ static NodePtr parse_add(const std::vector<token::Token> &tokens, u64 &pos) {
   }
 }
 
-static NodePtr parse_mul(const std::vector<token::Token> &tokens, u64 &pos) {
+static NodePtr parse_mul(const TokenList &tokens, u64 &pos) {
   auto node = parse_unary(tokens, pos);
   for (;;) {
     if (tokens[pos] == "*") {
@@ -369,7 +401,7 @@ static NodePtr parse_mul(const std::vector<token::Token> &tokens, u64 &pos) {
   }
 }
 
-static NodePtr parse_unary(const std::vector<token::Token> &tokens, u64 &pos) {
+static NodePtr parse_unary(const TokenList &tokens, u64 &pos) {
   if (tokens[pos] == "+") {
     ++pos;
     return parse_unary(tokens, pos);
@@ -393,8 +425,7 @@ static NodePtr parse_unary(const std::vector<token::Token> &tokens, u64 &pos) {
   return parse_primary(tokens, pos);
 }
 
-static NodePtr parse_primary(const std::vector<token::Token> &tokens,
-                             u64 &pos) {
+static NodePtr parse_primary(const TokenList &tokens, u64 &pos) {
   if (tokens[pos] == "(") {
     ++pos;
     auto node = parse_expression(tokens, pos);
@@ -408,7 +439,7 @@ static NodePtr parse_primary(const std::vector<token::Token> &tokens,
     ++pos;
     auto obj = find_var(token);
     if (obj == nullptr) {
-      return new_variable_node(new_lvar(strndup(token.loc_, token.len_)));
+      error("undefined variable");
     }
 
     return new_variable_node(std::move(obj));
@@ -424,11 +455,14 @@ static NodePtr parse_primary(const std::vector<token::Token> &tokens,
   return nullptr;
 }
 
-static NodePtr parse_compound_stmt(const std::vector<token::Token> &tokens,
-                                   u64 &pos) {
+static NodePtr parse_compound_stmt(const TokenList &tokens, u64 &pos) {
   std::vector<NodePtr> nodes;
   while (tokens[pos] != "}") {
-    nodes.push_back(std::move(parse_stmt(tokens, pos)));
+    if (tokens[pos] == "int") {
+      nodes.push_back(std::move(parse_declaration(tokens, pos)));
+    } else {
+      nodes.push_back(std::move(parse_stmt(tokens, pos)));
+    }
     typesystem::add_type(*nodes[nodes.size() - 1]);
   }
 
@@ -439,8 +473,7 @@ static NodePtr parse_compound_stmt(const std::vector<token::Token> &tokens,
   return node;
 }
 
-Function parse_tokens(const std::vector<token::Token> &tokens) {
-
+Function parse_tokens(const TokenList &tokens) {
   u64 pos = 0;
 
   skip_until(tokens, "{", pos);
