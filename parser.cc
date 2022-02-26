@@ -63,8 +63,8 @@ static NodePtr new_number(i64 value) {
   return node;
 }
 
-// it needs to be pointer so that we can change the offset stored in the object
-// more easily
+// it needs to be a pointer so that we can change the offset stored in the
+// object more easily
 static std::shared_ptr<Object> new_lvar(char *name) {
   std::shared_ptr<Object> obj = std::make_shared<Object>(name, 0);
   locals_.push_back(obj);
@@ -87,6 +87,10 @@ static NodePtr new_addition(NodePtr lhs_, NodePtr rhs_) {
   typesystem::add_type(*lhs);
   typesystem::add_type(*rhs);
 
+  // std::cout << "addition on lhs: " << static_cast<int>(lhs->tt_->type_) <<
+  // '\n'; std::cout << "addition on rhs: " << static_cast<int>(rhs->tt_->type_)
+  // << '\n'
+
   if (lhs->tt_->type_ == parser::Types::Int &&
       rhs->tt_->type_ == parser::Types::Int) {
     return new_binary_node(NodeType::Add, std::move(lhs), std::move(rhs));
@@ -107,7 +111,10 @@ static NodePtr new_addition(NodePtr lhs_, NodePtr rhs_) {
   return new_binary_node(NodeType::Add, std::move(lhs), std::move(rhs));
 }
 
-static NodePtr new_subtraction(NodePtr lhs, NodePtr rhs) {
+static NodePtr new_subtraction(NodePtr lhs_, NodePtr rhs_) {
+  auto lhs = std::move(lhs_);
+  auto rhs = std::move(rhs_);
+
   typesystem::add_type(*lhs);
   typesystem::add_type(*rhs);
 
@@ -121,8 +128,9 @@ static NodePtr new_subtraction(NodePtr lhs, NodePtr rhs) {
     rhs = new_binary_node(NodeType::Mul, std::move(rhs), new_number(8));
     typesystem::add_type(*rhs);
 
+    Type *tt = lhs->tt_;
     auto n = new_binary_node(NodeType::Sub, std::move(lhs), std::move(rhs));
-    n->tt_ = lhs->tt_;
+    n->tt_ = tt;
     return n;
   }
 

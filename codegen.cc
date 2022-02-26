@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <iostream>
 #include <variant>
+#include <algorithm>
 
 namespace codegen {
 static i64 depth{};
@@ -43,6 +44,7 @@ static void gen_address(const parser::Node &node) {
 
 static void assign_lvar_offsets(parser::Function &func) {
   i64 offset = 0;
+  std::reverse(func.locals_.begin(), func.locals_.end());
   for (auto &obj : func.locals_) {
     offset += 8;
     obj->offset_ = -offset;

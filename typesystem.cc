@@ -1,11 +1,13 @@
 #include "typesystem.h"
 #include "parser.h"
+#include <iostream>
 #include <memory>
+#include <variant>
 
 namespace typesystem {
 
 #define ADD_NOT_NULL(node)                                                     \
-  if (node == nullptr) {                                                       \
+  if (node != nullptr) {                                                       \
     add_type(*node);                                                           \
   }
 
@@ -17,7 +19,7 @@ parser::Type *ptr_to(parser::Type *base) {
 }
 
 void add_type(parser::Node &node) {
-  if (node.tt_->type_ == parser::Types::Empty)
+  if (node.tt_->type_ != parser::Types::Empty)
     return;
 
   ADD_NOT_NULL(node.lhs_);
@@ -29,15 +31,23 @@ void add_type(parser::Node &node) {
     ADD_NOT_NULL(for_node.increment_);
     ADD_NOT_NULL(for_node.initialization_);
     ADD_NOT_NULL(for_node.condition_);
+    return;
   } else if (node.type_ == parser::NodeType::If) {
     parser::IfNode &if_node = std::get<parser::IfNode>(node.data_);
     ADD_NOT_NULL(if_node.condition_);
     ADD_NOT_NULL(if_node.then_);
     ADD_NOT_NULL(if_node.else_);
+    return;
   } else if (node.type_ == parser::NodeType::Block) {
-    auto &vec = std::get<std::vector<parser::NodePtr>>(node.data_);
-    for (auto &d : vec) {
-      add_type(*d);
+    try {
+      auto &vec = std::get<std::vector<parser::NodePtr>>(node.data_);
+      for (auto &d : vec) {
+        add_type(*d);
+      }
+      return;
+    } catch (std::bad_variant_access &e) {
+      return; // we just return as we have just encountered a null-expression
+              // i.e ';'.
     }
   }
 
