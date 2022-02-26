@@ -1,10 +1,10 @@
 #include "codegen.h"
 #include "parser.h"
+#include <algorithm>
 #include <cassert>
 #include <cstdio>
 #include <iostream>
 #include <variant>
-#include <algorithm>
 
 namespace codegen {
 static i64 depth{};
@@ -18,13 +18,19 @@ static i64 align_to(i64 n, i64 align) {
   return (n + align - 1) / align * align;
 }
 
+template <typename... Args> static void emit(const char *fmt, Args... args) {
+  printf("  ");
+  printf(fmt, args...);
+  printf("\n");
+}
+
 static void push() {
-  printf("  push %%rax\n");
+  emit("push %%rax");
   ++depth;
 }
 
 static void pop(const char *argument) {
-  printf("  pop %s\n", argument);
+  emit("pop %s", argument);
   --depth;
 }
 
@@ -32,7 +38,7 @@ static void gen_expression(const parser::Node &node);
 static void gen_address(const parser::Node &node) {
   if (node.type_ == parser::NodeType::Variable) {
     int offset = std::get<std::shared_ptr<parser::Object>>(node.data_)->offset_;
-    printf("  lea %d(%%rbp), %%rax\n", offset);
+    emit("lea %d(%%rbp), %%rax", offset);
     return;
   } else if (node.type_ == parser::NodeType::Derefence) {
     gen_expression(*node.lhs_);
@@ -57,22 +63,22 @@ static void gen_expression(const parser::Node &node) {
   using NodeType = parser::NodeType;
   switch (node.type_) {
   case NodeType::Num: {
-    printf("  mov $%ld, %%rax\n", std::get<i64>(node.data_));
+    emit("mov $%ld, %%rax", std::get<i64>(node.data_));
     return;
   }
   case NodeType::Neg: {
     gen_expression(*node.lhs_);
-    printf("  neg %%rax\n");
+    emit("neg %%rax");
     return;
   }
   case NodeType::Variable: {
     gen_address(node);
-    printf("  mov (%%rax), %%rax\n");
+    emit("mov (%%rax), %%rax");
     return;
   }
   case NodeType::Derefence:
     gen_expression(*node.lhs_);
-    printf("  mov (%%rax), %%rax\n");
+    emit("mov (%%rax), %%rax");
     return;
   case NodeType::Addr:
     gen_address(*node.lhs_);
@@ -82,7 +88,7 @@ static void gen_expression(const parser::Node &node) {
     push();
     gen_expression(*node.rhs_);
     pop("%rdi");
-    printf("  mov %%rax, (%%rdi)\n");
+    emit("mov %%rax, (%%rdi)");
     return;
   }
   default: {
@@ -97,20 +103,20 @@ static void gen_expression(const parser::Node &node) {
 
   switch (node.type_) {
   case NodeType::Add: {
-    printf("  add %%rdi, %%rax\n");
+    emit("add %%rdi, %%rax");
     return;
   }
   case NodeType::Sub: {
-    printf("  sub %%rdi, %%rax\n");
+    emit("sub %%rdi, %%rax");
     return;
   }
   case NodeType::Mul: {
-    printf("  imul %%rdi, %%rax\n");
+    emit("imul %%rdi, %%rax");
     return;
   }
   case NodeType::Div: {
-    printf("  cqo\n");
-    printf("  idiv %%rdi\n");
+    emit("cqo");
+    emit("idiv %%rdi");
     return;
   }
 
@@ -118,19 +124,19 @@ static void gen_expression(const parser::Node &node) {
   case NodeType::LT:
   case NodeType::NE:
   case NodeType::LE: {
-    printf("  cmp %%rdi, %%rax\n");
+    emit("cmp %%rdi, %%rax");
 
     if (node.type_ == NodeType::EQ) {
-      printf("  sete %%al\n");
+      emit("sete %%al");
     } else if (node.type_ == NodeType::NE) {
-      printf("  setne %%al\n");
+      emit("setne %%al");
     } else if (node.type_ == NodeType::LT) {
-      printf("  setl %%al\n");
+      emit("setl %%al");
     } else if (node.type_ == NodeType::LE) {
-      printf("  setle %%al\n");
+      emit("setle %%al");
     }
 
-    printf("  movzb %%al, %%rax\n");
+    emit("movzb %%al, %%rax");
     return;
   }
   default: {
@@ -148,7 +154,7 @@ static void gen_stmt(const parser::Node &node) {
   }
   case parser::NodeType::Return: {
     gen_expression(*node.lhs_);
-    printf("  jmp .L.return\n");
+    emit("jmp .L.return");
     return;
   }
   case parser::NodeType::Block: {
@@ -169,10 +175,10 @@ static void gen_stmt(const parser::Node &node) {
     i64 L = count();
     const auto &if_node = std::get<parser::IfNode>(node.data_);
     gen_expression(*if_node.condition_);
-    printf("  cmp $0, %%rax\n");
-    printf("  je .L.else.%ld\n", L);
+    emit("cmp $0, %%rax");
+    emit("je .L.else.%ld", L);
     gen_stmt(*if_node.then_);
-    printf("  jmp .L.end.%ld\n", L);
+    emit("jmp .L.end.%ld", L);
     printf(".L.else.%ld:\n", L);
     if (if_node.else_ != nullptr) {
       gen_stmt(*if_node.else_);
@@ -191,14 +197,14 @@ static void gen_stmt(const parser::Node &node) {
     printf(".L.begin.%ld:\n", L);
     if (for_node.condition_ != nullptr) {
       gen_expression(*for_node.condition_);
-      printf("  cmp $0, %%rax\n");
-      printf("  je  .L.end.%ld\n", L);
+      emit("cmp $0, %%rax");
+      emit("je  .L.end.%ld", L);
     }
 
     gen_stmt(*for_node.body_);
     if (for_node.increment_ != nullptr)
       gen_expression(*for_node.increment_);
-    printf("  jmp .L.begin.%ld\n", L);
+    emit("jmp .L.begin.%ld", L);
     printf(".L.end.%ld:\n", L);
     return;
   }
@@ -212,19 +218,19 @@ static void gen_stmt(const parser::Node &node) {
 void gen_code(parser::Function &root) {
   assign_lvar_offsets(root);
 
-  printf("  .globl main\n");
+  emit(".globl main");
   printf("main:\n");
 
-  printf("  push %%rbp\n");
-  printf("  mov %%rsp, %%rbp\n");
-  printf("  sub $%ld, %%rsp\n", root.stack_sz_);
+  emit("push %%rbp");
+  emit("mov %%rsp, %%rbp");
+  emit("sub $%ld, %%rsp", root.stack_sz_);
 
   gen_stmt(*root.body_);
   assert(depth == 0);
 
   printf(".L.return:\n");
-  printf("  mov %%rbp, %%rsp\n");
-  printf("  pop %%rbp\n");
-  printf("  ret\n");
+  emit("mov %%rbp, %%rsp");
+  emit("pop %%rbp");
+  emit("ret");
 }
 } // namespace codegen
