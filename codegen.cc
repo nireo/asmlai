@@ -91,6 +91,11 @@ static void gen_expression(const parser::Node &node) {
     emit("mov %%rax, (%%rdi)");
     return;
   }
+  case NodeType::FunctionCall: {
+    emit("mov $0, %%rax");
+    emit("call %s", std::get<std::string>(node.data_).c_str());
+    return;
+  }
   default: {
   }
   }

@@ -65,9 +65,13 @@ void add_type(parser::Node &node) {
   case NT::NE:
   case NT::LE:
   case NT::LT:
-  case NT::Variable:
+  case NT::FunctionCall:
   case NT::Num: {
     node.tt_ = parser::default_int;
+    return;
+  }
+  case NT::Variable: {
+    node.tt_ = std::get<std::shared_ptr<parser::Object>>(node.data_)->ty_;
     return;
   }
   case NT::Addr: {
@@ -75,11 +79,12 @@ void add_type(parser::Node &node) {
     return;
   }
   case NT::Derefence: {
-    if (node.lhs_->tt_->type_ == parser::Types::Ptr) {
-      node.tt_ = node.lhs_->tt_->base_type_;
-    } else {
-      node.tt_ = parser::default_int;
+    if (node.lhs_->tt_->type_ != parser::Types::Ptr) {
+      std::fprintf(stderr, "invalid pointer dereference.");
+      std::exit(1);
     }
+
+    node.tt_ = node.lhs_->tt_->base_type_;
 
     return;
   }

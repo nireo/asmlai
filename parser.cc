@@ -435,6 +435,13 @@ static NodePtr parse_primary(const TokenList &tokens, u64 &pos) {
   }
 
   if (tokens[pos].type_ == token::TokenType::Identifier) {
+    if (tokens[pos + 1] == "(") {
+      auto node = new_node(NodeType::FunctionCall);
+      node->data_ = strndup(tokens[pos].loc_, tokens[pos].len_);
+      skip_until(tokens, ")", pos);
+      return node;
+    }
+
     const auto &token = tokens[pos];
     ++pos;
     auto obj = find_var(token);

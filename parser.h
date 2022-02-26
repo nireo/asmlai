@@ -45,6 +45,7 @@ enum class NodeType {
   For,
   Addr,
   Derefence,
+  FunctionCall,
 };
 
 struct Node;
@@ -78,7 +79,7 @@ struct Node {
   Type *tt_ = NULL;
 
   std::variant<i64, std::shared_ptr<Object>, std::vector<std::unique_ptr<Node>>,
-               IfNode, ForNode, std::monostate>
+               IfNode, ForNode, char *, std::monostate>
       data_ = std::monostate{};
 };
 
