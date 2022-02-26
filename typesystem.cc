@@ -67,7 +67,7 @@ void add_type(parser::Node &node) {
   case NT::LT:
   case NT::Variable:
   case NT::Num: {
-    node.tt_ = new parser::Type(parser::Types::Int);
+    node.tt_ = parser::default_int;
     return;
   }
   case NT::Addr: {
@@ -78,7 +78,7 @@ void add_type(parser::Node &node) {
     if (node.lhs_->tt_->type_ == parser::Types::Ptr) {
       node.tt_ = node.lhs_->tt_->base_type_;
     } else {
-      node.tt_ = new parser::Type(parser::Types::Int);
+      node.tt_ = parser::default_int;
     }
 
     return;

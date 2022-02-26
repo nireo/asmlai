@@ -34,6 +34,16 @@ static std::shared_ptr<Object> find_var(const token::Token &tok) {
   return nullptr;
 }
 
+static bool consume(const std::vector<token::Token> &tokens, u64 &pos,
+                    const char *str) {
+  if (tokens[pos] == str) {
+    ++pos;
+    return true;
+  }
+
+  return false;
+}
+
 static NodePtr new_single(NodeType type_, NodePtr expr) {
   auto node = new_node(type_);
   node->lhs_ = std::move(expr);
@@ -165,6 +175,18 @@ static NodePtr parse_expr_stmt(const std::vector<token::Token> &tokens,
   skip_until(tokens, ";", pos);
   return node;
 }
+
+static char *gen_identifier(const token::Token &tok) {
+  if (tok.type_ != token::TokenType::Identifier) {
+    error("expecting identifier");
+  }
+  return strndup(tok.loc_, tok.len_);
+}
+
+static Type *decl_type() {}
+
+static NodePtr parse_declaration(const std::vector<token::Token> &tokens,
+                                 u64 &pos) {}
 
 static NodePtr parse_stmt(const std::vector<token::Token> &tokens, u64 &pos) {
   if (tokens[pos] == "return") {
@@ -418,6 +440,7 @@ static NodePtr parse_compound_stmt(const std::vector<token::Token> &tokens,
 }
 
 Function parse_tokens(const std::vector<token::Token> &tokens) {
+
   u64 pos = 0;
 
   skip_until(tokens, "{", pos);

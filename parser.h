@@ -21,6 +21,9 @@ struct Type {
   Type *base_type_ = nullptr;
 };
 
+extern parser::Type *default_int;
+extern parser::Type *default_empty;
+
 enum class NodeType {
   Add,
   Sub,
@@ -66,7 +69,7 @@ struct ForNode {
 };
 
 struct Node {
-  Node() : tt_(new Type(Types::Empty)) {}
+  Node() : tt_(default_empty) {}
   NodeType type_ = NodeType::Add; // default type
   std::unique_ptr<Node> lhs_ = nullptr;
   std::unique_ptr<Node> rhs_ = nullptr;
