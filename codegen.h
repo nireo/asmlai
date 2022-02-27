@@ -4,7 +4,7 @@
 #include "parser.h"
 
 namespace codegen {
-void gen_code(parser::Function &root);
+void gen_code(std::vector<parser::Function> &&root);
 };
 
 #endif

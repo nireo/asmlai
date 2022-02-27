@@ -12,10 +12,9 @@ int main(int argc, char **argv) {
     std::exit(EXIT_FAILURE);
   }
 
-
   auto tokens = token::tokenize_input(argv[1]);
-  auto root_func = parser::parse_tokens(tokens);
-  codegen::gen_code(root_func);
+  auto functions = parser::parse_tokens(tokens);
+  codegen::gen_code(std::move(functions));
 
   delete parser::default_int;
   delete parser::default_empty;

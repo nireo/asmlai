@@ -18,6 +18,13 @@ parser::Type *ptr_to(parser::Type *base) {
   return tt;
 }
 
+parser::Type *func_ty(parser::Type *return_ty) {
+  parser::Type *ty = new parser::Type(parser::Types::Function);
+  ty->optional_data_ = return_ty;
+
+  return return_ty;
+}
+
 void add_type(parser::Node &node) {
   if (node.tt_->type_ != parser::Types::Empty)
     return;

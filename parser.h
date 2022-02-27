@@ -13,6 +13,7 @@ enum class Types {
   Empty,
   Int,
   Ptr,
+  Function,
 };
 
 struct Type {
@@ -21,6 +22,7 @@ struct Type {
   Types type_;
   Type *base_type_ = nullptr;
   char *name_ = nullptr;
+  std::variant<std::vector<Type *>, std::monostate, Type *> optional_data_;
 };
 
 extern parser::Type *default_int;
@@ -50,8 +52,11 @@ enum class NodeType {
 };
 
 struct Node;
+struct Object;
+
 using NodePtr = std::unique_ptr<Node>;
 using NodeList = std::vector<NodePtr>;
+using ObjectList = std::vector<std::shared_ptr<Object>>;
 
 struct Object {
   Object(char *name, i64 offset) : name_(name), offset_(offset) {}
@@ -94,10 +99,13 @@ struct Node {
 struct Function {
   i64 stack_sz_;
   NodePtr body_;
-  std::vector<std::shared_ptr<Object>> locals_;
+  ObjectList locals_;
+  ObjectList params_;
+
+  char *name_;
 };
 
-Function parse_tokens(const std::vector<token::Token> &tokens);
+std::vector<Function> parse_tokens(const std::vector<token::Token> &tokens);
 } // namespace parser
 
 #endif

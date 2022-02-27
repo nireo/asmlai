@@ -1,12 +1,14 @@
 #include "parser.h"
 #include "token.h"
 #include "typesystem.h"
+#include <cstddef>
 #include <cstdio>
 #include <cstring>
 #include <iostream>
 #include <memory>
 #include <optional>
 #include <unordered_map>
+#include <variant>
 
 namespace parser {
 template <typename... Args> static void error(const char *fmt, Args... args) {
@@ -71,6 +73,14 @@ static NodePtr new_number(i64 value) {
   node->data_ = value;
 
   return node;
+}
+
+static char *get_identifier(const token::Token &tok) {
+  if (tok.type_ != token::TokenType::Identifier) {
+    error("expected an identifier");
+  }
+
+  return strndup(tok.loc_, tok.len_);
 }
 
 // it needs to be a pointer so that we can change the offset stored in the
@@ -163,6 +173,7 @@ static NodePtr parse_unary(const TokenList &, u64 &);
 static NodePtr parse_primary(const TokenList &, u64 &);
 static NodePtr parse_relational(const TokenList &, u64 &);
 static NodePtr parse_assign(const TokenList &, u64 &);
+static Type *declarator(const TokenList &tokens, u64 &pos, Type *ty);
 
 static NodePtr parse_expr_stmt(const TokenList &tokens, u64 &pos) {
   if (tokens[pos] == ";") { // encountered a empty statement
@@ -180,6 +191,36 @@ static Type *decl_type(const TokenList &tokens, u64 &pos) {
   return default_int;
 }
 
+static Type *type_suffix(const TokenList &tokens, u64 &pos,
+                         Type *ty) { // parse func params
+  if (tokens[pos] == "(") {
+    ++pos;
+
+    std::vector<Type *> parameters;
+    while (tokens[pos] != ")") {
+      if (parameters.size() != 0) {
+        skip_until(tokens, ",", pos);
+      }
+
+      Type *base = decl_type(tokens, pos);
+      Type *tt = declarator(tokens, pos, base);
+
+      Type *ptr = new Type(tt->type_);
+      ptr->base_type_ = tt->base_type_;
+      ptr->name_ = strndup(tt->name_, strlen(tt->name_));
+
+      parameters.push_back(ptr);
+    }
+
+    std::cout << "function name " <<  ty->name_ << '\n';
+
+    ty->optional_data_ = std::move(parameters);
+    ++pos;
+  }
+
+  return ty;
+}
+
 static Type *declarator(const TokenList &tokens, u64 &pos, Type *ty) {
   while (consume(tokens, pos, "*")) {
     ty = typesystem::ptr_to(ty);
@@ -190,6 +231,7 @@ static Type *declarator(const TokenList &tokens, u64 &pos, Type *ty) {
   }
   ty->name_ = strndup(tokens[pos].loc_, tokens[pos].len_);
   ++pos;
+  ty = type_suffix(tokens, pos, ty);
   return ty;
 }
 
@@ -220,6 +262,12 @@ static NodePtr parse_declaration(const TokenList &tokens, u64 &pos) {
   ++pos;
 
   return node;
+}
+
+static void create_parameter_lvalues(std::vector<Type *> &params) {
+  for (auto &t : params) {
+    new_lvar(t->name_, t);
+  }
 }
 
 static NodePtr parse_stmt(const TokenList &tokens, u64 &pos) {
@@ -499,18 +547,40 @@ static NodePtr parse_compound_stmt(const TokenList &tokens, u64 &pos) {
   return node;
 }
 
-Function parse_tokens(const TokenList &tokens) {
-  u64 pos = 0;
+static Function parse_function(const TokenList &tokens, u64 &pos) {
+  Type *ty = decl_type(tokens, pos);
+  ty = declarator(tokens, pos, ty);
 
+  try {
+    create_parameter_lvalues(std::get<std::vector<Type *>>(ty->optional_data_));
+  } catch (const std::bad_variant_access &e) {
+    // no params do nothing.
+  }
+
+  Function func;
+  func.params_ = ObjectList{};
+  for (auto &p : locals_) {
+    func.params_.push_back(p);
+  }
+
+  func.name_ = ty->name_;
   skip_until(tokens, "{", pos);
-  auto node = parse_compound_stmt(tokens, pos);
+  func.body_ = parse_compound_stmt(tokens, pos);
+  func.locals_ = std::move(locals_);
 
-  auto func = Function{
-      .stack_sz_ = 0,
-      .body_ = std::move(node),
-      .locals_ = std::move(locals_),
-  };
+  locals_.clear();
 
   return func;
+}
+
+std::vector<Function> parse_tokens(const TokenList &tokens) {
+  u64 pos = 0;
+
+  std::vector<Function> funcs;
+  while (tokens[pos].type_ != token::TokenType::Eof) {
+    funcs.push_back(std::move(parse_function(tokens, pos)));
+  }
+
+  return funcs;
 }
 } // namespace parser
