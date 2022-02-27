@@ -425,6 +425,28 @@ static NodePtr parse_unary(const TokenList &tokens, u64 &pos) {
   return parse_primary(tokens, pos);
 }
 
+static NodePtr parse_func_call(const TokenList &tokens, u64 &pos) {
+  u64 start_pos = pos;
+  skip_until(tokens, "(", pos);
+
+  NodeList nodes;
+
+  while (tokens[pos] != ")") {
+    if (nodes.size() != 0) {
+      skip_until(tokens, ",", pos);
+    }
+
+    nodes.push_back(std::move(parse_assign(tokens, pos)));
+  }
+
+  skip_until(tokens, ")", pos);
+  auto node = new_node(NodeType::FunctionCall);
+  node->func_name_ = strndup(tokens[start_pos].loc_, tokens[start_pos].len_);
+  node->data_ = std::move(nodes);
+
+  return node;
+}
+
 static NodePtr parse_primary(const TokenList &tokens, u64 &pos) {
   if (tokens[pos] == "(") {
     ++pos;
@@ -436,10 +458,7 @@ static NodePtr parse_primary(const TokenList &tokens, u64 &pos) {
 
   if (tokens[pos].type_ == token::TokenType::Identifier) {
     if (tokens[pos + 1] == "(") {
-      auto node = new_node(NodeType::FunctionCall);
-      node->data_ = strndup(tokens[pos].loc_, tokens[pos].len_);
-      skip_until(tokens, ")", pos);
-      return node;
+      return parse_func_call(tokens, pos);
     }
 
     const auto &token = tokens[pos];

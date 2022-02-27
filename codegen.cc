@@ -1,5 +1,6 @@
 #include "codegen.h"
 #include "parser.h"
+#include "types.h"
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
@@ -7,6 +8,8 @@
 #include <variant>
 
 namespace codegen {
+static constexpr const char *argument_registers[6] = {"%rdi", "%rsi", "%rdx",
+                                                      "%rcx", "%r8",  "%r9"};
 static i64 depth{};
 
 static i64 count() {
@@ -92,8 +95,21 @@ static void gen_expression(const parser::Node &node) {
     return;
   }
   case NodeType::FunctionCall: {
+    // arguments are stored the same way as body expressions.
+    const auto &nodes = std::get<std::vector<parser::NodePtr>>(node.data_);
+    i32 arg_count = static_cast<i32>(nodes.size());
+
+    for (const auto &node : nodes) {
+      gen_expression(*node);
+      push();
+    }
+
+    for (i32 i = arg_count - 1; i >= 0; --i) {
+      pop(argument_registers[i]);
+    }
+
     emit("mov $0, %%rax");
-    emit("call %s", std::get<std::string>(node.data_).c_str());
+    emit("call %s", node.func_name_);
     return;
   }
   default: {

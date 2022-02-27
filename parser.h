@@ -3,6 +3,7 @@
 
 #include "token.h"
 #include <memory>
+#include <optional>
 #include <variant>
 #include <vector>
 
@@ -50,6 +51,7 @@ enum class NodeType {
 
 struct Node;
 using NodePtr = std::unique_ptr<Node>;
+using NodeList = std::vector<NodePtr>;
 
 struct Object {
   Object(char *name, i64 offset) : name_(name), offset_(offset) {}
@@ -78,9 +80,15 @@ struct Node {
   std::unique_ptr<Node> rhs_ = nullptr;
   Type *tt_ = NULL;
 
-  std::variant<i64, std::shared_ptr<Object>, std::vector<std::unique_ptr<Node>>,
-               IfNode, ForNode, char *, std::monostate>
+  std::variant<i64, std::shared_ptr<Object>, NodeList, IfNode, ForNode, char *,
+               std::monostate>
       data_ = std::monostate{};
+
+  // This would be normally wrapped into the std::variant, but when calling
+  // functions, we also need the arguments list which is stored in the
+  // std::variant so we need the new struct member. NOTE: This is used when
+  // defining functions and calling them.
+  char *func_name_ = NULL;
 };
 
 struct Function {
