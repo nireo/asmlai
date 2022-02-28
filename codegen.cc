@@ -38,6 +38,18 @@ static void pop(const char *argument) {
   --depth;
 }
 
+static void load(parser::Type *ty) {
+  if (ty->type_ == parser::Types::Array) {
+    return;
+  }
+  emit("mov (%%rax), %%rax");
+}
+
+static void store() {
+  pop("%rdi");
+  emit("mov %%rax, (%%rdi)");
+}
+
 static void gen_expression(const parser::Node &node);
 static void gen_address(const parser::Node &node) {
   if (node.type_ == parser::NodeType::Variable) {
@@ -57,7 +69,7 @@ static void assign_lvar_offsets(std::vector<parser::Function> &functions) {
     i64 offset = 0;
     // assign first for parameters
     for (auto &par : func.params_) {
-      offset += 8;
+      offset += par->ty_->size_;
       par->offset_ = -offset;
     }
 
@@ -89,12 +101,12 @@ static void gen_expression(const parser::Node &node) {
   }
   case NodeType::Variable: {
     gen_address(node);
-    emit("mov (%%rax), %%rax");
+    load(node.tt_);
     return;
   }
   case NodeType::Derefence:
     gen_expression(*node.lhs_);
-    emit("mov (%%rax), %%rax");
+    load(node.tt_);
     return;
   case NodeType::Addr:
     gen_address(*node.lhs_);
@@ -103,8 +115,7 @@ static void gen_expression(const parser::Node &node) {
     gen_address(*node.lhs_);
     push();
     gen_expression(*node.rhs_);
-    pop("%rdi");
-    emit("mov %%rax, (%%rdi)");
+    store();
     return;
   }
   case NodeType::FunctionCall: {

@@ -14,11 +14,23 @@ enum class Types {
   Int,
   Ptr,
   Function,
+  Array,
+};
+struct Type;
+
+struct ArrayType {
+  i32 array_length;
+};
+
+struct FunctionType {
+  Type *return_type_;
+  std::vector<Type *> params_;
 };
 
 struct Type {
   Type(Types tt) : type_(tt) {}
 
+  i32 size_;
   Types type_;
   Type *base_type_ = nullptr;
   char *name_ = nullptr;
