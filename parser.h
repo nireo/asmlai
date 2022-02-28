@@ -17,24 +17,38 @@ enum class Types {
   Array,
 };
 struct Type;
+using TypePtr = std::unique_ptr<Type>;
 
 struct ArrayType {
   i32 array_length;
 };
 
 struct FunctionType {
-  Type *return_type_;
-  std::vector<Type *> params_;
+  TypePtr return_type_;
+  std::vector<TypePtr> params_;
+};
+
+struct Type_ptr : public std::unique_ptr<Type, std::default_delete<Type>> {
+  using unique_ptr::unique_ptr;
+
+  Type_ptr(const Type_ptr &o) : unique_ptr<Type, std::default_delete<Type>>() {
+    reset(o ? o->clone() : nullptr);
+  }
+  Type_ptr &operator=(const Type_ptr &o) {
+    reset(o ? o->clone() : nullptr);
+    return *this;
+  }
 };
 
 struct Type {
+public:
   Type(Types tt) : type_(tt) {}
 
   i32 size_;
   Types type_;
-  Type *base_type_ = nullptr;
+  Type_ptr base_type_ = nullptr;
   char *name_ = nullptr;
-  std::variant<std::vector<Type *>, std::monostate, Type *> optional_data_;
+  std::variant<std::vector<Type_ptr>, std::monostate, Type_ptr> optional_data_;
 };
 
 extern parser::Type *default_int;
