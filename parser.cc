@@ -188,7 +188,7 @@ static NodePtr parse_expr_stmt(const TokenList &tokens, u64 &pos) {
 
 static Type *decl_type(const TokenList &tokens, u64 &pos) {
   skip_until(tokens, "int", pos);
-  return default_int;
+  return new Type(Types::Int);
 }
 
 static Type *type_suffix(const TokenList &tokens, u64 &pos,
@@ -205,14 +205,8 @@ static Type *type_suffix(const TokenList &tokens, u64 &pos,
       Type *base = decl_type(tokens, pos);
       Type *tt = declarator(tokens, pos, base);
 
-      Type *ptr = new Type(tt->type_);
-      ptr->base_type_ = tt->base_type_;
-      ptr->name_ = strndup(tt->name_, strlen(tt->name_));
-
-      parameters.push_back(ptr);
+      parameters.push_back(tt);
     }
-
-    std::cout << "function name " <<  ty->name_ << '\n';
 
     ty->optional_data_ = std::move(parameters);
     ++pos;
@@ -229,6 +223,7 @@ static Type *declarator(const TokenList &tokens, u64 &pos, Type *ty) {
   if (tokens[pos].type_ != token::TokenType::Identifier) {
     error("expected a variable name");
   }
+
   ty->name_ = strndup(tokens[pos].loc_, tokens[pos].len_);
   ++pos;
   ty = type_suffix(tokens, pos, ty);
