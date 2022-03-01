@@ -7,6 +7,7 @@
 parser::Type *parser::default_int =
     new parser::Type(parser::Types::Int, parser::kNumberSize);
 parser::Type *parser::default_empty = new parser::Type(parser::Types::Empty, 0);
+
 int main(int argc, char **argv) {
   if (argc != 2) {
     std::cerr << "scc: invalid number of arguments\n";

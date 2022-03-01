@@ -239,6 +239,8 @@ static Type *type_suffix(const TokenList &tokens, u64 &pos, Type *ty) {
     ++pos;
     auto sz = get_number_value(tokens, pos);
     skip_until(tokens, "]", pos);
+    ty = type_suffix(tokens, pos, ty);
+
     return typesystem::array_of_type(ty, sz);
   }
 
