@@ -176,6 +176,8 @@ static NodePtr parse_unary(const TokenList &, u64 &);
 static NodePtr parse_primary(const TokenList &, u64 &);
 static NodePtr parse_relational(const TokenList &, u64 &);
 static NodePtr parse_assign(const TokenList &, u64 &);
+static NodePtr parse_postfix(const TokenList &, u64 &pos);
+
 static Type *declarator(const TokenList &tokens, u64 &pos, Type *ty);
 
 static NodePtr parse_expr_stmt(const TokenList &tokens, u64 &pos) {
@@ -390,6 +392,21 @@ static NodePtr parse_equal(const TokenList &tokens, u64 &pos) {
   }
 }
 
+static NodePtr parse_postfix(const TokenList &tokens, u64 &pos) {
+  auto node = parse_primary(tokens, pos);
+
+  while (tokens[pos] == "[") {
+    ++pos;
+    auto index = parse_expression(tokens, pos);
+
+    skip_until(tokens, "]", pos);
+    node = new_single(NodeType::Derefence,
+                      new_addition(std::move(node), std::move(index)));
+  }
+
+  return node;
+}
+
 static NodePtr parse_assign(const TokenList &tokens, u64 &pos) {
   auto node = parse_equal(tokens, pos);
   if (tokens[pos] == "=") {
@@ -497,7 +514,7 @@ static NodePtr parse_unary(const TokenList &tokens, u64 &pos) {
     return new_single(NodeType::Derefence, parse_unary(tokens, pos));
   }
 
-  return parse_primary(tokens, pos);
+  return parse_postfix(tokens, pos);
 }
 
 static NodePtr parse_func_call(const TokenList &tokens, u64 &pos) {
