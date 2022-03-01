@@ -79,7 +79,7 @@ static void assign_lvar_offsets(std::vector<parser::Function> &functions) {
         continue;
       }
 
-      offset += 8;
+      offset += obj->ty_->size_;
       obj->offset_ = -offset;
     }
 

@@ -127,7 +127,8 @@ static NodePtr new_addition(NodePtr lhs_, NodePtr rhs_) {
     rhs = std::move(tmp);
   }
 
-  rhs = new_binary_node(NodeType::Mul, std::move(rhs), new_number(8));
+  rhs = new_binary_node(NodeType::Mul, std::move(rhs),
+                        new_number(lhs->tt_->size_));
   return new_binary_node(NodeType::Add, std::move(lhs), std::move(rhs));
 }
 
@@ -145,7 +146,8 @@ static NodePtr new_subtraction(NodePtr lhs_, NodePtr rhs_) {
 
   if (lhs->tt_->base_type_ != nullptr &&
       rhs->tt_->type_ == parser::Types::Int) {
-    rhs = new_binary_node(NodeType::Mul, std::move(rhs), new_number(8));
+    rhs = new_binary_node(NodeType::Mul, std::move(rhs),
+                          new_number(lhs->tt_->size_));
     typesystem::add_type(*rhs);
 
     Type *tt = lhs->tt_;
@@ -155,9 +157,10 @@ static NodePtr new_subtraction(NodePtr lhs_, NodePtr rhs_) {
   }
 
   if (lhs->tt_->base_type_ != nullptr && rhs->tt_->base_type_ != nullptr) {
+    i32 size = lhs->tt_->size_;
     auto n = new_binary_node(NodeType::Sub, std::move(lhs), std::move(rhs));
-    n->tt_ = new parser::Type(Types::Int);
-    return new_binary_node(NodeType::Div, std::move(n), new_number(8));
+    n->tt_ = new parser::Type(Types::Int, kNumberSize);
+    return new_binary_node(NodeType::Div, std::move(n), new_number(size));
   }
 
   error("invalid subtraction operation.");
@@ -186,30 +189,57 @@ static NodePtr parse_expr_stmt(const TokenList &tokens, u64 &pos) {
   return node;
 }
 
-static Type *decl_type(const TokenList &tokens, u64 &pos) {
-  skip_until(tokens, "int", pos);
-  return new Type(Types::Int);
+static i64 get_number_value(const TokenList &tokens, u64 &pos) {
+  if (tokens[pos].type_ != token::TokenType::Num) {
+    error("expecting number");
+  }
+
+  return std::get<i64>(tokens[pos].data_); // guaranteed not to fail
 }
 
-static Type *type_suffix(const TokenList &tokens, u64 &pos,
-                         Type *ty) { // parse func params
-  if (tokens[pos] == "(") {
-    ++pos;
+static Type *decl_type(const TokenList &tokens, u64 &pos) {
+  skip_until(tokens, "int", pos);
+  return new Type(Types::Int, kNumberSize);
+}
 
-    std::vector<Type *> parameters;
-    while (tokens[pos] != ")") {
-      if (parameters.size() != 0) {
-        skip_until(tokens, ",", pos);
-      }
-
-      Type *base = decl_type(tokens, pos);
-      Type *tt = declarator(tokens, pos, base);
-
-      parameters.push_back(tt);
+static Type *function_parameters(const TokenList &tokens, u64 &pos,
+                                 Type *func_type) {
+  std::vector<Type *> params;
+  while (tokens[pos] != ")") {
+    if (params.size() != 0) {
+      skip_until(tokens, ",", pos);
     }
 
-    ty->optional_data_ = std::move(parameters);
+    Type *base = decl_type(tokens, pos);
+    Type *tt = declarator(tokens, pos, base);
+
+    params.push_back(tt);
+  }
+
+  FunctionType f_data;
+  f_data.params_ = std::move(params);
+  f_data.return_type_ = func_type;
+
+  Type *func_wrapper = new Type(Types::Function, 0);
+  func_wrapper->name_ = strndup(func_type->name_, strlen(func_type->name_));
+  func_wrapper->optional_data_ = f_data;
+
+  ++pos;
+
+  return func_wrapper;
+}
+
+static Type *type_suffix(const TokenList &tokens, u64 &pos, Type *ty) {
+  if (tokens[pos] == "(") {
     ++pos;
+    return function_parameters(tokens, pos, ty);
+  }
+
+  if (tokens[pos] == "[") {
+    ++pos;
+    auto sz = get_number_value(tokens, pos);
+    skip_until(tokens, "]", pos);
+    return typesystem::array_of_type(ty, sz);
   }
 
   return ty;
@@ -547,7 +577,8 @@ static Function parse_function(const TokenList &tokens, u64 &pos) {
   ty = declarator(tokens, pos, ty);
 
   try {
-    create_parameter_lvalues(std::get<std::vector<Type *>>(ty->optional_data_));
+    create_parameter_lvalues(
+        std::get<FunctionType>(ty->optional_data_).params_);
   } catch (const std::bad_variant_access &e) {
     // no params do nothing.
   }

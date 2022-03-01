@@ -16,6 +16,8 @@ enum class Types {
   Function,
   Array,
 };
+
+constexpr i32 kNumberSize = 8;
 struct Type;
 using TypePtr = std::unique_ptr<Type>;
 
@@ -24,31 +26,20 @@ struct ArrayType {
 };
 
 struct FunctionType {
-  TypePtr return_type_;
-  std::vector<TypePtr> params_;
-};
-
-struct Type_ptr : public std::unique_ptr<Type, std::default_delete<Type>> {
-  using unique_ptr::unique_ptr;
-
-  Type_ptr(const Type_ptr &o) : unique_ptr<Type, std::default_delete<Type>>() {
-    reset(o ? o->clone() : nullptr);
-  }
-  Type_ptr &operator=(const Type_ptr &o) {
-    reset(o ? o->clone() : nullptr);
-    return *this;
-  }
+  Type *return_type_;
+  std::vector<Type *> params_;
 };
 
 struct Type {
 public:
-  Type(Types tt) : type_(tt) {}
+  Type(Types tt, i32 size) : type_(tt), size_(size) {}
 
-  i32 size_;
+  i32 size_ = 0;
   Types type_;
-  Type_ptr base_type_ = nullptr;
+  Type *base_type_ = nullptr;
   char *name_ = nullptr;
-  std::variant<std::vector<Type_ptr>, std::monostate, Type_ptr> optional_data_;
+  std::variant<std::vector<Type *>, std::monostate, Type *, FunctionType>
+      optional_data_;
 };
 
 extern parser::Type *default_int;

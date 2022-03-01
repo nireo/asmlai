@@ -12,17 +12,28 @@ namespace typesystem {
   }
 
 parser::Type *ptr_to(parser::Type *base) {
-  parser::Type *tt = new parser::Type(parser::Types::Ptr);
+  parser::Type *tt = new parser::Type(parser::Types::Ptr, parser::kNumberSize);
   tt->base_type_ = base;
 
   return tt;
 }
 
 parser::Type *func_ty(parser::Type *return_ty) {
-  parser::Type *ty = new parser::Type(parser::Types::Function);
+  parser::Type *ty = new parser::Type(parser::Types::Function, 0);
   ty->optional_data_ = return_ty;
 
   return return_ty;
+}
+
+parser::Type *array_of_type(parser::Type *array_type, i32 length) {
+  parser::Type *ty =
+      new parser::Type(parser::Types::Array, array_type->size_ * length);
+  parser::ArrayType array_data_;
+  array_data_.array_length = length;
+  ty->base_type_ = array_type;
+  ty->name_ = array_type->name_;
+
+  return ty;
 }
 
 void add_type(parser::Node &node) {
@@ -65,7 +76,14 @@ void add_type(parser::Node &node) {
   case NT::Mul:
   case NT::Div:
   case NT::Neg:
+    node.tt_ = node.lhs_->tt_;
+    return;
   case NT::Assign:
+    if (node.lhs_->tt_->type_ == parser::Types::Array) {
+      std::fprintf(stderr, "assigning to a non-lvalue");
+      std::exit(1);
+    }
+
     node.tt_ = node.lhs_->tt_;
     return;
   case NT::EQ:
@@ -82,11 +100,15 @@ void add_type(parser::Node &node) {
     return;
   }
   case NT::Addr: {
-    node.tt_ = ptr_to(node.lhs_->tt_);
+    if (node.lhs_->tt_->type_ == parser::Types::Array) {
+      node.tt_ = ptr_to(node.lhs_->tt_->base_type_);
+    } else {
+      node.tt_ = ptr_to(node.lhs_->tt_);
+    }
     return;
   }
   case NT::Derefence: {
-    if (node.lhs_->tt_->type_ != parser::Types::Ptr) {
+    if (!node.lhs_->tt_) {
       std::fprintf(stderr, "invalid pointer dereference.");
       std::exit(1);
     }
