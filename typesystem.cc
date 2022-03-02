@@ -29,9 +29,11 @@ parser::Type *array_of_type(parser::Type *array_type, i32 length) {
   parser::Type *ty =
       new parser::Type(parser::Types::Array, array_type->size_ * length);
   parser::ArrayType array_data_;
+
   array_data_.array_length = length;
   ty->base_type_ = array_type;
   ty->name_ = array_type->name_;
+  ty->optional_data_ = std::move(array_data_);
 
   return ty;
 }

@@ -548,6 +548,14 @@ static NodePtr parse_primary(const TokenList &tokens, u64 &pos) {
     return node;
   }
 
+  if (tokens[pos] == "sizeof") {
+    ++pos;
+    auto node = parse_unary(tokens, pos);
+    typesystem::add_type(*node);
+
+    return new_number(node->tt_->size_);
+  }
+
   if (tokens[pos].type_ == token::TokenType::Identifier) {
     if (tokens[pos + 1] == "(") {
       return parse_func_call(tokens, pos);

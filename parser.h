@@ -32,13 +32,14 @@ struct FunctionType {
 
 struct Type {
 public:
-  Type(Types tt, i32 size) : type_(tt), size_(size) {}
+  Type(Types tt, i32 size) : size_(size), type_(tt) {}
 
   i32 size_ = 0;
   Types type_;
   Type *base_type_ = nullptr;
   char *name_ = nullptr;
-  std::variant<std::vector<Type *>, std::monostate, Type *, FunctionType>
+  std::variant<std::vector<Type *>, std::monostate, Type *, FunctionType,
+               ArrayType>
       optional_data_;
 };
 
