@@ -10,7 +10,7 @@
 namespace codegen {
 static constexpr const char *argument_registers[6] = {"%rdi", "%rsi", "%rdx",
                                                       "%rcx", "%r8",  "%r9"};
-static parser::Function curr_func;
+static std::shared_ptr<parser::Object> curr_func;
 static i64 depth{};
 
 static i64 count() {
@@ -64,17 +64,21 @@ static void gen_address(const parser::Node &node) {
   std::fprintf(stderr, "non-lvalue\n");
 }
 
-static void assign_lvar_offsets(std::vector<parser::Function> &functions) {
+static void
+assign_lvar_offsets(std::vector<std::shared_ptr<parser::Object>> &functions) {
   for (auto &func : functions) {
+    if (func->is_func_)
+      continue;
+
     i64 offset = 0;
     // assign first for parameters
-    for (auto &par : func.params_) {
+    for (auto &par : func->params_) {
       offset += par->ty_->size_;
       par->offset_ = -offset;
     }
 
-    std::reverse(func.locals_.begin(), func.locals_.end());
-    for (auto &obj : func.locals_) {
+    std::reverse(func->locals_.begin(), func->locals_.end());
+    for (auto &obj : func->locals_) {
       if (obj->offset_ != 0) {
         continue;
       }
@@ -83,7 +87,7 @@ static void assign_lvar_offsets(std::vector<parser::Function> &functions) {
       obj->offset_ = -offset;
     }
 
-    func.stack_sz_ = align_to(offset, (i64)16);
+    func->stack_sz = align_to(offset, (i64)16);
   }
 }
 
@@ -199,7 +203,7 @@ static void gen_stmt(const parser::Node &node) {
   }
   case parser::NodeType::Return: {
     gen_expression(*node.lhs_);
-    emit("jmp .L.return.%s", curr_func.name_);
+    emit("jmp .L.return.%s", curr_func->name_);
     return;
   }
   case parser::NodeType::Block: {
@@ -259,29 +263,29 @@ static void gen_stmt(const parser::Node &node) {
   }
 }
 
-void gen_code(std::vector<parser::Function> &&root) {
+void gen_code(std::vector<std::shared_ptr<parser::Object>> &&root) {
   assign_lvar_offsets(root);
 
   for (u64 i = 0; i < root.size(); ++i) {
-    curr_func = std::move(root[i]);
+    curr_func = root[i];
 
-    emit(".globl %s", curr_func.name_);
-    printf("%s:\n", curr_func.name_);
+    emit(".globl %s", curr_func->name_);
+    printf("%s:\n", curr_func->name_);
 
     emit("push %%rbp");
     emit("mov %%rsp, %%rbp");
-    emit("sub $%ld, %%rsp", curr_func.stack_sz_);
+    emit("sub $%ld, %%rsp", curr_func->stack_sz);
 
     u64 arg_reg_index = 0;
-    for (auto &par : curr_func.params_) {
+    for (auto &par : curr_func->params_) {
       emit("mov %s, %d(%%rbp)", argument_registers[arg_reg_index++],
            par->offset_);
     }
 
-    gen_stmt(*curr_func.body_);
+    gen_stmt(*curr_func->body);
     assert(depth == 0);
 
-    printf(".L.return.%s:\n", curr_func.name_);
+    printf(".L.return.%s:\n", curr_func->name_);
     emit("mov %%rbp, %%rsp");
     emit("pop %%rbp");
     emit("ret");

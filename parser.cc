@@ -18,6 +18,8 @@ template <typename... Args> static void error(const char *fmt, Args... args) {
 }
 
 static std::vector<std::shared_ptr<Object>> locals_;
+static std::vector<std::shared_ptr<Object>> globals_;
+
 using TokenList = std::vector<token::Token>;
 
 static NodePtr new_node(NodeType type_) {
@@ -87,8 +89,18 @@ static char *get_identifier(const token::Token &tok) {
 // object more easily
 static std::shared_ptr<Object> new_lvar(char *name, Type *ty) {
   std::shared_ptr<Object> obj = std::make_shared<Object>(name, 0);
+  obj->is_local_ = true;
   obj->ty_ = ty;
   locals_.push_back(obj);
+
+  return obj;
+}
+
+static std::shared_ptr<Object> new_gvar(char *name, Type *ty) {
+  std::shared_ptr<Object> obj = std::make_shared<Object>(name, 0);
+  obj->is_local_ = false;
+  obj->ty_ = ty;
+  globals_.push_back(obj);
 
   return obj;
 }
@@ -599,8 +611,7 @@ static NodePtr parse_compound_stmt(const TokenList &tokens, u64 &pos) {
   return node;
 }
 
-static Function parse_function(const TokenList &tokens, u64 &pos) {
-  Type *ty = decl_type(tokens, pos);
+static void parse_function(const TokenList &tokens, u64 &pos, Type *ty) {
   ty = declarator(tokens, pos, ty);
 
   try {
@@ -610,30 +621,30 @@ static Function parse_function(const TokenList &tokens, u64 &pos) {
     // no params do nothing.
   }
 
-  Function func;
-  func.params_ = ObjectList{};
+  std::shared_ptr<Object> func_obj =
+      new_gvar(strndup(ty->name_, strlen(ty->name_)), ty);
+  func_obj->is_func_ = true;
+
+  func_obj->params_ = ObjectList{};
   for (auto &p : locals_) {
-    func.params_.push_back(p);
+    func_obj->params_.push_back(p);
   }
 
-  func.name_ = ty->name_;
   skip_until(tokens, "{", pos);
-  func.body_ = parse_compound_stmt(tokens, pos);
-  func.locals_ = std::move(locals_);
+  func_obj->body = parse_compound_stmt(tokens, pos);
+  func_obj->locals_ = std::move(locals_);
 
   locals_.clear();
-
-  return func;
 }
 
-std::vector<Function> parse_tokens(const TokenList &tokens) {
+std::vector<std::shared_ptr<Object>> parse_tokens(const TokenList &tokens) {
   u64 pos = 0;
 
-  std::vector<Function> funcs;
   while (tokens[pos].type_ != token::TokenType::Eof) {
-    funcs.push_back(std::move(parse_function(tokens, pos)));
+    Type *base_type = decl_type(tokens, pos);
+    parse_function(tokens, pos, base_type);
   }
 
-  return funcs;
+  return std::move(globals_);
 }
 } // namespace parser

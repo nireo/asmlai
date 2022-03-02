@@ -71,6 +71,7 @@ enum class NodeType {
 
 struct Node;
 struct Object;
+struct Function;
 
 using NodePtr = std::unique_ptr<Node>;
 using NodeList = std::vector<NodePtr>;
@@ -78,9 +79,17 @@ using ObjectList = std::vector<std::shared_ptr<Object>>;
 
 struct Object {
   Object(char *name, i64 offset) : name_(name), offset_(offset) {}
-  char *name_;
-  i64 offset_;
-  Type *ty_;
+  char *name_ = nullptr;
+  i64 offset_ = 0;
+  Type *ty_ = nullptr;
+
+  bool is_local_ = false;
+  bool is_func_ = false;
+  NodePtr body = nullptr;
+  int stack_sz = 0;
+
+  std::vector<std::shared_ptr<Object>> params_{};
+  std::vector<std::shared_ptr<Object>> locals_{};
 };
 
 struct IfNode {
@@ -123,7 +132,8 @@ struct Function {
   char *name_;
 };
 
-std::vector<Function> parse_tokens(const std::vector<token::Token> &tokens);
+std::vector<std::shared_ptr<Object>>
+parse_tokens(const std::vector<token::Token> &tokens);
 } // namespace parser
 
 #endif
