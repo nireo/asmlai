@@ -67,22 +67,18 @@ static void gen_address(const parser::Node &node) {
 static void
 assign_lvar_offsets(std::vector<std::shared_ptr<parser::Object>> &functions) {
   for (auto &func : functions) {
-    if (func->is_func_)
-      continue;
-
-    i64 offset = 0;
-    // assign first for parameters
-    for (auto &par : func->params_) {
-      offset += par->ty_->size_;
-      par->offset_ = -offset;
+    if (func->is_func_) {
+      i64 offset = 0;
+      // assign first for parameters
+      for (auto &par : func->params_) {
+        offset += par->ty_->size_;
+        par->offset_ = -offset;
+      }
     }
 
+    i64 offset = 0;
     std::reverse(func->locals_.begin(), func->locals_.end());
     for (auto &obj : func->locals_) {
-      if (obj->offset_ != 0) {
-        continue;
-      }
-
       offset += obj->ty_->size_;
       obj->offset_ = -offset;
     }
