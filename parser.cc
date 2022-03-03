@@ -36,6 +36,12 @@ static std::shared_ptr<Object> find_var(const token::Token &tok) {
     }
   }
 
+  for (const auto &obj : globals_) {
+    if (!strncmp(tok.loc_, obj->name_, tok.len_)) {
+      return obj;
+    }
+  }
+
   return nullptr;
 }
 
@@ -637,12 +643,45 @@ static void parse_function(const TokenList &tokens, u64 &pos, Type *ty) {
   locals_.clear();
 }
 
+static void global_varialble(const TokenList &tokens, u64 &pos, Type *base) {
+  bool first = true;
+
+  while (!consume(tokens, pos, ";")) {
+    if (!first) {
+      skip_until(tokens, ",", pos);
+    }
+
+    first = false;
+    Type *ty = declarator(tokens, pos, base);
+    new_gvar(strndup(ty->name_, strlen(ty->name_)), ty);
+  }
+}
+
+static bool is_func(const TokenList &tokens, u64 &pos) {
+  if (tokens[pos] == ";") {
+    return false;
+  }
+
+  u64 original = pos;
+  Type *ty = declarator(tokens, pos, default_empty);
+  bool verdict = ty->type_ == Types::Function;
+  pos = original;
+
+  return verdict;
+}
+
 std::vector<std::shared_ptr<Object>> parse_tokens(const TokenList &tokens) {
   u64 pos = 0;
 
   while (tokens[pos].type_ != token::TokenType::Eof) {
     Type *base_type = decl_type(tokens, pos);
-    parse_function(tokens, pos, base_type);
+
+    if (is_func(tokens, pos)) {
+      parse_function(tokens, pos, base_type);
+      continue;
+    }
+
+    global_varialble(tokens, pos, base_type);
   }
 
   return std::move(globals_);

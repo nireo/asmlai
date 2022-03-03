@@ -53,8 +53,13 @@ static void store() {
 static void gen_expression(const parser::Node &node);
 static void gen_address(const parser::Node &node) {
   if (node.type_ == parser::NodeType::Variable) {
-    int offset = std::get<std::shared_ptr<parser::Object>>(node.data_)->offset_;
-    emit("lea %d(%%rbp), %%rax", offset);
+    const auto &obj = std::get<std::shared_ptr<parser::Object>>(node.data_);
+    if (obj->is_local_) {
+      emit("lea %ld(%%rbp), %%rax", obj->offset_);
+    } else {
+      emit("lea %s(%%rip), %%rax", obj->name_);
+    }
+
     return;
   } else if (node.type_ == parser::NodeType::Derefence) {
     gen_expression(*node.lhs_);
@@ -263,9 +268,25 @@ void gen_code(std::vector<std::shared_ptr<parser::Object>> &&root) {
   assign_lvar_offsets(root);
 
   for (u64 i = 0; i < root.size(); ++i) {
+    if (root[i]->is_func_) {
+      continue;
+    }
+
+    emit(".data");
+    emit(".globl %s", root[i]->name_);
+    printf("%s:\n", root[i]->name_);
+    emit(".zero %d", root[i]->ty_->size_);
+  }
+
+  for (u64 i = 0; i < root.size(); ++i) {
+    if (!root[i]->is_func_) {
+      continue;
+    }
+
     curr_func = root[i];
 
     emit(".globl %s", curr_func->name_);
+    emit(".text");
     printf("%s:\n", curr_func->name_);
 
     emit("push %%rbp");
