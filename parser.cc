@@ -129,8 +129,7 @@ static NodePtr new_addition(NodePtr lhs_, NodePtr rhs_) {
   // '\n'; std::cout << "addition on rhs: " << static_cast<int>(rhs->tt_->type_)
   // << '\n'
 
-  if (lhs->tt_->type_ == parser::Types::Int &&
-      rhs->tt_->type_ == parser::Types::Int) {
+  if (typesystem::is_number(lhs->tt_) && typesystem::is_number(rhs->tt_)) {
     return new_binary_node(NodeType::Add, std::move(lhs), std::move(rhs));
   }
 
@@ -157,13 +156,11 @@ static NodePtr new_subtraction(NodePtr lhs_, NodePtr rhs_) {
   typesystem::add_type(*lhs);
   typesystem::add_type(*rhs);
 
-  if (lhs->tt_->type_ == parser::Types::Int &&
-      rhs->tt_->type_ == parser::Types::Int) {
+  if (typesystem::is_number(lhs->tt_) && typesystem::is_number(rhs->tt_)) {
     return new_binary_node(NodeType::Sub, std::move(lhs), std::move(rhs));
   }
 
-  if (lhs->tt_->base_type_ != nullptr &&
-      rhs->tt_->type_ == parser::Types::Int) {
+  if (lhs->tt_->base_type_ != nullptr && typesystem::is_number(rhs->tt_)) {
     rhs = new_binary_node(NodeType::Mul, std::move(rhs),
                           new_number(lhs->tt_->size_));
     typesystem::add_type(*rhs);
@@ -217,7 +214,16 @@ static i64 get_number_value(const TokenList &tokens, u64 &pos) {
   return std::get<i64>(tokens[pos].data_); // guaranteed not to fail
 }
 
+static bool is_typename(const token::Token &tok) {
+  return tok == "char" || tok == "int";
+}
+
 static Type *decl_type(const TokenList &tokens, u64 &pos) {
+  if (tokens[pos] == "char") {
+    ++pos;
+    return new Type(Types::Char, kCharSize);
+  }
+
   skip_until(tokens, "int", pos);
   return new Type(Types::Int, kNumberSize);
 }
@@ -602,7 +608,7 @@ static NodePtr parse_primary(const TokenList &tokens, u64 &pos) {
 static NodePtr parse_compound_stmt(const TokenList &tokens, u64 &pos) {
   std::vector<NodePtr> nodes;
   while (tokens[pos] != "}") {
-    if (tokens[pos] == "int") {
+    if (is_typename(tokens[pos])) {
       nodes.push_back(std::move(parse_declaration(tokens, pos)));
     } else {
       nodes.push_back(std::move(parse_stmt(tokens, pos)));

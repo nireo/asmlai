@@ -8,8 +8,10 @@
 #include <variant>
 
 namespace codegen {
-static constexpr const char *argument_registers[6] = {"%rdi", "%rsi", "%rdx",
-                                                      "%rcx", "%r8",  "%r9"};
+constexpr static const char *argreg8[] = {"%dil", "%sil", "%dl",
+                                          "%cl",  "%r8b", "%r9b"};
+constexpr static const char *argreg64[] = {"%rdi", "%rsi", "%rdx",
+                                           "%rcx", "%r8",  "%r9"};
 static std::shared_ptr<parser::Object> curr_func;
 static i64 depth{};
 
@@ -42,12 +44,22 @@ static void load(parser::Type *ty) {
   if (ty->type_ == parser::Types::Array) {
     return;
   }
-  emit("mov (%%rax), %%rax");
+
+  if (ty->size_ == 1) {
+    emit("movsbq (%%rax), %%rax");
+  } else {
+    emit("mov (%%rax), %%rax");
+  }
 }
 
-static void store() {
+static void store(parser::Type *ty) {
   pop("%rdi");
-  emit("mov %%rax, (%%rdi)");
+
+  if (ty->size_ == 1) {
+    emit("mov %%al, (%%rdi)");
+  } else {
+    emit("mov %%rax, (%%rdi)");
+  }
 }
 
 static void gen_expression(const parser::Node &node);
@@ -120,7 +132,7 @@ static void gen_expression(const parser::Node &node) {
     gen_address(*node.lhs_);
     push();
     gen_expression(*node.rhs_);
-    store();
+    store(node.tt_);
     return;
   }
   case NodeType::FunctionCall: {
@@ -134,7 +146,7 @@ static void gen_expression(const parser::Node &node) {
     }
 
     for (i32 i = arg_count - 1; i >= 0; --i) {
-      pop(argument_registers[i]);
+      pop(argreg64[i]);
     }
 
     emit("mov $0, %%rax");
@@ -295,8 +307,11 @@ void gen_code(std::vector<std::shared_ptr<parser::Object>> &&root) {
 
     u64 arg_reg_index = 0;
     for (auto &par : curr_func->params_) {
-      emit("mov %s, %d(%%rbp)", argument_registers[arg_reg_index++],
-           par->offset_);
+      if (par->ty_->size_ == 1) {
+        emit("mov %s, %d(%%rbp)", argreg8[arg_reg_index++], par->offset_);
+      } else {
+        emit("mov %s, %d(%%rbp)", argreg64[arg_reg_index++], par->offset_);
+      }
     }
 
     gen_stmt(*curr_func->body);

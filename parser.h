@@ -11,6 +11,7 @@ namespace parser {
 
 enum class Types {
   Empty,
+  Char,
   Int,
   Ptr,
   Function,
@@ -18,6 +19,7 @@ enum class Types {
 };
 
 constexpr i32 kNumberSize = 8;
+constexpr i32 kCharSize = 1;
 struct Type;
 using TypePtr = std::unique_ptr<Type>;
 

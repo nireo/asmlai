@@ -11,6 +11,10 @@ namespace typesystem {
     add_type(*node);                                                           \
   }
 
+bool is_number(parser::Type *ty) {
+  return ty->type_ == parser::Types::Int || ty->type_ == parser::Types::Char;
+}
+
 parser::Type *ptr_to(parser::Type *base) {
   parser::Type *tt = new parser::Type(parser::Types::Ptr, parser::kNumberSize);
   tt->base_type_ = base;
