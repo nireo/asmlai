@@ -15,6 +15,12 @@ enum class TokenType {
   Common,
   Identifier,
   Keyword,
+  String,
+};
+
+struct StringLiteral {
+  u64 length{0};
+  char *data = NULL;
 };
 
 struct Token {
@@ -25,7 +31,7 @@ struct Token {
 
   TokenType type_;
   // variat because in the future there will be more stuff here.
-  std::variant<std::monostate, i64> data_;
+  std::variant<std::monostate, i64, StringLiteral> data_;
   i64 len_{0};
   char *loc_ = nullptr;
 };

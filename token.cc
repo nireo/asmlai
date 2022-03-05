@@ -64,6 +64,23 @@ static int read_punctuator(char *p) {
   return std::ispunct(*p) ? 1 : 0;
 }
 
+static token::Token read_string(char *start) {
+  char *ptr = start + 1;
+  for (; *ptr != '"'; ptr++) {
+    if (*ptr == '\n' || *ptr == '\0') {
+      error_at(start, "unterminated string");
+    }
+  }
+
+  auto tok = new_token(start + 1, ptr + 1, TokenType::String);
+  StringLiteral lit{};
+  lit.length = ptr - start;
+  lit.data = strndup(start + 1, ptr - start - 1);
+  tok.data_ = std::move(lit);
+
+  return tok;
+}
+
 std::vector<Token> tokenize_input(char *p) {
   std::vector<Token> res;
 
@@ -80,6 +97,12 @@ std::vector<Token> tokenize_input(char *p) {
       tok.len_ = p - ss;
       res.push_back(std::move(tok));
 
+      continue;
+    }
+
+    if (*p == '"') {
+      auto tok = read_string(p);
+      p += std::get<StringLiteral>(tok.data_).length;
       continue;
     }
 

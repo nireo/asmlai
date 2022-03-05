@@ -29,6 +29,13 @@ static NodePtr new_node(NodeType type_) {
   return node;
 }
 
+static std::string new_unique() {
+  static int L_id = 0;
+  std::string buf = ".L..";
+  buf += L_id++;
+  return buf;
+}
+
 static std::shared_ptr<Object> find_var(const token::Token &tok) {
   for (const auto &obj : locals_) {
     if (!strncmp(tok.loc_, obj->name_, tok.len_)) {
@@ -593,6 +600,9 @@ static NodePtr parse_primary(const TokenList &tokens, u64 &pos) {
     }
 
     return new_variable_node(std::move(obj));
+  }
+
+  if (tokens[pos].type_ == token::TokenType::String) {
   }
 
   if (tokens[pos].type_ == token::TokenType::Num) {
