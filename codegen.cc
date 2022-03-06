@@ -287,7 +287,14 @@ void gen_code(std::vector<std::shared_ptr<parser::Object>> &&root) {
     emit(".data");
     emit(".globl %s", root[i]->name_);
     printf("%s:\n", root[i]->name_);
-    emit(".zero %d", root[i]->ty_->size_);
+
+    if (root[i]->init_data_ == nullptr) {
+      emit(".zero %d", root[i]->ty_->size_);
+    } else {
+      for (i32 i = 0; i < root[i]->ty_->size_; ++i) {
+        emit(".byte %d", root[i]->init_data_[i]);
+      }
+    }
   }
 
   for (u64 i = 0; i < root.size(); ++i) {

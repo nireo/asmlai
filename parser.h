@@ -84,6 +84,7 @@ struct Object {
   char *name_ = nullptr;
   i64 offset_ = 0;
   Type *ty_ = nullptr;
+  char *init_data_ = nullptr;
 
   bool is_local_ = false;
   bool is_func_ = false;

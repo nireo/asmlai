@@ -7,7 +7,6 @@
 #include <iostream>
 #include <memory>
 #include <optional>
-#include <unordered_map>
 #include <variant>
 
 namespace parser {
@@ -29,11 +28,11 @@ static NodePtr new_node(NodeType type_) {
   return node;
 }
 
-static std::string new_unique() {
+static char *new_unique() {
   static int L_id = 0;
-  std::string buf = ".L..";
-  buf += L_id++;
-  return buf;
+  char *buffer = (char *)calloc(1, 20);
+  sprintf(buffer, ".L..%d", L_id++);
+  return buffer;
 }
 
 static std::shared_ptr<Object> find_var(const token::Token &tok) {
@@ -116,6 +115,17 @@ static std::shared_ptr<Object> new_gvar(char *name, Type *ty) {
   globals_.push_back(obj);
 
   return obj;
+}
+
+static std::shared_ptr<Object> new_anonymous_variable(Type *ty) {
+  return new_gvar(new_unique(), ty);
+}
+
+static std::shared_ptr<Object> new_string_literal(char *p, Type *ty) {
+  auto var = new_anonymous_variable(ty);
+  var->init_data_ = p;
+
+  return var;
 }
 
 static void skip_until(const TokenList &tokens, const char *tok, u64 &pos) {
@@ -603,6 +613,13 @@ static NodePtr parse_primary(const TokenList &tokens, u64 &pos) {
   }
 
   if (tokens[pos].type_ == token::TokenType::String) {
+    const auto &string_literal =
+        std::get<token::StringLiteral>(tokens[pos].data_);
+    auto obj = new_string_literal(
+        string_literal.data,
+        typesystem::array_of_type(new Type(Types::Char, kCharSize),
+                                  string_literal.length));
+    return new_variable_node(std::move(obj));
   }
 
   if (tokens[pos].type_ == token::TokenType::Num) {
