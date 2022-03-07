@@ -64,7 +64,7 @@ static int read_punctuator(char *p) {
   return std::ispunct(*p) ? 1 : 0;
 }
 
-static token::Token read_string(char *start) {
+static Token read_string(char *start) {
   char *ptr = start + 1;
   for (; *ptr != '"'; ptr++) {
     if (*ptr == '\n' || *ptr == '\0') {
@@ -72,7 +72,7 @@ static token::Token read_string(char *start) {
     }
   }
 
-  auto tok = new_token(start + 1, ptr + 1, TokenType::String);
+  auto tok = new_token(start, ptr + 1, TokenType::String);
   StringLiteral lit{};
   lit.length = ptr - start;
   lit.data = strndup(start + 1, ptr - start - 1);
@@ -102,7 +102,8 @@ std::vector<Token> tokenize_input(char *p) {
 
     if (*p == '"') {
       auto tok = read_string(p);
-      p += std::get<StringLiteral>(tok.data_).length;
+      p += tok.len_;
+      res.push_back(std::move(tok));
       continue;
     }
 
@@ -112,7 +113,7 @@ std::vector<Token> tokenize_input(char *p) {
         p++;
       } while (is_ident_any(*p));
       auto tok = new_token(start, p, TokenType::Identifier);
-      res.push_back(tok);
+      res.push_back(std::move(tok));
       continue;
     }
 
@@ -120,7 +121,7 @@ std::vector<Token> tokenize_input(char *p) {
     if (p_len) {
       auto tok = new_token(p, p + p_len, TokenType::Common);
       p += tok.len_;
-      res.push_back(tok);
+      res.push_back(std::move(tok));
       continue;
     }
 

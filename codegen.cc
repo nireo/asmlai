@@ -291,8 +291,8 @@ void gen_code(std::vector<std::shared_ptr<parser::Object>> &&root) {
     if (root[i]->init_data_ == nullptr) {
       emit(".zero %d", root[i]->ty_->size_);
     } else {
-      for (i32 i = 0; i < root[i]->ty_->size_; ++i) {
-        emit(".byte %d", root[i]->init_data_[i]);
+      for (int j = 0; j < root[i]->ty_->size_; ++j) {
+        emit(".byte %d", root[i]->init_data_[j]);
       }
     }
   }

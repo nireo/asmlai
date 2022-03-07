@@ -3,6 +3,7 @@
 #include "typesystem.h"
 #include <cstddef>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <memory>
@@ -30,7 +31,7 @@ static NodePtr new_node(NodeType type_) {
 
 static char *new_unique() {
   static int L_id = 0;
-  char *buffer = (char *)calloc(1, 20);
+  char *buffer = (char *)malloc(20 * sizeof(char));
   sprintf(buffer, ".L..%d", L_id++);
   return buffer;
 }
@@ -615,8 +616,9 @@ static NodePtr parse_primary(const TokenList &tokens, u64 &pos) {
   if (tokens[pos].type_ == token::TokenType::String) {
     const auto &string_literal =
         std::get<token::StringLiteral>(tokens[pos].data_);
+    auto len = string_literal.length;
     auto obj = new_string_literal(
-        string_literal.data,
+        strndup(string_literal.data, len),
         typesystem::array_of_type(new Type(Types::Char, kCharSize),
                                   string_literal.length));
     return new_variable_node(std::move(obj));

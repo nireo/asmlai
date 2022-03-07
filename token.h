@@ -19,8 +19,8 @@ enum class TokenType {
 };
 
 struct StringLiteral {
-  u64 length{0};
-  char *data = NULL;
+  u64 length;
+  char *data;
 };
 
 struct Token {

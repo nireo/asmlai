@@ -15,6 +15,7 @@ int main(int argc, char **argv) {
   }
 
   auto tokens = token::tokenize_input(argv[1]);
+
   auto functions = parser::parse_tokens(tokens);
   codegen::gen_code(std::move(functions));
 
