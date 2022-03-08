@@ -621,6 +621,7 @@ static NodePtr parse_primary(const TokenList &tokens, u64 &pos) {
         strndup(string_literal.data, len),
         typesystem::array_of_type(new Type(Types::Char, kCharSize),
                                   string_literal.length));
+    ++pos;
     return new_variable_node(std::move(obj));
   }
 
