@@ -64,6 +64,41 @@ static int read_punctuator(char *p) {
   return std::ispunct(*p) ? 1 : 0;
 }
 
+static int read_escaped_char(char *p) {
+  switch (*p) {
+  case 'a':
+    return '\a';
+  case 'b':
+    return 'b';
+  case 't':
+    return '\t';
+  case 'n':
+    return '\n';
+  case 'v':
+    return '\v';
+  case 'f':
+    return '\f';
+  case 'r':
+    return '\r';
+  default:
+    return *p;
+  }
+}
+
+static char *string_literal_end(char *p) {
+  char *start = p;
+  for (; *p != '"'; p++) {
+    if (*p == '\n' || *p == '\0') {
+      error_at(start, "unclosed string litreal");
+    }
+
+    if (*p == '\\') {
+      p++;
+    }
+  }
+  return p;
+}
+
 static Token read_string(char *start) {
   char *ptr = start + 1;
   for (; *ptr != '"'; ptr++) {
