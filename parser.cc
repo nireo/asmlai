@@ -163,7 +163,7 @@ static NodePtr new_addition(NodePtr lhs_, NodePtr rhs_) {
   }
 
   rhs = new_binary_node(NodeType::Mul, std::move(rhs),
-                        new_number(lhs->tt_->size_));
+                        new_number(lhs->tt_->base_type_->size_));
   return new_binary_node(NodeType::Add, std::move(lhs), std::move(rhs));
 }
 
