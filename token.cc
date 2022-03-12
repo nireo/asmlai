@@ -48,6 +48,14 @@ static bool is_ident_char(char c) {
   return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || c == '_';
 }
 
+static int from_hex(char c) {
+  if ('0' <= c && c <= '9')
+    return c - '0';
+  if ('a' <= c && c <= 'f')
+    return c - 'a' + 10;
+  return c - 'A' + 10;
+}
+
 static bool is_ident_any(char c) {
   return is_ident_char(c) || ('0' <= c && c <= '9');
 }
@@ -64,7 +72,34 @@ static int read_punctuator(char *p) {
   return std::ispunct(*p) ? 1 : 0;
 }
 
-static int read_escaped_char(char *p) {
+static int read_escaped_char(char **new_pos, char *p) {
+  if ('0' <= *p && *p <= '7') {
+    // octal
+    int c = *p++ - '0';
+    if ('0' <= *p && *p <= '7') {
+      c = (c << 3) + (*p++ - '0');
+      if ('0' <= *p && *p <= '7') {
+        c = (c << 3) + (*p++ - '0');
+      }
+    }
+    *new_pos = p;
+    return c;
+  }
+
+  if (*p == 'x') {
+    ++p;
+    if (!std::isxdigit(*p))
+      error_at(p, "invalid hex escape.");
+
+    int c = 0;
+    for (; std::isxdigit(*p); ++p)
+      c = (c << 4) + from_hex(*p);
+    *new_pos = p;
+    return c;
+  }
+
+  *new_pos = p + 1;
+
   switch (*p) {
   case 'a':
     return '\a';
@@ -80,7 +115,6 @@ static int read_escaped_char(char *p) {
     return '\f';
   case 'r':
     return '\r';
-  // [GNU] \e for the ASCII escape character is a GNU C extension.
   case 'e':
     return 27;
   default:
@@ -109,8 +143,7 @@ static Token read_string(char *start) {
 
   for (char *p = start + 1; p < end;) {
     if (*p == '\\') {
-      buffer[len++] = read_escaped_char(p + 1);
-      p += 2;
+      buffer[len++] = read_escaped_char(&p, p + 1);
     } else {
       buffer[len++] = *p++;
     }
