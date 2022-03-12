@@ -69,7 +69,7 @@ static int read_escaped_char(char *p) {
   case 'a':
     return '\a';
   case 'b':
-    return 'b';
+    return '\b';
   case 't':
     return '\t';
   case 'n':
@@ -80,6 +80,9 @@ static int read_escaped_char(char *p) {
     return '\f';
   case 'r':
     return '\r';
+  // [GNU] \e for the ASCII escape character is a GNU C extension.
+  case 'e':
+    return 27;
   default:
     return *p;
   }
@@ -100,17 +103,23 @@ static char *string_literal_end(char *p) {
 }
 
 static Token read_string(char *start) {
-  char *ptr = start + 1;
-  for (; *ptr != '"'; ptr++) {
-    if (*ptr == '\n' || *ptr == '\0') {
-      error_at(start, "unterminated string");
+  char *end = string_literal_end(start + 1);
+  char *buffer = (char *)malloc((end - start) * sizeof(char));
+  i64 len = 0;
+
+  for (char *p = start + 1; p < end;) {
+    if (*p == '\\') {
+      buffer[len++] = read_escaped_char(p + 1);
+      p += 2;
+    } else {
+      buffer[len++] = *p++;
     }
   }
 
-  auto tok = new_token(start, ptr + 1, TokenType::String);
+  auto tok = new_token(start, end + 1, TokenType::String);
   StringLiteral lit{};
-  lit.length = ptr - start;
-  lit.data = strndup(start + 1, ptr - start - 1);
+  lit.length = len + 1;
+  lit.data = buffer;
   tok.data_ = std::move(lit);
 
   return tok;
