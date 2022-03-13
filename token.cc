@@ -1,6 +1,7 @@
 #include "token.h"
 
 #include <cctype>
+#include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <string.h>
@@ -9,6 +10,7 @@
 
 namespace token {
 static char *curr_input;
+static char *curr_filename;
 
 template <typename... Args>
 void error(const char *format_string, Args... args) {
@@ -19,10 +21,25 @@ void error(const char *format_string, Args... args) {
 
 template <typename... Args>
 void error_at(char *location, const char *format_string, Args... args) {
-  i64 pos = location - curr_input;
+  char *line = location;
+  while (curr_input < line && line[-1] != '\n')
+    line--;
 
-  std::fprintf(stderr, "%s\n", curr_input);
-  std::fprintf(stderr, "%*s", pos, "");
+  char *end = location;
+  while (*end != '\n')
+    end++;
+
+  int line_no = 1;
+  for (char *p = curr_input; p < line; p++)
+    if (*p == '\n')
+      line_no++;
+
+  int indent = fprintf(stderr, "%s:%d: ", curr_filename, line_no);
+  fprintf(stderr, "%.*s\n", (int)(end - line), line);
+
+  int pos = location - line + indent;
+
+  std::fprintf(stderr, "%*s", pos, ""); // print pos spaces.
   std::fprintf(stderr, "^ ");
   std::fprintf(stderr, format_string, args...);
   std::fprintf(stderr, "\n");
@@ -229,5 +246,33 @@ std::vector<Token> tokenize_input(char *p) {
 
   res.push_back(new_token(p, p, TokenType::Eof));
   return res;
+}
+
+static char *file_to_string(char *fpath) {
+  FILE *fp = std::fopen(fpath, "r");
+  if (!fp) {
+    error("cannot open file at path %s: %s", fpath, strerror(errno));
+  }
+
+  char *buffer;
+  size_t buffer_size;
+
+  FILE *out = open_memstream(&buffer, &buffer_size);
+  for (;;) {
+    char buf_[4096];
+    int n = fread(buf_, 1, sizeof(buf_), fp);
+    if (n == 0)
+      break; // done reading
+    std::fwrite(buf_, 1, n, out);
+  }
+  std::fclose(fp);
+  std::fflush(fp);
+
+  if (buffer_size == 0 || buffer[buffer_size - 1] != '\n')
+    std::fputc('\n', out);
+  std::fputc('\0', out);
+  std::fclose(out);
+
+  return buffer;
 }
 } // namespace token
