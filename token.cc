@@ -162,6 +162,22 @@ std::vector<Token> tokenize_input(char *p) {
   std::vector<Token> res;
 
   while (*p) {
+    if (starts_with(p, "//")) {
+      p += 2;
+      while (*p != '\n')
+        ++p;
+      continue;
+    }
+
+    if (starts_with(p, "/*")) {
+      char *q = strstr(p + 2, "*/"); // kinda scuffed hack
+      if (!q) {
+        error_at(p, "unclosed block comment");
+      }
+      p = q + 2;
+      continue;
+    }
+
     if (std::isspace(*p)) {
       p++;
       continue;

@@ -204,4 +204,8 @@ assert 16 'int main() { return "\20"[0]; }'
 assert 65 'int main() { return "\101"[0]; }'
 assert 104 'int main() { return "\1500"[0]; }'
 
+assert 2 'int main() { /* return 1; */ return 2; }'
+assert 2 'int main() { // return 1;
+return 2; }'
+
 echo OK
