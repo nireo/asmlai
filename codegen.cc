@@ -30,6 +30,7 @@ template <typename... Args> static void emit(const char *fmt, Args... args) {
   printf("\n");
 }
 
+static void gen_stmt(const parser::Node &);
 static void push() {
   emit("push %%rax");
   ++depth;
@@ -133,6 +134,13 @@ static void gen_expression(const parser::Node &node) {
     push();
     gen_expression(*node.rhs_);
     store(node.tt_);
+    return;
+  }
+  case NodeType::StmtExpr: {
+    const auto &nodes = std::get<parser::NodeList>(node.data_);
+    for (const auto &node : nodes) {
+      gen_stmt(*node);
+    }
     return;
   }
   case NodeType::FunctionCall: {

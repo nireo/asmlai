@@ -123,6 +123,20 @@ void add_type(parser::Node &node) {
 
     return;
   }
+  case NT::StmtExpr: {
+    try {
+      const auto &body_node = *std::get<parser::NodePtr>(node.data_);
+      const auto &node_list = std::get<parser::NodeList>(body_node.data_);
+
+      if (node_list[node_list.size() - 1]->type_ == NT::ExprStmt) {
+        node.tt_ = node_list[node_list.size() - 1]->tt_;
+        return;
+      }
+    } catch (const std::bad_variant_access &e) {
+      std::fprintf(stderr, "statement expression needs to return a type.");
+      return;
+    }
+  }
   default: {
   }
   }

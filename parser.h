@@ -69,6 +69,7 @@ enum class NodeType {
   Addr,
   Derefence,
   FunctionCall,
+  StmtExpr,
 };
 
 struct Node;
@@ -116,7 +117,7 @@ struct Node {
   Type *tt_ = NULL;
 
   std::variant<i64, std::shared_ptr<Object>, NodeList, IfNode, ForNode, char *,
-               std::monostate>
+               NodePtr, std::monostate>
       data_ = std::monostate{};
 
   // This would be normally wrapped into the std::variant, but when calling

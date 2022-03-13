@@ -582,6 +582,15 @@ static NodePtr parse_func_call(const TokenList &tokens, u64 &pos) {
 }
 
 static NodePtr parse_primary(const TokenList &tokens, u64 &pos) {
+  if (tokens[pos] == "(" && tokens[pos + 1] == "{") {
+    auto node = new_node(NodeType::StmtExpr);
+    pos += 2;
+    node->data_ = parse_compound_stmt(tokens, pos);
+    skip_until(tokens, ")", pos);
+
+    return node;
+  }
+
   if (tokens[pos] == "(") {
     ++pos;
     auto node = parse_expression(tokens, pos);
