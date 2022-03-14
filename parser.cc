@@ -21,7 +21,6 @@ static std::vector<std::shared_ptr<Object>> locals_;
 static std::vector<std::shared_ptr<Object>> globals_;
 
 using TokenList = std::vector<token::Token>;
-
 static NodePtr new_node(NodeType type_) {
   auto node = std::make_unique<Node>();
   node->type_ = type_;

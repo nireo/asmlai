@@ -175,7 +175,10 @@ static Token read_string(char *start) {
   return tok;
 }
 
-std::vector<Token> tokenize_input(char *p) {
+std::vector<Token> tokenize_input(char *filename, char *p) {
+  curr_filename = filename;
+  curr_input = p;
+
   std::vector<Token> res;
 
   while (*p) {
@@ -249,30 +252,39 @@ std::vector<Token> tokenize_input(char *p) {
 }
 
 static char *file_to_string(char *fpath) {
-  FILE *fp = std::fopen(fpath, "r");
-  if (!fp) {
-    error("cannot open file at path %s: %s", fpath, strerror(errno));
+  FILE *fp;
+  if (strcmp(fpath, "-") == 0) {
+    fp = stdin;
+  } else {
+    fp = std::fopen(fpath, "r");
+    if (!fp)
+      error("cannot open %s: %s", fpath, strerror(errno));
   }
 
-  char *buffer;
-  size_t buffer_size;
+  char *buf;
+  size_t buflen;
+  FILE *out = open_memstream(&buf, &buflen);
 
-  FILE *out = open_memstream(&buffer, &buffer_size);
   for (;;) {
-    char buf_[4096];
-    int n = fread(buf_, 1, sizeof(buf_), fp);
+    char buf2[4096];
+    int n = std::fread(buf2, 1, sizeof(buf2), fp);
     if (n == 0)
-      break; // done reading
-    std::fwrite(buf_, 1, n, out);
+      break;
+    std::fwrite(buf2, 1, n, out);
   }
-  std::fclose(fp);
-  std::fflush(fp);
 
-  if (buffer_size == 0 || buffer[buffer_size - 1] != '\n')
+  if (fp != stdin)
+    std::fclose(fp);
+
+  std::fflush(out);
+  if (buflen == 0 || buf[buflen - 1] != '\n')
     std::fputc('\n', out);
   std::fputc('\0', out);
   std::fclose(out);
+  return buf;
+}
 
-  return buffer;
+std::vector<Token> tokenize_path(char *path) {
+  return tokenize_input(path, file_to_string(path));
 }
 } // namespace token
