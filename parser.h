@@ -45,8 +45,11 @@ public:
       optional_data_;
 };
 
+struct Scope;
+
 extern parser::Type *default_int;
 extern parser::Type *default_empty;
+extern std::vector<Scope> scopes;
 
 enum class NodeType {
   Add,
@@ -94,6 +97,15 @@ struct Object {
 
   std::vector<std::shared_ptr<Object>> params_{};
   std::vector<std::shared_ptr<Object>> locals_{};
+};
+
+struct VarScope {
+  char *name_;
+  std::shared_ptr<Object> variable_;
+};
+
+struct Scope {
+  std::vector<VarScope> variables_;
 };
 
 struct IfNode {

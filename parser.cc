@@ -19,6 +19,7 @@ template <typename... Args> static void error(const char *fmt, Args... args) {
 
 static std::vector<std::shared_ptr<Object>> locals_;
 static std::vector<std::shared_ptr<Object>> globals_;
+static int current_scope = 0;
 
 using TokenList = std::vector<token::Token>;
 static NodePtr new_node(NodeType type_) {
@@ -33,6 +34,19 @@ static char *new_unique() {
   char *buffer = (char *)malloc(20 * sizeof(char));
   sprintf(buffer, ".L..%d", L_id++);
   return buffer;
+}
+
+static void enter_scope() {
+  scopes.push_back({.variables_ = {}});
+  ++current_scope;
+}
+
+static void leave_scope() {
+  if (current_scope == 0) {
+    error("popping global scope.");
+  }
+
+  --current_scope;
 }
 
 static std::shared_ptr<Object> find_var(const token::Token &tok) {
@@ -58,6 +72,14 @@ static bool consume(const TokenList &tokens, u64 &pos, const char *str) {
   }
 
   return false;
+}
+
+static void push_scope(char *name, std::shared_ptr<Object> variable) {
+  VarScope vscope;
+  vscope.name_ = name;
+  vscope.variable_ = variable;
+
+  scopes[current_scope].variables_.push_back(std::move(vscope));
 }
 
 static NodePtr new_single(NodeType type_, NodePtr expr) {
@@ -671,6 +693,7 @@ static void parse_function(const TokenList &tokens, u64 &pos, Type *ty) {
     // no params do nothing.
   }
 
+  enter_scope();
   std::shared_ptr<Object> func_obj =
       new_gvar(strndup(ty->name_, strlen(ty->name_)), ty);
   func_obj->is_func_ = true;
@@ -683,6 +706,8 @@ static void parse_function(const TokenList &tokens, u64 &pos, Type *ty) {
   skip_until(tokens, "{", pos);
   func_obj->body = parse_compound_stmt(tokens, pos);
   func_obj->locals_ = std::move(locals_);
+
+  leave_scope();
 
   locals_.clear();
 }
