@@ -19,7 +19,6 @@ template <typename... Args> static void error(const char *fmt, Args... args) {
 
 static std::vector<std::shared_ptr<Object>> locals_;
 static std::vector<std::shared_ptr<Object>> globals_;
-static int current_scope = 0;
 
 using TokenList = std::vector<token::Token>;
 static NodePtr new_node(NodeType type_) {
@@ -37,28 +36,19 @@ static char *new_unique() {
 }
 
 static void enter_scope() {
-  scopes.push_back({.variables_ = {}});
-  ++current_scope;
+  Scope *n = new Scope();
+  scopes->next_ = scopes;
+  scopes = n;
 }
 
-static void leave_scope() {
-  if (current_scope == 0) {
-    error("popping global scope.");
-  }
-
-  --current_scope;
-}
+static void leave_scope() { scopes = scopes->next_; }
 
 static std::shared_ptr<Object> find_var(const token::Token &tok) {
-  for (const auto &obj : locals_) {
-    if (!strncmp(tok.loc_, obj->name_, tok.len_)) {
-      return obj;
-    }
-  }
-
-  for (const auto &obj : globals_) {
-    if (!strncmp(tok.loc_, obj->name_, tok.len_)) {
-      return obj;
+  for (Scope *sc = scopes; sc; sc = sc->next_) {
+    for (const auto &v : sc->variables_) {
+      if (tok == v.name_) {
+        return v.variable_;
+      }
     }
   }
 
@@ -78,8 +68,7 @@ static void push_scope(char *name, std::shared_ptr<Object> variable) {
   VarScope vscope;
   vscope.name_ = name;
   vscope.variable_ = variable;
-
-  scopes[current_scope].variables_.push_back(std::move(vscope));
+  scopes->variables_.push_back(std::move(vscope));
 }
 
 static NodePtr new_single(NodeType type_, NodePtr expr) {
@@ -667,6 +656,8 @@ static NodePtr parse_primary(const TokenList &tokens, u64 &pos) {
 
 static NodePtr parse_compound_stmt(const TokenList &tokens, u64 &pos) {
   std::vector<NodePtr> nodes;
+  enter_scope();
+
   while (tokens[pos] != "}") {
     if (is_typename(tokens[pos])) {
       nodes.push_back(std::move(parse_declaration(tokens, pos)));
@@ -675,6 +666,8 @@ static NodePtr parse_compound_stmt(const TokenList &tokens, u64 &pos) {
     }
     typesystem::add_type(*nodes[nodes.size() - 1]);
   }
+
+  leave_scope();
 
   auto node = new_node(NodeType::Block);
   node->data_ = std::move(nodes);

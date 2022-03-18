@@ -7,9 +7,7 @@
 parser::Type *parser::default_int =
     new parser::Type(parser::Types::Int, parser::kNumberSize);
 parser::Type *parser::default_empty = new parser::Type(parser::Types::Empty, 0);
-std::vector<parser::Scope> scopes = {{
-    .variables_ = {},
-}};
+parser::Scope *parser::scopes = new parser::Scope();
 
 static char *input_path;
 static char *o_opt;

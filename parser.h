@@ -49,7 +49,8 @@ struct Scope;
 
 extern parser::Type *default_int;
 extern parser::Type *default_empty;
-extern std::vector<Scope> scopes;
+extern Scope
+    *scopes; // use linked list since globals vectors didn't work very well.
 
 enum class NodeType {
   Add,
@@ -105,6 +106,12 @@ struct VarScope {
 };
 
 struct Scope {
+  Scope() {
+    next_ = nullptr;
+    variables_ = std::vector<VarScope>();
+  }
+
+  Scope *next_;
   std::vector<VarScope> variables_;
 };
 
