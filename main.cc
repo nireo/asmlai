@@ -40,6 +40,11 @@ static void parse_cmd_args(int argc, char **argv) {
 
     input_path = argv[i];
   }
+
+  if (!input_path) {
+    std::fprintf(stderr, "no input files.");
+    std::exit(1);
+  }
 }
 
 static FILE *open_file(char *path) {
@@ -56,12 +61,9 @@ static FILE *open_file(char *path) {
 }
 
 int main(int argc, char **argv) {
-  if (argc != 2) {
-    std::cerr << "scc: invalid number of arguments\n";
-    std::exit(EXIT_FAILURE);
-  }
+  parse_cmd_args(argc, argv);
 
-  auto tokens = token::tokenize_path(argv[1]);
+  auto tokens = token::tokenize_path(input_path);
 
   auto functions = parser::parse_tokens(tokens);
   codegen::gen_code(std::move(functions));
