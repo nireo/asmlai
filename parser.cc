@@ -37,7 +37,7 @@ static char *new_unique() {
 
 static void enter_scope() {
   Scope *n = new Scope();
-  scopes->next_ = scopes;
+  n->next_ = scopes;
   scopes = n;
 }
 
@@ -89,7 +89,6 @@ static NodePtr new_binary_node(NodeType type_, NodePtr lhs, NodePtr rhs) {
 static NodePtr new_variable_node(std::shared_ptr<Object> variable) {
   auto node = new_node(NodeType::Variable);
   node->data_ = std::move(variable);
-
   return node;
 }
 
@@ -124,6 +123,15 @@ static std::shared_ptr<Object> new_gvar(char *name, Type *ty) {
   obj->is_local_ = false;
   obj->ty_ = ty;
   globals_.push_back(obj);
+
+  return obj;
+}
+
+static std::shared_ptr<Object> new_var(char *name, Type *ty) {
+  std::shared_ptr<Object> obj = std::make_shared<Object>(name, 0);
+  obj->is_local_ = false;
+  obj->ty_ = ty;
+  push_scope(name, obj);
 
   return obj;
 }
