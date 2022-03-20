@@ -107,10 +107,19 @@ static char *get_identifier(const token::Token &tok) {
   return strndup(tok.loc_, tok.len_);
 }
 
+static std::shared_ptr<Object> new_var(char *name, Type *ty) {
+  std::shared_ptr<Object> obj = std::make_shared<Object>(name, 0);
+  obj->is_local_ = false;
+  obj->ty_ = ty;
+  push_scope(name, obj);
+
+  return obj;
+}
+
 // it needs to be a pointer so that we can change the offset stored in the
 // object more easily
 static std::shared_ptr<Object> new_lvar(char *name, Type *ty) {
-  std::shared_ptr<Object> obj = std::make_shared<Object>(name, 0);
+  auto obj = new_var(name, ty);
   obj->is_local_ = true;
   obj->ty_ = ty;
   locals_.push_back(obj);
@@ -119,19 +128,10 @@ static std::shared_ptr<Object> new_lvar(char *name, Type *ty) {
 }
 
 static std::shared_ptr<Object> new_gvar(char *name, Type *ty) {
-  std::shared_ptr<Object> obj = std::make_shared<Object>(name, 0);
+  auto obj = new_var(name, ty);
   obj->is_local_ = false;
   obj->ty_ = ty;
   globals_.push_back(obj);
-
-  return obj;
-}
-
-static std::shared_ptr<Object> new_var(char *name, Type *ty) {
-  std::shared_ptr<Object> obj = std::make_shared<Object>(name, 0);
-  obj->is_local_ = false;
-  obj->ty_ = ty;
-  push_scope(name, obj);
 
   return obj;
 }
