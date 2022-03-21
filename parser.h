@@ -74,6 +74,7 @@ enum class NodeType {
   Derefence,
   FunctionCall,
   StmtExpr,
+  Comma,
 };
 
 struct Node;

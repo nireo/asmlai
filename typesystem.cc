@@ -137,6 +137,10 @@ void add_type(parser::Node &node) {
       return;
     }
   }
+  case NT::Comma: {
+    node.tt_ = node.rhs_->tt_;
+    return;
+  }
   default: {
   }
   }

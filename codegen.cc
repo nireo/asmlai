@@ -77,6 +77,10 @@ static void gen_address(const parser::Node &node) {
   } else if (node.type_ == parser::NodeType::Derefence) {
     gen_expression(*node.lhs_);
     return;
+  } else if (node.type_ == parser::NodeType::Comma) {
+    gen_expression(*node.lhs_);
+    gen_expression(*node.rhs_);
+    return;
   }
 
   std::fprintf(stderr, "non-lvalue\n");
@@ -159,6 +163,11 @@ static void gen_expression(const parser::Node &node) {
 
     emit("mov $0, %%rax");
     emit("call %s", node.func_name_);
+    return;
+  }
+  case NodeType::Comma: {
+    gen_expression(*node.lhs_);
+    gen_expression(*node.rhs_);
     return;
   }
   default: {

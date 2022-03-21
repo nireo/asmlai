@@ -428,7 +428,14 @@ static NodePtr parse_stmt(const TokenList &tokens, u64 &pos) {
 }
 
 static NodePtr parse_expression(const TokenList &tokens, u64 &pos) {
-  return parse_assign(tokens, pos);
+  auto node = parse_assign(tokens, pos);
+
+  if (tokens[pos] == ",") {
+    ++pos;
+    return new_binary_node(NodeType::Comma, std::move(node),
+                           parse_expression(tokens, pos));
+  }
+  return node;
 }
 
 static NodePtr parse_equal(const TokenList &tokens, u64 &pos) {
