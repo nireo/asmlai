@@ -254,14 +254,37 @@ static bool is_typename(const token::Token &tok) {
   return tok == "char" || tok == "int";
 }
 
+static void struct_members(const TokenList &tokens, u64 &pos) {
+  while (tokens[pos] != "}") {
+  }
+}
+
+static Type *struct_declaration(const TokenList &tokens, u64 &pos) {
+  skip_until(tokens, "{", pos);
+
+  Type *ty = new Type(Types::Struct, 0);
+  // TODO: parse struct members
+  // TODO: assign offsets
+  return ty;
+}
+
 static Type *decl_type(const TokenList &tokens, u64 &pos) {
   if (tokens[pos] == "char") {
     ++pos;
     return new Type(Types::Char, kCharSize);
   }
 
-  skip_until(tokens, "int", pos);
-  return new Type(Types::Int, kNumberSize);
+  if (tokens[pos] == "int") {
+    ++pos;
+    return new Type(Types::Int, kNumberSize);
+  }
+
+  if (tokens[pos] == "struct") {
+    ++pos;
+    return parse_struct_declaration(tokens, pos);
+  }
+
+  return nullptr;
 }
 
 static Type *function_parameters(const TokenList &tokens, u64 &pos,

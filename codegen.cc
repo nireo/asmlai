@@ -81,6 +81,10 @@ static void gen_address(const parser::Node &node) {
     gen_expression(*node.lhs_);
     gen_expression(*node.rhs_);
     return;
+  } else if (node.type_ == parser::NodeType::Member) {
+    gen_address(*node.lhs_);
+    emit("add $%ld, %%rax", std::get<parser::MemberPtr>(node.data_)->offset);
+    return;
   }
 
   std::fprintf(stderr, "non-lvalue\n");
@@ -121,6 +125,7 @@ static void gen_expression(const parser::Node &node) {
     emit("neg %%rax");
     return;
   }
+  case NodeType::Member:
   case NodeType::Variable: {
     gen_address(node);
     load(node.tt_);

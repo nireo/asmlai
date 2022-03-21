@@ -16,6 +16,7 @@ enum class Types {
   Ptr,
   Function,
   Array,
+  Struct,
 };
 
 constexpr i32 kNumberSize = 8;
@@ -32,6 +33,14 @@ struct FunctionType {
   std::vector<Type *> params_;
 };
 
+struct Member {
+  std::unique_ptr<Member> next_ = nullptr;
+  char *name;
+  i64 offset = 0;
+  Type *type = nullptr;
+};
+using MemberPtr = std::unique_ptr<Member>;
+
 struct Type {
 public:
   Type(Types tt, i32 size) : size_(size), type_(tt) {}
@@ -41,7 +50,7 @@ public:
   Type *base_type_ = nullptr;
   char *name_ = nullptr;
   std::variant<std::vector<Type *>, std::monostate, Type *, FunctionType,
-               ArrayType>
+               ArrayType, MemberPtr>
       optional_data_;
 };
 
@@ -75,6 +84,7 @@ enum class NodeType {
   FunctionCall,
   StmtExpr,
   Comma,
+  Member,
 };
 
 struct Node;
@@ -134,10 +144,10 @@ struct Node {
   NodeType type_ = NodeType::Add; // default type
   std::unique_ptr<Node> lhs_ = nullptr;
   std::unique_ptr<Node> rhs_ = nullptr;
-  Type *tt_ = NULL;
+  Type *tt_ = nullptr;
 
   std::variant<i64, std::shared_ptr<Object>, NodeList, IfNode, ForNode, char *,
-               NodePtr, std::monostate>
+               NodePtr, std::unique_ptr<Member>, std::monostate>
       data_ = std::monostate{};
 
   // This would be normally wrapped into the std::variant, but when calling
