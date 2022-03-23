@@ -227,7 +227,8 @@ static NodePtr parse_unary(const TokenList &, u64 &);
 static NodePtr parse_primary(const TokenList &, u64 &);
 static NodePtr parse_relational(const TokenList &, u64 &);
 static NodePtr parse_assign(const TokenList &, u64 &);
-static NodePtr parse_postfix(const TokenList &, u64 &pos);
+static NodePtr parse_postfix(const TokenList &, u64 &);
+static Type *parse_struct_declaration(const TokenList &, u64 &);
 
 static Type *declarator(const TokenList &tokens, u64 &pos, Type *ty);
 
@@ -254,20 +255,6 @@ static bool is_typename(const token::Token &tok) {
   return tok == "char" || tok == "int";
 }
 
-static void struct_members(const TokenList &tokens, u64 &pos) {
-  while (tokens[pos] != "}") {
-  }
-}
-
-static Type *struct_declaration(const TokenList &tokens, u64 &pos) {
-  skip_until(tokens, "{", pos);
-
-  Type *ty = new Type(Types::Struct, 0);
-  // TODO: parse struct members
-  // TODO: assign offsets
-  return ty;
-}
-
 static Type *decl_type(const TokenList &tokens, u64 &pos) {
   if (tokens[pos] == "char") {
     ++pos;
@@ -285,6 +272,70 @@ static Type *decl_type(const TokenList &tokens, u64 &pos) {
   }
 
   return nullptr;
+}
+
+static MemberList struct_members(const TokenList &tokens, u64 &pos) {
+  MemberList members{};
+  while (tokens[pos] != "}") {
+    Type *base_type = decl_type(tokens, pos);
+    i32 i = 0;
+
+    while (!consume(tokens, pos, ";")) {
+      if (i++) {
+        skip_until(tokens, ",", pos);
+      }
+
+      Member mem{};
+      mem.type = declarator(tokens, pos, base_type);
+      mem.name = mem.type->name_;
+      members.push_back(std::move(mem));
+    }
+  }
+
+  return members;
+}
+
+static Type *struct_declaration(const TokenList &tokens, u64 &pos) {
+  skip_until(tokens, "{", pos);
+
+  Type *ty = new Type(Types::Struct, 0);
+  auto members = struct_members(tokens, pos);
+  i32 offset = 0;
+  for (i64 i = members.size() - 1; i >= 0; ++i) {
+    members[i].offset = offset;
+    offset += members[i].type->size_;
+  }
+
+  ty->optional_data_ = std::move(members);
+  ty->size_ = offset;
+
+  return ty;
+}
+
+static const Member &get_struct_member(Type *ty, const token::Token &tok) {
+  try {
+    const auto &ref = std::get<MemberList>(ty->optional_data_);
+    for (i64 i = 0; i < ref.size(); ++i) {
+      if (strlen(ref[i].name) == tok.len_ &&
+          !strncmp(ref[i].name, tok.loc_, tok.len_))
+        return ref[i];
+    }
+
+  } catch (const std::bad_variant_access &e) {
+    error("no such struct member.");
+  }
+  std::exit(1);
+}
+
+static NodePtr struct_ref(NodePtr lhs, const token::Token &tok) {
+  typesystem::add_type(*lhs);
+  if (lhs->tt_->type_ != Types::Struct) {
+    error("not a struct.");
+  }
+
+  auto node = new_single(NodeType::Member, std::move(lhs));
+
+  return node;
 }
 
 static Type *function_parameters(const TokenList &tokens, u64 &pos,

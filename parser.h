@@ -40,6 +40,7 @@ struct Member {
   Type *type = nullptr;
 };
 using MemberPtr = std::unique_ptr<Member>;
+using MemberList = std::vector<Member>;
 
 struct Type {
 public:
@@ -50,7 +51,7 @@ public:
   Type *base_type_ = nullptr;
   char *name_ = nullptr;
   std::variant<std::vector<Type *>, std::monostate, Type *, FunctionType,
-               ArrayType, MemberPtr>
+               ArrayType, MemberList>
       optional_data_;
 };
 
@@ -147,7 +148,7 @@ struct Node {
   Type *tt_ = nullptr;
 
   std::variant<i64, std::shared_ptr<Object>, NodeList, IfNode, ForNode, char *,
-               NodePtr, std::unique_ptr<Member>, std::monostate>
+               NodePtr, Member, std::monostate>
       data_ = std::monostate{};
 
   // This would be normally wrapped into the std::variant, but when calling
