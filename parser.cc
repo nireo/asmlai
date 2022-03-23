@@ -796,7 +796,6 @@ static void parse_function(const TokenList &tokens, u64 &pos, Type *ty) {
 
 static void global_varialble(const TokenList &tokens, u64 &pos, Type *base) {
   bool first = true;
-
   while (!consume(tokens, pos, ";")) {
     if (!first) {
       skip_until(tokens, ",", pos);

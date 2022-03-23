@@ -20,7 +20,8 @@ void error(const char *format_string, Args... args) {
 }
 
 template <typename... Args>
-void error_at(char *location, const char *format_string, Args... args) {
+void error_at(int line_number, char *location, const char *format_string,
+              Args... args) {
   char *line = location;
   while (curr_input < line && line[-1] != '\n')
     line--;
@@ -29,12 +30,7 @@ void error_at(char *location, const char *format_string, Args... args) {
   while (*end != '\n')
     end++;
 
-  int line_no = 1;
-  for (char *p = curr_input; p < line; p++)
-    if (*p == '\n')
-      line_no++;
-
-  int indent = fprintf(stderr, "%s:%d: ", curr_filename, line_no);
+  int indent = fprintf(stderr, "%s:%d: ", curr_filename, line_number);
   fprintf(stderr, "%.*s\n", (int)(end - line), line);
 
   int pos = location - line + indent;
@@ -49,7 +45,7 @@ void error_at(char *location, const char *format_string, Args... args) {
 
 template <typename... Args>
 void error_token(const Token &tok, const char *format_string, Args... args) {
-  error_at(tok.loc_, format_string, args...);
+  error_at(tok.line_number_, tok.loc_, format_string, args...);
 }
 
 static Token new_token(char *start, char *end, TokenType type_) {
@@ -59,6 +55,21 @@ static Token new_token(char *start, char *end, TokenType type_) {
       .len_ = end - start,
       .loc_ = start,
   };
+}
+
+static void add_line_numbers(std::vector<Token> &tokens) {
+  char *p = curr_input;
+  i32 num = 1, pos = 0;
+
+  do {
+    if (p == tokens[pos].loc_) {
+      tokens[pos].line_number_ = num;
+      ++pos;
+    }
+
+    if (*p == '\n')
+      ++num;
+  } while (*p++);
 }
 
 static bool is_ident_char(char c) {
@@ -248,6 +259,8 @@ std::vector<Token> tokenize_input(char *filename, char *p) {
   }
 
   res.push_back(new_token(p, p, TokenType::Eof));
+
+  add_line_numbers(res);
   return res;
 }
 

@@ -34,6 +34,7 @@ struct Token {
   std::variant<std::monostate, i64, StringLiteral> data_;
   i64 len_{0};
   char *loc_ = nullptr;
+  i32 line_number_{0};
 };
 
 template <typename... Args> void error(const char *format_string, Args... args);
