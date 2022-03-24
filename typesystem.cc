@@ -141,6 +141,16 @@ void add_type(parser::Node &node) {
     node.tt_ = node.rhs_->tt_;
     return;
   }
+  case NT::Member: {
+    try {
+      node.tt_ = std::get<parser::Member *>(node.data_)->type;
+      return;
+    } catch (const std::bad_variant_access &e) {
+      std::fprintf(stderr, "cannot access member in node pointer.");
+      return;
+    }
+    return;
+  }
   default: {
   }
   }

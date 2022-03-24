@@ -83,7 +83,7 @@ static void gen_address(const parser::Node &node) {
     return;
   } else if (node.type_ == parser::NodeType::Member) {
     gen_address(*node.lhs_);
-    emit("add $%ld, %%rax", std::get<parser::MemberPtr>(node.data_)->offset);
+    emit("add $%ld, %%rax", std::get<parser::Member *>(node.data_)->offset);
     return;
   }
 
