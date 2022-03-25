@@ -14,6 +14,7 @@ constexpr static const char *argreg64[] = {"%rdi", "%rsi", "%rdx",
                                            "%rcx", "%r8",  "%r9"};
 static std::shared_ptr<parser::Object> curr_func;
 static i64 depth{};
+static FILE *out_file;
 
 static i64 count() {
   static i64 i = i;
@@ -25,9 +26,9 @@ static i64 align_to(i64 n, i64 align) {
 }
 
 template <typename... Args> static void emit(const char *fmt, Args... args) {
-  printf("  ");
-  printf(fmt, args...);
-  printf("\n");
+  std::fprintf(out_file, "  ");
+  std::fprintf(out_file, fmt, args...);
+  std::fprintf(out_file, "\n");
 }
 
 static void gen_stmt(const parser::Node &);
@@ -262,11 +263,11 @@ static void gen_stmt(const parser::Node &node) {
     emit("je .L.else.%ld", L);
     gen_stmt(*if_node.then_);
     emit("jmp .L.end.%ld", L);
-    printf(".L.else.%ld:\n", L);
+    std::fprintf(out_file, ".L.else.%ld:\n", L);
     if (if_node.else_ != nullptr) {
       gen_stmt(*if_node.else_);
     }
-    printf(".L.end.%ld:\n", L);
+    std::fprintf(out_file, ".L.end.%ld:\n", L);
     return;
   }
   case parser::NodeType::For: {
@@ -277,7 +278,7 @@ static void gen_stmt(const parser::Node &node) {
       gen_stmt(*for_node.initialization_);
     }
 
-    printf(".L.begin.%ld:\n", L);
+    std::fprintf(out_file, ".L.begin.%ld:\n", L);
     if (for_node.condition_ != nullptr) {
       gen_expression(*for_node.condition_);
       emit("cmp $0, %%rax");
@@ -288,7 +289,7 @@ static void gen_stmt(const parser::Node &node) {
     if (for_node.increment_ != nullptr)
       gen_expression(*for_node.increment_);
     emit("jmp .L.begin.%ld", L);
-    printf(".L.end.%ld:\n", L);
+    std::fprintf(out_file, ".L.end.%ld:\n", L);
     return;
   }
   default: {
@@ -298,7 +299,8 @@ static void gen_stmt(const parser::Node &node) {
   }
 }
 
-void gen_code(std::vector<std::shared_ptr<parser::Object>> &&root) {
+void gen_code(std::vector<std::shared_ptr<parser::Object>> &&root, FILE *out) {
+  out_file = out;
   assign_lvar_offsets(root);
 
   for (u64 i = 0; i < root.size(); ++i) {
@@ -308,7 +310,7 @@ void gen_code(std::vector<std::shared_ptr<parser::Object>> &&root) {
 
     emit(".data");
     emit(".globl %s", root[i]->name_);
-    printf("%s:\n", root[i]->name_);
+    std::fprintf(out_file, "%s:\n", root[i]->name_);
 
     if (root[i]->init_data_ == nullptr) {
       emit(".zero %d", root[i]->ty_->size_);
@@ -328,7 +330,7 @@ void gen_code(std::vector<std::shared_ptr<parser::Object>> &&root) {
 
     emit(".globl %s", curr_func->name_);
     emit(".text");
-    printf("%s:\n", curr_func->name_);
+    std::fprintf(out_file, "%s:\n", curr_func->name_);
 
     emit("push %%rbp");
     emit("mov %%rsp, %%rbp");
@@ -346,7 +348,7 @@ void gen_code(std::vector<std::shared_ptr<parser::Object>> &&root) {
     gen_stmt(*curr_func->body);
     assert(depth == 0);
 
-    printf(".L.return.%s:\n", curr_func->name_);
+    std::fprintf(out_file, ".L.return.%s:\n", curr_func->name_);
     emit("mov %%rbp, %%rsp");
     emit("pop %%rbp");
     emit("ret");

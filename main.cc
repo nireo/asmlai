@@ -66,7 +66,9 @@ int main(int argc, char **argv) {
   auto tokens = token::tokenize_path(input_path);
 
   auto functions = parser::parse_tokens(tokens);
-  codegen::gen_code(std::move(functions));
+  FILE *out = open_file(o_opt);
+  fprintf(out, ".file 1 \"%s\"\n", input_path);
+  codegen::gen_code(std::move(functions), out);
 
   delete parser::default_int;
   delete parser::default_empty;
