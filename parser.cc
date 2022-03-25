@@ -298,7 +298,7 @@ static Member *struct_members(const TokenList &tokens, u64 &pos) {
   return head.next_;
 }
 
-static Type *struct_declaration(const TokenList &tokens, u64 &pos) {
+static Type *parse_struct_declaration(const TokenList &tokens, u64 &pos) {
   skip_until(tokens, "{", pos);
 
   Type *ty = new Type(Types::Struct, 0);

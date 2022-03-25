@@ -20,8 +20,8 @@ void error(const char *format_string, Args... args) {
 }
 
 template <typename... Args>
-void error_at(int line_number, char *location, const char *format_string,
-              Args... args) {
+void error_at_(int line_number, char *location, const char *format_string,
+               Args... args) {
   char *line = location;
   while (curr_input < line && line[-1] != '\n')
     line--;
@@ -44,8 +44,18 @@ void error_at(int line_number, char *location, const char *format_string,
 }
 
 template <typename... Args>
+void error_at(char *loc, const char *fmt, Args... args) {
+  int line_number = 1;
+  for (char *p = curr_input; p < loc; p++) {
+    if (*p == '\n')
+      ++line_number;
+  }
+  error_at_(line_number, loc, fmt, args...);
+}
+
+template <typename... Args>
 void error_token(const Token &tok, const char *format_string, Args... args) {
-  error_at(tok.line_number_, tok.loc_, format_string, args...);
+  error_at_(tok.line_number_, tok.loc_, format_string, args...);
 }
 
 static Token new_token(char *start, char *end, TokenType type_) {

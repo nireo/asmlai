@@ -39,8 +39,7 @@ struct Token {
 
 template <typename... Args> void error(const char *format_string, Args... args);
 template <typename... Args>
-void error_at(int line_number, char *location, const char *format_string,
-              Args... args);
+void error_at(char *location, const char *format_string, Args... args);
 
 std::vector<Token> tokenize_input(char *filename, char *p);
 std::vector<Token> tokenize_path(char *path);
