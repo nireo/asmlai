@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "codegen.h"
 #include "token.h"
 #include "typesystem.h"
 #include <cstddef>
@@ -303,15 +304,20 @@ static Type *parse_struct_declaration(const TokenList &tokens, u64 &pos) {
 
   Type *ty = new Type(Types::Struct, 0);
   auto members = struct_members(tokens, pos);
+  ty->align_ = 1;
+
   i32 offset = 0;
   for (Member *mem = members; mem; mem = mem->next_) {
+    offset = codegen::align_to(offset, mem->type->align_);
     mem->offset = offset;
     offset += mem->type->size_;
+
+    if (ty->align_ < mem->type->align_)
+      ty->align_ = mem->type->align_;
   }
 
   ty->optional_data_ = members;
-  ty->size_ = offset;
-
+  ty->size_ = codegen::align_to(offset, ty->align_);
   return ty;
 }
 

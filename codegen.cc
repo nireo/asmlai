@@ -21,9 +21,7 @@ static i64 count() {
   return i++;
 }
 
-static i64 align_to(i64 n, i64 align) {
-  return (n + align - 1) / align * align;
-}
+i64 align_to(i64 n, i64 align) { return (n + align - 1) / align * align; }
 
 template <typename... Args> static void emit(const char *fmt, Args... args) {
   std::fprintf(out_file, "  ");

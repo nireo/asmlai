@@ -6,6 +6,7 @@
 
 namespace codegen {
 void gen_code(std::vector<std::shared_ptr<parser::Object>> &&root, FILE *fp);
-};
+i64 align_to(i64 n, i64 align);
+}; // namespace codegen
 
 #endif
