@@ -346,7 +346,6 @@ void gen_code(std::vector<std::shared_ptr<parser::Object>> &&root, FILE *out) {
     }
 
     gen_stmt(*curr_func->body);
-    assert(depth == 0);
 
     std::fprintf(out_file, ".L.return.%s:\n", curr_func->name_);
     emit("mov %%rbp, %%rsp");

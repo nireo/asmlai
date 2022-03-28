@@ -1,7 +1,6 @@
 #!/bin/bash
 tmp=`mktemp -d /tmp/asmlai-test-XXXXXX`
 trap 'rm -rf $tmp' INT TERM HUP EXIT
-
 echo > $tmp/empty.c
 
 check() {
@@ -20,7 +19,7 @@ rm -f $tmp/out
 check -o
 
 # --help
-./chibicc --help 2>&1 | grep -q chibicc
+./asmlai --help 2>&1 | grep -q asmlai
 check --help
 
 echo OK
