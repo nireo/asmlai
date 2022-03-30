@@ -12,7 +12,8 @@ namespace typesystem {
   }
 
 bool is_number(parser::Type *ty) {
-  return ty->type_ == parser::Types::Int || ty->type_ == parser::Types::Char;
+  return ty->type_ == parser::Types::Int || ty->type_ == parser::Types::Char ||
+         ty->type_ == parser::Types::Short;
 }
 
 parser::Type *ptr_to(parser::Type *base) {

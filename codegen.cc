@@ -8,10 +8,14 @@
 #include <variant>
 
 namespace codegen {
-constexpr static const char *argreg8[] = {"%dil", "%sil", "%dl",
-                                          "%cl",  "%r8b", "%r9b"};
-constexpr static const char *argreg64[] = {"%rdi", "%rsi", "%rdx",
-                                           "%rcx", "%r8",  "%r9"};
+constexpr static const char *args_8bit[] = {"%dil", "%sil", "%dl",
+                                            "%cl",  "%r8b", "%r9b"};
+constexpr static const char *arg_16bit[] = {"%di", "%si",  "%dx",
+                                            "%cx", "%r8w", "%r9w"};
+constexpr static const char *arg_32bit[] = {"%edi", "%esi", "%edx",
+                                            "%ecx", "%r8d", "%r9d"};
+constexpr static const char *arg_64bit[] = {"%rdi", "%rsi", "%rdx",
+                                            "%rcx", "%r8",  "%r9"};
 static std::shared_ptr<parser::Object> curr_func;
 static i64 depth{};
 static FILE *out_file;
@@ -47,6 +51,10 @@ static void load(parser::Type *ty) {
 
   if (ty->size_ == 1) {
     emit("movsbq (%%rax), %%rax");
+  } else if (ty->size_ == 2) {
+    emit("movswq (%%rax), %%rax");
+  } else if (ty->size_ == 4) {
+    emit("movsxd (%%rax), %%rax");
   } else {
     emit("mov (%%rax), %%rax");
   }
@@ -162,7 +170,7 @@ static void gen_expression(const parser::Node &node) {
     }
 
     for (i32 i = arg_count - 1; i >= 0; --i) {
-      pop(argreg64[i]);
+      pop(arg_64bit[i]);
     }
 
     emit("mov $0, %%rax");
@@ -337,9 +345,9 @@ void gen_code(std::vector<std::shared_ptr<parser::Object>> &&root, FILE *out) {
     u64 arg_reg_index = 0;
     for (auto &par : curr_func->params_) {
       if (par->ty_->size_ == 1) {
-        emit("mov %s, %d(%%rbp)", argreg8[arg_reg_index++], par->offset_);
+        emit("mov %s, %d(%%rbp)", args_8bit[arg_reg_index++], par->offset_);
       } else {
-        emit("mov %s, %d(%%rbp)", argreg64[arg_reg_index++], par->offset_);
+        emit("mov %s, %d(%%rbp)", arg_64bit[arg_reg_index++], par->offset_);
       }
     }
 

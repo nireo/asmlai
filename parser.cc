@@ -267,6 +267,11 @@ static Type *decl_type(const TokenList &tokens, u64 &pos) {
     return new Type(Types::Int, kNumberSize);
   }
 
+  if (tokens[pos] == "short") {
+    ++pos;
+    return new Type(Types::Short, kShortSize);
+  }
+
   if (tokens[pos] == "struct") {
     ++pos;
     return parse_struct_declaration(tokens, pos);
