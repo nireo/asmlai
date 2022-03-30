@@ -23,8 +23,14 @@ enum class Types {
 constexpr i32 kNumberSize = 8;
 constexpr i32 kCharSize = 1;
 constexpr i32 kShortSize = 2;
+
 struct Type;
 using TypePtr = std::unique_ptr<Type>;
+
+struct StructTag {
+  char *name_ = nullptr;
+  Type *ty_ = nullptr;
+};
 
 struct ArrayType {
   i32 array_length;
@@ -127,10 +133,12 @@ struct Scope {
   Scope() {
     next_ = nullptr;
     variables_ = std::vector<VarScope>();
+    tags_ = std::vector<StructTag>();
   }
 
   Scope *next_;
   std::vector<VarScope> variables_;
+  std::vector<StructTag> tags_;
 };
 
 struct IfNode {

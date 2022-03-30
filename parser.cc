@@ -56,6 +56,24 @@ static std::shared_ptr<Object> find_var(const token::Token &tok) {
   return nullptr;
 }
 
+static Type *find_tag(const token::Token &tok) {
+  for (Scope *sc = scopes; sc; sc = sc->next_) {
+    for (const auto &t : sc->tags_) {
+      if (tok == t.name_)
+        return t.ty_;
+    }
+  }
+  return nullptr;
+}
+
+static void push_tag(const token::Token &tok, Type *type) {
+  StructTag tag{};
+  tag.name_ = strndup(tok.loc_, tok.len_);
+  tag.ty_ = type;
+
+  scopes->tags_.push_back(std::move(tag));
+}
+
 static bool consume(const TokenList &tokens, u64 &pos, const char *str) {
   if (tokens[pos] == str) {
     ++pos;
@@ -163,7 +181,8 @@ static NodePtr new_addition(NodePtr lhs_, NodePtr rhs_) {
   typesystem::add_type(*rhs);
 
   // std::cout << "addition on lhs: " << static_cast<int>(lhs->tt_->type_) <<
-  // '\n'; std::cout << "addition on rhs: " << static_cast<int>(rhs->tt_->type_)
+  // '\n'; std::cout << "addition on rhs: " <<
+  // static_cast<int>(rhs->tt_->type_)
   // << '\n'
 
   if (typesystem::is_number(lhs->tt_) && typesystem::is_number(rhs->tt_)) {
@@ -305,9 +324,25 @@ static Member *struct_members(const TokenList &tokens, u64 &pos) {
 }
 
 static Type *parse_struct_declaration(const TokenList &tokens, u64 &pos) {
+  i32 tag_pos = -1;
+  if (tokens[pos].type_ == token::TokenType::Identifier) {
+    tag_pos = pos;
+    ++pos;
+  }
+
+  if (tag_pos != -1 && tokens[pos] != "{") {
+    Type *ty = find_tag(tokens[tag_pos]);
+    if (!ty) {
+      error("unknown struct type.");
+    }
+
+    return ty;
+  }
+
   skip_until(tokens, "{", pos);
 
   Type *ty = new Type(Types::Struct, 0);
+  ++pos;
   auto members = struct_members(tokens, pos);
   ty->align_ = 1;
 
