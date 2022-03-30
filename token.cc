@@ -107,6 +107,13 @@ static int read_punctuator(char *p) {
       starts_with(p, ">="))
     return 2;
 
+  constexpr const char *kw[] = {"==", "!=", "<=", ">=", "->"};
+  for (int i = 0; i < 5; ++i) {
+    if (starts_with(p, kw[i])) {
+      return strlen(kw[i]);
+    }
+  }
+
   return std::ispunct(*p) ? 1 : 0;
 }
 

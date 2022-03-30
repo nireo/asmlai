@@ -358,6 +358,11 @@ static Type *parse_struct_declaration(const TokenList &tokens, u64 &pos) {
 
   ty->optional_data_ = members;
   ty->size_ = codegen::align_to(offset, ty->align_);
+
+  if (tag_pos != -1) {
+    push_tag(tokens[tag_pos], ty);
+  }
+
   return ty;
 }
 
@@ -587,13 +592,30 @@ static NodePtr parse_equal(const TokenList &tokens, u64 &pos) {
 static NodePtr parse_postfix(const TokenList &tokens, u64 &pos) {
   auto node = parse_primary(tokens, pos);
 
-  while (tokens[pos] == "[") {
-    ++pos;
-    auto index = parse_expression(tokens, pos);
+  for (;;) {
+    if (tokens[pos] == "[") {
+      ++pos;
+      auto index = parse_expression(tokens, pos);
 
-    skip_until(tokens, "]", pos);
-    node = new_single(NodeType::Derefence,
-                      new_addition(std::move(node), std::move(index)));
+      skip_until(tokens, "]", pos);
+      node = new_single(NodeType::Derefence,
+                        new_addition(std::move(node), std::move(index)));
+    }
+
+    if (tokens[pos] == ".") {
+      ++pos;
+      node = struct_ref(std::move(node), tokens[pos]);
+      ++pos;
+      continue;
+    }
+
+    if (tokens[pos] == "->") {
+      auto nod = new_single(NodeType::Derefence, std::move(node));
+      nod = struct_ref(std::move(nod), tokens[pos + 1]);
+
+      pos += 2;
+      continue;
+    }
   }
 
   return node;
