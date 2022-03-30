@@ -113,6 +113,7 @@ assign_lvar_offsets(std::vector<std::shared_ptr<parser::Object>> &functions) {
     std::reverse(func->locals_.begin(), func->locals_.end());
     for (auto &obj : func->locals_) {
       offset += obj->ty_->size_;
+      offset = align_to(offset, obj->ty_->align_);
       obj->offset_ = -offset;
     }
 

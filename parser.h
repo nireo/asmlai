@@ -49,8 +49,9 @@ using MemberList = std::vector<Member>;
 struct Type {
 public:
   Type(Types tt, i32 size) : size_(size), type_(tt) {}
+  Type(Types tt, i32 size, i32 align) : type_(tt), size_(size), align_(align) {}
 
-  int align_;
+  i32 align_;
   i32 size_ = 0;
   Types type_;
   Type *base_type_ = nullptr;

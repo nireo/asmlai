@@ -17,7 +17,8 @@ bool is_number(parser::Type *ty) {
 }
 
 parser::Type *ptr_to(parser::Type *base) {
-  parser::Type *tt = new parser::Type(parser::Types::Ptr, parser::kNumberSize);
+  parser::Type *tt = new parser::Type(parser::Types::Ptr, parser::kNumberSize,
+                                      parser::kNumberSize);
   tt->base_type_ = base;
 
   return tt;
@@ -31,8 +32,8 @@ parser::Type *func_ty(parser::Type *return_ty) {
 }
 
 parser::Type *array_of_type(parser::Type *array_type, i32 length) {
-  parser::Type *ty =
-      new parser::Type(parser::Types::Array, array_type->size_ * length);
+  parser::Type *ty = new parser::Type(
+      parser::Types::Array, array_type->size_ * length, array_type->align_);
   parser::ArrayType array_data_;
 
   array_data_.array_length = length;
