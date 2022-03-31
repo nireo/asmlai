@@ -249,6 +249,8 @@ static NodePtr parse_relational(const TokenList &, u64 &);
 static NodePtr parse_assign(const TokenList &, u64 &);
 static NodePtr parse_postfix(const TokenList &, u64 &);
 static Type *parse_struct_declaration(const TokenList &, u64 &);
+static Type *parse_union_declaration(const TokenList &, u64 &);
+static Type *struct_union(const TokenList &tokens, u64 &pos);
 
 static Type *declarator(const TokenList &tokens, u64 &pos, Type *ty);
 
@@ -272,7 +274,25 @@ static i64 get_number_value(const TokenList &tokens, u64 &pos) {
 }
 
 static bool is_typename(const token::Token &tok) {
-  return tok == "char" || tok == "int" || tok == "struct";
+  return tok == "char" || tok == "int" || tok == "struct" || tok == "union";
+}
+
+static Type *parse_union_declaration(const TokenList &tokens, u64 &pos) {
+  Type *ty = struct_union(tokens, pos);
+  ty->type_ = Types::Union;
+
+  auto members = std::get<Member*>(ty->optional_data_);
+  for (Member *mem = members; mem; mem = mem->next_) {
+    if (ty->align_ < mem->type->align_) {
+      ty->align_ = mem->type->align_;
+    }
+
+    if (ty->size_ < mem->type->size_) {
+      ty->size_ = mem->type->size_;
+    }
+  }
+  ty->size_ = codegen::align_to(ty->size_, ty->align_);
+  return ty;
 }
 
 static Type *decl_type(const TokenList &tokens, u64 &pos) {
@@ -294,6 +314,11 @@ static Type *decl_type(const TokenList &tokens, u64 &pos) {
   if (tokens[pos] == "struct") {
     ++pos;
     return parse_struct_declaration(tokens, pos);
+  }
+
+  if (tokens[pos] == "union") {
+    ++pos;
+    return parse_union_declaration(tokens, pos);
   }
 
   return nullptr;
@@ -323,9 +348,9 @@ static Member *struct_members(const TokenList &tokens, u64 &pos) {
   return head.next_;
 }
 
-static Type *parse_struct_declaration(const TokenList &tokens, u64 &pos) {
+static Type *struct_union(const TokenList &tokens, u64 &pos) {
   i32 tag_pos = -1;
-  if (tokens[pos].type_ == token::TokenType::Identifier) {
+  if (tokens[pos].type_ != token::TokenType::Identifier) {
     tag_pos = pos;
     ++pos;
   }
@@ -333,18 +358,29 @@ static Type *parse_struct_declaration(const TokenList &tokens, u64 &pos) {
   if (tag_pos != -1 && tokens[pos] != "{") {
     Type *ty = find_tag(tokens[tag_pos]);
     if (!ty) {
-      error("unknown struct type.");
+      error("unknown struct type");
     }
-
     return ty;
   }
-
-  skip_until(tokens, "{", pos);
 
   Type *ty = new Type(Types::Struct, 0);
   ++pos;
   auto members = struct_members(tokens, pos);
   ty->align_ = 1;
+  ty->optional_data_ = members;
+
+  if (tag_pos != -1) {
+    push_tag(tokens[tag_pos], ty);
+  }
+
+  return ty;
+}
+
+static Type *parse_struct_declaration(const TokenList &tokens, u64 &pos) {
+  Type *ty = struct_union(tokens, pos);
+  ty->type_ = Types::Struct;
+
+  auto members = std::get<Member *>(ty->optional_data_);
 
   i32 offset = 0;
   for (Member *mem = members; mem; mem = mem->next_) {
@@ -355,13 +391,7 @@ static Type *parse_struct_declaration(const TokenList &tokens, u64 &pos) {
     if (ty->align_ < mem->type->align_)
       ty->align_ = mem->type->align_;
   }
-
-  ty->optional_data_ = members;
   ty->size_ = codegen::align_to(offset, ty->align_);
-
-  if (tag_pos != -1) {
-    push_tag(tokens[tag_pos], ty);
-  }
 
   return ty;
 }
@@ -384,7 +414,7 @@ static Member *get_struct_member(Type *ty, const token::Token &tok) {
 
 static NodePtr struct_ref(NodePtr lhs, const token::Token &tok) {
   typesystem::add_type(*lhs);
-  if (lhs->tt_->type_ != Types::Struct) {
+  if (lhs->tt_->type_ != Types::Struct && lhs->tt_->type_ != Types::Union) {
     error("not a struct.");
   }
 

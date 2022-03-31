@@ -18,6 +18,7 @@ enum class Types {
   Array,
   Struct,
   Short,
+  Union,
 };
 
 constexpr i32 kNumberSize = 8;
