@@ -7,8 +7,11 @@
 parser::Type *parser::default_int = new parser::Type(
     parser::Types::Int, parser::kNumberSize, parser::kNumberSize);
 parser::Type *parser::default_empty = new parser::Type(parser::Types::Empty, 0);
+parser::Type *parser::default_void =
+    new parser::Type(parser::Types::Void, 1, 1);
 parser::Type *parser::default_long =
     new parser::Type(parser::Types::Long, parser::kLongSize, parser::kLongSize);
+
 parser::Scope *parser::scopes = new parser::Scope();
 
 static char *input_path;

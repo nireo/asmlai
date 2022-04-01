@@ -121,6 +121,11 @@ void add_type(parser::Node &node) {
       std::exit(1);
     }
 
+    if (node.lhs_->tt_->base_type_->type_ == parser::Types::Void) {
+      std::fprintf(stderr, "dereferencing a void pointer");
+      std::exit(1);
+    }
+
     node.tt_ = node.lhs_->tt_->base_type_;
 
     return;

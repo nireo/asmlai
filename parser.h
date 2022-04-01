@@ -20,6 +20,7 @@ enum class Types {
   Short,
   Union,
   Long,
+  Void,
 };
 
 constexpr i32 kCharSize = 1;
@@ -75,6 +76,7 @@ struct Scope;
 extern parser::Type *default_int;
 extern parser::Type *default_empty;
 extern parser::Type *default_long;
+extern parser::Type *default_void;
 extern Scope
     *scopes; // use linked list since globals vectors didn't work very well.
 

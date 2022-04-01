@@ -275,7 +275,7 @@ static i64 get_number_value(const TokenList &tokens, u64 &pos) {
 
 static bool is_typename(const token::Token &tok) {
   return tok == "char" || tok == "int" || tok == "struct" || tok == "union" ||
-         tok == "long";
+         tok == "long" || tok == "void";
 }
 
 static Type *parse_union_declaration(const TokenList &tokens, u64 &pos) {
@@ -297,34 +297,74 @@ static Type *parse_union_declaration(const TokenList &tokens, u64 &pos) {
 }
 
 static Type *decl_type(const TokenList &tokens, u64 &pos) {
-  if (tokens[pos] == "char") {
-    ++pos;
-    return new Type(Types::Char, kCharSize, kCharSize);
-  }
+  constexpr i32 VOID = 1 << 0;
+  constexpr i32 CHAR = 1 << 2;
+  constexpr i32 SHORT = 1 << 4;
+  constexpr i32 INT = 1 << 6;
+  constexpr i32 LONG = 1 << 8;
+  constexpr i32 OTHER = 1 << 10;
 
-  if (tokens[pos] == "int") {
-    ++pos;
-    return new Type(Types::Int, kNumberSize, kNumberSize);
-  }
+  Type *ty = new Type(Types::Int, kNumberSize, kNumberSize);
+  int counter = 0;
 
-  if (tokens[pos] == "short") {
-    ++pos;
-    return new Type(Types::Short, kShortSize, kShortSize);
-  }
+  while (is_typename(tokens[pos])) {
+    if (tokens[pos] == "struct" || tokens[pos] == "union") {
+      if (tokens[pos] == "struct") {
+        ++pos;
+        ty = parse_struct_declaration(tokens, pos);
+      } else {
+        ++pos;
+        ty = parse_union_declaration(tokens, pos);
+      }
 
-  if (tokens[pos] == "struct") {
-    ++pos;
-    return parse_struct_declaration(tokens, pos);
-  }
+      counter += OTHER;
+      continue;
+    }
 
-  if (tokens[pos] == "union") {
-    ++pos;
-    return parse_union_declaration(tokens, pos);
-  }
+    if (tokens[pos] == "void") {
+      counter += VOID;
+    } else if (tokens[pos] == "char") {
+      counter += CHAR;
+    } else if (tokens[pos] == "short") {
+      counter += SHORT;
+    } else if (tokens[pos] == "int") {
+      counter += INT;
+    } else if (tokens[pos] == "long") {
+      counter += LONG;
+    } else {
+      std::fprintf(stderr, "undefined type.");
+      std::exit(1);
+    }
 
-  if (tokens[pos] == "long") {
+    switch (counter) {
+    case VOID: {
+      ty = default_void;
+      break;
+    }
+    case CHAR: {
+      ty = new Type(Types::Char, kCharSize, kCharSize);
+      break;
+    }
+    case SHORT:
+    case SHORT + INT: {
+      ty = new Type(Types::Short, kShortSize, kShortSize);
+      break;
+    }
+    case INT: {
+      ty = new Type(Types::Int, kNumberSize, kNumberSize);
+      break;
+    }
+    case LONG:
+    case LONG + INT: {
+      ty = new Type(Types::Long, kLongSize, kLongSize);
+      break;
+    }
+    default: {
+      error("invalid type.");
+    }
+    }
+
     ++pos;
-    return new Type(Types::Long, kLongSize, kLongSize);
   }
 
   return nullptr;
@@ -499,6 +539,9 @@ static NodePtr parse_declaration(const TokenList &tokens, u64 &pos) {
     if (i++ > 0)
       skip_until(tokens, ",", pos);
     Type *ty = declarator(tokens, pos, base);
+    if (ty->type_ == Types::Void)
+      error("variable declared void");
+
     auto obj = new_lvar(ty->name_, ty);
 
     if (tokens[pos] != "=")
