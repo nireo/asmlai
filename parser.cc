@@ -281,7 +281,7 @@ static Type *parse_union_declaration(const TokenList &tokens, u64 &pos) {
   Type *ty = struct_union(tokens, pos);
   ty->type_ = Types::Union;
 
-  auto members = std::get<Member*>(ty->optional_data_);
+  auto members = std::get<Member *>(ty->optional_data_);
   for (Member *mem = members; mem; mem = mem->next_) {
     if (ty->align_ < mem->type->align_) {
       ty->align_ = mem->type->align_;

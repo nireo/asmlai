@@ -8,14 +8,15 @@
 #include <variant>
 
 namespace codegen {
-constexpr static const char *args_8bit[] = {"%dil", "%sil", "%dl",
-                                            "%cl",  "%r8b", "%r9b"};
+constexpr static const char *arg_8bit[] = {"%dil", "%sil", "%dl",
+                                           "%cl",  "%r8b", "%r9b"};
 constexpr static const char *arg_16bit[] = {"%di", "%si",  "%dx",
                                             "%cx", "%r8w", "%r9w"};
 constexpr static const char *arg_32bit[] = {"%edi", "%esi", "%edx",
                                             "%ecx", "%r8d", "%r9d"};
 constexpr static const char *arg_64bit[] = {"%rdi", "%rsi", "%rdx",
                                             "%rcx", "%r8",  "%r9"};
+
 static std::shared_ptr<parser::Object> curr_func;
 static i64 depth{};
 static FILE *out_file;
@@ -74,8 +75,31 @@ static void store(parser::Type *ty) {
 
   if (ty->size_ == 1) {
     emit("mov %%al, (%%rdi)");
+  } else if (ty->size_ == 4) {
+    emit("mov %%eax, (%%rdi)");
   } else {
     emit("mov %%rax, (%%rdi)");
+  }
+}
+
+static void store_parameter(i32 arg_reg, i32 offset, i32 size) {
+  switch (size) {
+  case 1: {
+    emit("mov %s, %d(%%rbp)", arg_8bit[arg_reg], offset);
+    return;
+  }
+  case 4: {
+    emit("mov %s %d(%%rbp)", arg_32bit[arg_reg], offset);
+    return;
+  }
+  case 8: {
+    emit("mov %s, %d(%%rbp)", arg_64bit[arg_reg], offset);
+    return;
+  }
+  default: {
+    std::fprintf(stderr, "unrecognized type size.");
+    std::exit(1);
+  }
   }
 }
 
@@ -354,11 +378,7 @@ void gen_code(std::vector<std::shared_ptr<parser::Object>> &&root, FILE *out) {
 
     u64 arg_reg_index = 0;
     for (auto &par : curr_func->params_) {
-      if (par->ty_->size_ == 1) {
-        emit("mov %s, %d(%%rbp)", args_8bit[arg_reg_index++], par->offset_);
-      } else {
-        emit("mov %s, %d(%%rbp)", arg_64bit[arg_reg_index++], par->offset_);
-      }
+      store_parameter(arg_reg_index++, par->offset_, par->ty_->size_);
     }
 
     gen_stmt(*curr_func->body);

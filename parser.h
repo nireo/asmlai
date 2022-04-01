@@ -21,9 +21,9 @@ enum class Types {
   Union,
 };
 
-constexpr i32 kNumberSize = 8;
 constexpr i32 kCharSize = 1;
 constexpr i32 kShortSize = 2;
+constexpr i32 kNumberSize = 4;
 
 struct Type;
 using TypePtr = std::unique_ptr<Type>;
