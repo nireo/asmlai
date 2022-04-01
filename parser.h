@@ -19,11 +19,13 @@ enum class Types {
   Struct,
   Short,
   Union,
+  Long,
 };
 
 constexpr i32 kCharSize = 1;
 constexpr i32 kShortSize = 2;
 constexpr i32 kNumberSize = 4;
+constexpr i32 kLongSize = 8;
 
 struct Type;
 using TypePtr = std::unique_ptr<Type>;
@@ -72,6 +74,7 @@ struct Scope;
 
 extern parser::Type *default_int;
 extern parser::Type *default_empty;
+extern parser::Type *default_long;
 extern Scope
     *scopes; // use linked list since globals vectors didn't work very well.
 

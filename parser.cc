@@ -274,7 +274,8 @@ static i64 get_number_value(const TokenList &tokens, u64 &pos) {
 }
 
 static bool is_typename(const token::Token &tok) {
-  return tok == "char" || tok == "int" || tok == "struct" || tok == "union";
+  return tok == "char" || tok == "int" || tok == "struct" || tok == "union" ||
+         tok == "long";
 }
 
 static Type *parse_union_declaration(const TokenList &tokens, u64 &pos) {
@@ -298,17 +299,17 @@ static Type *parse_union_declaration(const TokenList &tokens, u64 &pos) {
 static Type *decl_type(const TokenList &tokens, u64 &pos) {
   if (tokens[pos] == "char") {
     ++pos;
-    return new Type(Types::Char, kCharSize);
+    return new Type(Types::Char, kCharSize, kCharSize);
   }
 
   if (tokens[pos] == "int") {
     ++pos;
-    return new Type(Types::Int, kNumberSize);
+    return new Type(Types::Int, kNumberSize, kNumberSize);
   }
 
   if (tokens[pos] == "short") {
     ++pos;
-    return new Type(Types::Short, kShortSize);
+    return new Type(Types::Short, kShortSize, kShortSize);
   }
 
   if (tokens[pos] == "struct") {
@@ -319,6 +320,11 @@ static Type *decl_type(const TokenList &tokens, u64 &pos) {
   if (tokens[pos] == "union") {
     ++pos;
     return parse_union_declaration(tokens, pos);
+  }
+
+  if (tokens[pos] == "long") {
+    ++pos;
+    return new Type(Types::Long, kLongSize, kLongSize);
   }
 
   return nullptr;

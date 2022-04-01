@@ -46,7 +46,8 @@ static void pop(const char *argument) {
 }
 
 static void load(parser::Type *ty) {
-  if (ty->type_ == parser::Types::Array || ty->type_ == parser::Types::Struct) {
+  if (ty->type_ == parser::Types::Array || ty->type_ == parser::Types::Struct ||
+      ty->type_ == parser::Types::Union) {
     return;
   }
 
@@ -64,12 +65,11 @@ static void load(parser::Type *ty) {
 static void store(parser::Type *ty) {
   pop("%rdi");
 
-  if (ty->type_ == parser::Types::Struct) {
+  if (ty->type_ == parser::Types::Struct || ty->type_ == parser::Types::Union) {
     for (i32 i = 0; i < ty->size_; ++i) {
       emit("mov %d(%%rax), %%r8b", i);
       emit("mov %%r8b, %d(%%rdi)", i);
     }
-
     return;
   }
 

@@ -13,7 +13,7 @@ namespace typesystem {
 
 bool is_number(parser::Type *ty) {
   return ty->type_ == parser::Types::Int || ty->type_ == parser::Types::Char ||
-         ty->type_ == parser::Types::Short;
+         ty->type_ == parser::Types::Short || ty->type_ == parser::Types::Long;
 }
 
 parser::Type *ptr_to(parser::Type *base) {
@@ -100,7 +100,7 @@ void add_type(parser::Node &node) {
   case NT::LT:
   case NT::FunctionCall:
   case NT::Num: {
-    node.tt_ = parser::default_int;
+    node.tt_ = parser::default_long;
     return;
   }
   case NT::Variable: {
