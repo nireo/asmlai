@@ -362,7 +362,7 @@ void gen_code(std::vector<std::shared_ptr<parser::Object>> &&root, FILE *out) {
   }
 
   for (u64 i = 0; i < root.size(); ++i) {
-    if (!root[i]->is_func_) {
+    if (!root[i]->is_func_ || !root[i]->is_definition_) {
       continue;
     }
 

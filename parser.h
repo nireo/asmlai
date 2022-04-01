@@ -123,6 +123,7 @@ struct Object {
 
   bool is_local_ = false;
   bool is_func_ = false;
+  bool is_definition_ = false;
   NodePtr body = nullptr;
   int stack_sz = 0;
 
@@ -131,8 +132,9 @@ struct Object {
 };
 
 struct VarScope {
-  char *name_;
-  std::shared_ptr<Object> variable_;
+  char *name_ = nullptr;
+  std::shared_ptr<Object> variable_ = nullptr;
+  Type *typedef_ = nullptr;
 };
 
 struct Scope {

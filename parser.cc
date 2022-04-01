@@ -355,6 +355,8 @@ static Type *decl_type(const TokenList &tokens, u64 &pos) {
       break;
     }
     case LONG:
+    case LONG + LONG:
+    case LONG + LONG + INT:
     case LONG + INT: {
       ty = new Type(Types::Long, kLongSize, kLongSize);
       break;
@@ -392,6 +394,20 @@ static Member *struct_members(const TokenList &tokens, u64 &pos) {
   }
   ++pos;
   return head.next_;
+}
+
+static void parse_typedef(const TokenList &tokens, u64 &pos, Type *base) {
+  int i = 0;
+
+  while (!consume(tokens, pos, ";")) {
+    if (i++ > 0) {
+      skip_until(tokens, ";", pos);
+    }
+    Type *ty = declarator(tokens, pos, base);
+
+    // TODO: do this
+  }
+  return;
 }
 
 static Type *struct_union(const TokenList &tokens, u64 &pos) {
@@ -931,6 +947,12 @@ static void parse_function(const TokenList &tokens, u64 &pos, Type *ty) {
   std::shared_ptr<Object> func_obj =
       new_gvar(strndup(ty->name_, strlen(ty->name_)), ty);
   func_obj->is_func_ = true;
+  func_obj->is_definition_ = !consume(tokens, pos, ";");
+
+  if (!func_obj->is_definition_) {
+    // function prototype.
+    return;
+  }
 
   func_obj->params_ = ObjectList{};
   for (auto &p : locals_) {
