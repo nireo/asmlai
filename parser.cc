@@ -44,11 +44,13 @@ static void enter_scope() {
 
 static void leave_scope() { scopes = scopes->next_; }
 
-static std::shared_ptr<Object> find_var(const token::Token &tok) {
+// we cannot return a reference, since it can also be null. So instead return a
+// pointer.
+static VarScope *find_var(const token::Token &tok) {
   for (Scope *sc = scopes; sc; sc = sc->next_) {
-    for (const auto &v : sc->variables_) {
+    for (auto &v : sc->variables_) {
       if (tok == v.name_) {
-        return v.variable_;
+        return &v;
       }
     }
   }
@@ -83,11 +85,15 @@ static bool consume(const TokenList &tokens, u64 &pos, const char *str) {
   return false;
 }
 
-static void push_scope(char *name, std::shared_ptr<Object> variable) {
+// return the index of the variable in the scope, such that we can edit it
+// without having to use pointers for VarScopes.
+static u64 push_scope(char *name, std::shared_ptr<Object> variable) {
   VarScope vscope;
   vscope.name_ = name;
   vscope.variable_ = variable;
   scopes->variables_.push_back(std::move(vscope));
+
+  return scopes->variables_.size() - 1;
 }
 
 static NodePtr new_single(NodeType type_, NodePtr expr) {
@@ -273,9 +279,23 @@ static i64 get_number_value(const TokenList &tokens, u64 &pos) {
   return std::get<i64>(tokens[pos].data_); // guaranteed not to fail
 }
 
+static Type *find_typedef(const token::Token &tok) {
+  if (tok.type_ == token::TokenType::Identifier) {
+    auto tp = find_var(tok);
+    if (tp) {
+      return tp->typedef_;
+    }
+  }
+
+  return nullptr;
+}
+
 static bool is_typename(const token::Token &tok) {
-  return tok == "char" || tok == "int" || tok == "struct" || tok == "union" ||
-         tok == "long" || tok == "void";
+  if (tok == "char" || tok == "int" || tok == "struct" || tok == "union" ||
+      tok == "long" || tok == "void")
+    return true;
+
+  return find_typedef(tok);
 }
 
 static Type *parse_union_declaration(const TokenList &tokens, u64 &pos) {
@@ -296,7 +316,8 @@ static Type *parse_union_declaration(const TokenList &tokens, u64 &pos) {
   return ty;
 }
 
-static Type *decl_type(const TokenList &tokens, u64 &pos) {
+static Type *decl_type(const TokenList &tokens, u64 &pos,
+                       VariableAttributes *attr) {
   constexpr i32 VOID = 1 << 0;
   constexpr i32 CHAR = 1 << 2;
   constexpr i32 SHORT = 1 << 4;
@@ -308,6 +329,35 @@ static Type *decl_type(const TokenList &tokens, u64 &pos) {
   int counter = 0;
 
   while (is_typename(tokens[pos])) {
+    if (tokens[pos] == "typedef") {
+      if (!attr) {
+        error("typedef not allowed here.");
+      }
+      attr->is_typedef_ = true;
+      ++pos;
+      continue;
+    }
+
+    Type *ty2 = find_typedef(tokens[pos]);
+    if (tokens[pos] == "struct" || tokens[pos] == "union" || ty2) {
+      if (counter)
+        break;
+
+      if (tokens[pos] == "struct") {
+        ++pos;
+        ty = parse_struct_declaration(tokens, pos);
+      } else if (tokens[pos] == "union") {
+        ++pos;
+        ty = parse_union_declaration(tokens, pos);
+      } else {
+        ++pos;
+        ty = ty2;
+      }
+
+      counter += OTHER;
+      continue;
+    }
+
     if (tokens[pos] == "struct" || tokens[pos] == "union") {
       if (tokens[pos] == "struct") {
         ++pos;
@@ -377,7 +427,7 @@ static Member *struct_members(const TokenList &tokens, u64 &pos) {
   Member *current = &head;
 
   while (tokens[pos] != "}") {
-    Type *base_type = decl_type(tokens, pos);
+    Type *base_type = decl_type(tokens, pos, nullptr);
     i32 i = 0;
 
     while (!consume(tokens, pos, ";")) {
@@ -494,7 +544,7 @@ static Type *function_parameters(const TokenList &tokens, u64 &pos,
       skip_until(tokens, ",", pos);
     }
 
-    Type *base = decl_type(tokens, pos);
+    Type *base = decl_type(tokens, pos, nullptr);
     Type *tt = declarator(tokens, pos, base);
 
     params.push_back(tt);
@@ -546,8 +596,8 @@ static Type *declarator(const TokenList &tokens, u64 &pos, Type *ty) {
   return ty;
 }
 
-static NodePtr parse_declaration(const TokenList &tokens, u64 &pos) {
-  Type *base = decl_type(tokens, pos);
+static NodePtr parse_declaration(const TokenList &tokens, u64 &pos,
+                                 Type *base) {
   int i = 0;
   std::vector<NodePtr> nodes;
 
@@ -882,11 +932,11 @@ static NodePtr parse_primary(const TokenList &tokens, u64 &pos) {
     const auto &token = tokens[pos];
     ++pos;
     auto obj = find_var(token);
-    if (obj == nullptr) {
+    if (!obj || !obj->variable_) {
       error("undefined variable");
     }
 
-    return new_variable_node(std::move(obj));
+    return new_variable_node(obj->variable_);
   }
 
   if (tokens[pos].type_ == token::TokenType::String) {
@@ -917,7 +967,15 @@ static NodePtr parse_compound_stmt(const TokenList &tokens, u64 &pos) {
 
   while (tokens[pos] != "}") {
     if (is_typename(tokens[pos])) {
-      nodes.push_back(std::move(parse_declaration(tokens, pos)));
+      VariableAttributes attrs{};
+      Type *baset = decl_type(tokens, pos, &attrs);
+
+      if (attrs.is_typedef_) {
+        parse_typedef(tokens, pos, baset);
+        continue;
+      }
+
+      nodes.push_back(std::move(parse_declaration(tokens, pos, baset)));
     } else {
       nodes.push_back(std::move(parse_stmt(tokens, pos)));
     }
@@ -998,7 +1056,13 @@ std::vector<std::shared_ptr<Object>> parse_tokens(const TokenList &tokens) {
   u64 pos = 0;
 
   while (tokens[pos].type_ != token::TokenType::Eof) {
-    Type *base_type = decl_type(tokens, pos);
+    VariableAttributes attrs{};
+    Type *base_type = decl_type(tokens, pos, &attrs);
+
+    if (attrs.is_typedef_) {
+      parse_typedef(tokens, pos, base_type);
+      continue;
+    }
 
     if (is_func(tokens, pos)) {
       parse_function(tokens, pos, base_type);

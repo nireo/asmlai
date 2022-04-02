@@ -36,6 +36,10 @@ struct StructTag {
   Type *ty_ = nullptr;
 };
 
+struct VariableAttributes {
+  bool is_typedef_;
+};
+
 struct ArrayType {
   i32 array_length;
 };
