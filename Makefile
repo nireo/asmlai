@@ -1,4 +1,4 @@
-CFLAGS=-std=c++17 -g -O2
+CFLAGS=-std=c++17 -g
 CC = g++
 
 SRCS=$(wildcard *.cc)

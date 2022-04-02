@@ -358,19 +358,6 @@ static Type *decl_type(const TokenList &tokens, u64 &pos,
       continue;
     }
 
-    if (tokens[pos] == "struct" || tokens[pos] == "union") {
-      if (tokens[pos] == "struct") {
-        ++pos;
-        ty = parse_struct_declaration(tokens, pos);
-      } else {
-        ++pos;
-        ty = parse_union_declaration(tokens, pos);
-      }
-
-      counter += OTHER;
-      continue;
-    }
-
     if (tokens[pos] == "void") {
       counter += VOID;
     } else if (tokens[pos] == "char") {
@@ -419,7 +406,7 @@ static Type *decl_type(const TokenList &tokens, u64 &pos,
     ++pos;
   }
 
-  return nullptr;
+  return ty;
 }
 
 static Member *struct_members(const TokenList &tokens, u64 &pos) {
