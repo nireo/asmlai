@@ -269,8 +269,10 @@ static NodePtr parse_postfix(const TokenList &, u64 &);
 static Type *parse_struct_declaration(const TokenList &, u64 &);
 static Type *parse_union_declaration(const TokenList &, u64 &);
 static Type *struct_union(const TokenList &tokens, u64 &pos);
-
+static Type *type_suffix(const TokenList &tokens, u64 &pos, Type *ty);
 static Type *declarator(const TokenList &tokens, u64 &pos, Type *ty);
+static Type *decl_type(const TokenList &tokens, u64 &pos,
+                       VariableAttributes *attr);
 
 static NodePtr parse_expr_stmt(const TokenList &tokens, u64 &pos) {
   if (tokens[pos] == ";") { // encountered a empty statement
@@ -300,6 +302,31 @@ static Type *find_typedef(const token::Token &tok) {
   }
 
   return nullptr;
+}
+
+static Type *abstract_declarator(const TokenList &tokens, u64 &pos, Type *typ) {
+  while (tokens[pos] == "*") {
+    typ = typesystem::ptr_to(typ);
+    ++pos;
+  }
+
+  if (tokens[pos] == "(") {
+    u64 original_pos = pos;
+    Type xdd(Types::Empty, 0);
+    abstract_declarator(tokens, original_pos, &xdd);
+    skip_until(tokens, ")", pos);
+    typ = type_suffix(tokens, pos, typ);
+
+    ++original_pos;
+    return abstract_declarator(tokens, original_pos, typ);
+  }
+
+  return type_suffix(tokens, pos, typ);
+}
+
+static Type *typename_(const TokenList &tokens, u64 &pos) {
+  Type *ty = decl_type(tokens, pos, nullptr);
+  return abstract_declarator(tokens, pos, ty);
 }
 
 static bool is_typename(const token::Token &tok) {
@@ -924,6 +951,15 @@ static NodePtr parse_primary(const TokenList &tokens, u64 &pos) {
     skip_until(tokens, ")", pos);
 
     return node;
+  }
+
+  if (tokens[pos] == "sizeof" && tokens[pos + 1] == "(" &&
+      is_typename(tokens[pos + 2])) {
+    pos += 2;
+    Type *ty = typename_(tokens, pos);
+    skip_until(tokens, ")", pos);
+
+    return new_number(ty->size_);
   }
 
   if (tokens[pos] == "sizeof") {
