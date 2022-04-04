@@ -5,6 +5,7 @@
 #include <cassert>
 #include <cstdio>
 #include <iostream>
+#include <string>
 #include <variant>
 
 namespace codegen {
@@ -199,6 +200,7 @@ assign_lvar_offsets(std::vector<std::shared_ptr<parser::Object>> &functions) {
 
 static void gen_expression(const parser::Node &node) {
   using NodeType = parser::NodeType;
+
   switch (node.type_) {
   case NodeType::Num: {
     emit("mov $%ld, %%rax", std::get<i64>(node.data_));
@@ -269,22 +271,39 @@ static void gen_expression(const parser::Node &node) {
   gen_expression(*node.lhs_);
   pop("%rdi");
 
+  std::string ax_, di_;
+  if (node.lhs_->tt_->type_ == parser::Types::Long ||
+      node.lhs_->tt_->base_type_) {
+    ax_ = "%rax";
+    di_ = "%rdi";
+  } else {
+    ax_ = "%eax";
+    di_ = "%edi";
+  }
+
+  const char *ax = ax_.c_str();
+  const char *di = di_.c_str();
+
   switch (node.type_) {
   case NodeType::Add: {
-    emit("add %%rdi, %%rax");
+    emit("add %s, %s", di, ax);
     return;
   }
   case NodeType::Sub: {
-    emit("sub %%rdi, %%rax");
+    emit("sub %s, %s", di, ax);
     return;
   }
   case NodeType::Mul: {
-    emit("imul %%rdi, %%rax");
+    emit("imul %s, %s", di, ax);
     return;
   }
   case NodeType::Div: {
-    emit("cqo");
-    emit("idiv %%rdi");
+    if (node.lhs_->tt_->size_ == 8) {
+      emit("cqo");
+    } else {
+      emit("cdq");
+    }
+    emit("idiv %s", di);
     return;
   }
 
@@ -292,7 +311,7 @@ static void gen_expression(const parser::Node &node) {
   case NodeType::LT:
   case NodeType::NE:
   case NodeType::LE: {
-    emit("cmp %%rdi, %%rax");
+    emit("cmp %s, %s", di, ax);
 
     if (node.type_ == NodeType::EQ) {
       emit("sete %%al");
@@ -303,7 +322,6 @@ static void gen_expression(const parser::Node &node) {
     } else if (node.type_ == NodeType::LE) {
       emit("setle %%al");
     }
-
     emit("movzb %%al, %%rax");
     return;
   }
