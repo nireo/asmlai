@@ -20,6 +20,7 @@ template <typename... Args> static void error(const char *fmt, Args... args) {
 
 static std::vector<std::shared_ptr<Object>> locals_;
 static std::vector<std::shared_ptr<Object>> globals_;
+static std::shared_ptr<Object> current_function_ = nullptr;
 
 using TokenList = std::vector<token::Token>;
 static NodePtr new_node(NodeType type_) {
@@ -66,6 +67,17 @@ static Type *find_tag(const token::Token &tok) {
     }
   }
   return nullptr;
+}
+
+static NodePtr new_cast(NodePtr expr, Type *ty) {
+  typesystem::add_type(*expr);
+
+  auto node = std::make_unique<Node>();
+  node->type_ = NodeType::Cast;
+  node->lhs_ = std::move(expr);
+  node->tt_ = ty;
+
+  return node;
 }
 
 static void push_tag(const token::Token &tok, Type *type) {
@@ -493,6 +505,17 @@ static Type *parse_struct_declaration(const TokenList &tokens, u64 &pos) {
   ty->size_ = codegen::align_to(offset, ty->align_);
 
   return ty;
+}
+
+static NodePtr parse_cast(const TokenList &tokens, u64 &pos) {
+  if (tokens[pos] == "(" && is_typename(tokens[pos + 1])) {
+    u64 original_pos = pos;
+    ++pos;
+    Type *ty = decl_type(tokens, pos, nullptr);
+    skip_until(tokens, ")", pos);
+  }
+
+  return parse_unary(tokens, pos);
 }
 
 static Member *get_struct_member(Type *ty, const token::Token &tok) {
@@ -1045,7 +1068,6 @@ std::vector<std::shared_ptr<Object>> parse_tokens(const TokenList &tokens) {
   while (tokens[pos].type_ != token::TokenType::Eof) {
     VariableAttributes attrs{};
     Type *base_type = decl_type(tokens, pos, &attrs);
-
     if (attrs.is_typedef_) {
       parse_typedef(tokens, pos, base_type);
       continue;

@@ -108,6 +108,7 @@ enum class NodeType {
   StmtExpr,
   Comma,
   Member,
+  Cast,
 };
 
 struct Node;

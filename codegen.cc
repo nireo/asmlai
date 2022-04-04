@@ -17,6 +17,36 @@ constexpr static const char *arg_32bit[] = {"%edi", "%esi", "%edx",
 constexpr static const char *arg_64bit[] = {"%rdi", "%rsi", "%rdx",
                                             "%rcx", "%r8",  "%r9"};
 
+enum class TypeID { I8, I16, I32, I64 };
+#define INT(x) static_cast<int>(x)
+
+static TypeID get_type_id(parser::Type *ty) {
+  switch (ty->type_) {
+  case parser::Types::Char: {
+    return TypeID::I8;
+  }
+  case parser::Types::Short: {
+    return TypeID::I16;
+  }
+  case parser::Types::Int: {
+    return TypeID::I32;
+  }
+  default: {
+    return TypeID::I64;
+  }
+  }
+}
+
+constexpr static const char *i32i8 = "movsbl %al, %eax";
+constexpr static const char *i32i16 = "movsbl %al, %eax";
+constexpr static const char *i32i64 = "movsbl %al, %eax";
+constexpr static const char *casts[][10] = {
+    {nullptr, nullptr, nullptr, i32i64}, // i8
+    {i32i8, nullptr, nullptr, i32i64},   // i16
+    {i32i8, i32i16, nullptr, i32i64},    // i32
+    {i32i8, i32i16, nullptr, nullptr},   // i64
+};
+
 static std::shared_ptr<parser::Object> curr_func;
 static i64 depth{};
 static FILE *out_file;
@@ -32,6 +62,19 @@ template <typename... Args> static void emit(const char *fmt, Args... args) {
   std::fprintf(out_file, "  ");
   std::fprintf(out_file, fmt, args...);
   std::fprintf(out_file, "\n");
+}
+
+static void cast(parser::Type *from, parser::Type *to) {
+  if (to->type_ == parser::Types::Void) {
+    return;
+  }
+
+  int type1 = INT(get_type_id(from));
+  int type2 = INT(get_type_id(to));
+
+  if (casts[type1][type2] != nullptr) {
+    emit("%s", casts[type1][type2]);
+  }
 }
 
 static void gen_stmt(const parser::Node &);
