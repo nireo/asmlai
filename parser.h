@@ -21,6 +21,7 @@ enum class Types {
   Union,
   Long,
   Void,
+  Bool,
 };
 
 constexpr i32 kCharSize = 1;

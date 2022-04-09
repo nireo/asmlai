@@ -1,6 +1,7 @@
 #include "codegen.h"
 #include "parser.h"
 #include "types.h"
+#include "typesystem.h"
 #include <algorithm>
 #include <cassert>
 #include <cstdio>
@@ -65,8 +66,23 @@ template <typename... Args> static void emit(const char *fmt, Args... args) {
   std::fprintf(out_file, "\n");
 }
 
+static void cmp_zero(parser::Type *ty) {
+  if (typesystem::is_number(ty) && ty->size_ <= 4) {
+    emit("cmp $0, %%eax");
+  } else {
+    emit("cmp $0, %%rax");
+  }
+}
+
 static void cast(parser::Type *from, parser::Type *to) {
   if (to->type_ == parser::Types::Void) {
+    return;
+  }
+
+  if (to->type_ == parser::Types::Bool) {
+    cmp_zero(from);
+    emit("setne %%al");
+    emit("movzx %%al, %%eax");
     return;
   }
 
