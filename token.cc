@@ -167,6 +167,27 @@ static int read_escaped_char(char **new_pos, char *p) {
   }
 }
 
+static Token read_char_literal(char *start) {
+  char *p = start + 1;
+  if (*p == '\0')
+    error_at(start, "unclosed char literal");
+  char c;
+  if (*p == '\\')
+    c = read_escaped_char(&p, p + 1);
+  else
+    c = *p++;
+
+  char *end = strchr(p, '\'');
+  if (!end) {
+    error_at(p, "unclosed char literal");
+  }
+
+  auto tok = new_token(start, end +1, TokenType::Num);
+  tok.data_ = c;
+
+  return tok;
+}
+
 static char *string_literal_end(char *p) {
   char *start = p;
   for (; *p != '"'; p++) {
@@ -245,6 +266,14 @@ std::vector<Token> tokenize_input(char *filename, char *p) {
       auto tok = read_string(p);
       p += tok.len_;
       res.push_back(std::move(tok));
+      continue;
+    }
+
+    if (*p == '\'') {
+      auto tok = read_char_literal(p);
+      p += tok.len_;
+      res.push_back(tok);
+
       continue;
     }
 
