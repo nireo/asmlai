@@ -357,24 +357,25 @@ static Type *parse_union_declaration(const TokenList &tokens, u64 &pos) {
 
 static Type *decl_type(const TokenList &tokens, u64 &pos,
                        VariableAttributes *attr) {
-  constexpr i32 VOID = 1 << 0;
-  constexpr i32 BOOL = 1 << 2;
-  constexpr i32 CHAR = 1 << 4;
-  constexpr i32 SHORT = 1 << 6;
-  constexpr i32 INT = 1 << 8;
-  constexpr i32 LONG = 1 << 10;
-  constexpr i32 OTHER = 1 << 12;
+  enum {
+    VOID = 1 << 0,
+    CHAR = 1 << 2,
+    SHORT = 1 << 4,
+    INT = 1 << 6,
+    LONG = 1 << 8,
+    OTHER = 1 << 10,
+  };
 
   Type *ty = new Type(Types::Int, kNumberSize, kNumberSize);
   int counter = 0;
 
   while (is_typename(tokens[pos])) {
     if (tokens[pos] == "typedef") {
-      if (!attr) {
-        error("typedef not allowed here.");
-      }
+      if (!attr)
+        error("storage class specifier is not allowed in this context");
       attr->is_typedef_ = true;
       ++pos;
+
       continue;
     }
 
@@ -390,63 +391,49 @@ static Type *decl_type(const TokenList &tokens, u64 &pos,
         ++pos;
         ty = parse_union_declaration(tokens, pos);
       } else {
-        ++pos;
         ty = ty2;
+        ++pos;
       }
 
       counter += OTHER;
       continue;
     }
 
-    if (tokens[pos] == "void") {
+    if (tokens[pos] == "void")
       counter += VOID;
-    } else if (tokens[pos] == "_Bool") {
-      counter += BOOL;
-    } else if (tokens[pos] == "char") {
+    else if (tokens[pos] == "char")
       counter += CHAR;
-    } else if (tokens[pos] == "short") {
+    else if (tokens[pos] == "short")
       counter += SHORT;
-    } else if (tokens[pos] == "int") {
+    else if (tokens[pos] == "int")
       counter += INT;
-    } else if (tokens[pos] == "long") {
+    else if (tokens[pos] == "long")
       counter += LONG;
-    } else {
-      std::fprintf(stderr, "undefined type.");
+    else
       std::exit(1);
-    }
 
     switch (counter) {
-    case VOID: {
-      ty = default_void;
+    case VOID:
+      ty = new Type(Types::Void, 1, 1);
       break;
-    }
-    case BOOL: {
-      ty = new Type(Types::Bool, 1, 1);
-      break;
-    }
-    case CHAR: {
+    case CHAR:
       ty = new Type(Types::Char, kCharSize, kCharSize);
       break;
-    }
     case SHORT:
-    case SHORT + INT: {
+    case SHORT + INT:
       ty = new Type(Types::Short, kShortSize, kShortSize);
       break;
-    }
-    case INT: {
+    case INT:
       ty = new Type(Types::Int, kNumberSize, kNumberSize);
       break;
-    }
     case LONG:
+    case LONG + INT:
     case LONG + LONG:
     case LONG + LONG + INT:
-    case LONG + INT: {
       ty = new Type(Types::Long, kLongSize, kLongSize);
       break;
-    }
-    default: {
-      error("invalid type.");
-    }
+    default:
+      error("invalid type");
     }
 
     ++pos;
@@ -680,9 +667,16 @@ static void create_parameter_lvalues(std::vector<Type *> &params) {
 
 static NodePtr parse_stmt(const TokenList &tokens, u64 &pos) {
   if (tokens[pos] == "return") {
+    auto node = new_node(NodeType::Return);
     ++pos;
-    auto node = new_single(NodeType::Return, parse_expression(tokens, pos));
+
+    auto exp = parse_expression(tokens, pos);
     skip_until(tokens, ";", pos);
+
+    typesystem::add_type(*exp);
+    node->lhs_ = std::move(exp);
+
+
     return node;
   }
 
@@ -805,6 +799,8 @@ static NodePtr parse_postfix(const TokenList &tokens, u64 &pos) {
       pos += 2;
       continue;
     }
+
+    return node;
   }
 
   return node;
@@ -1041,6 +1037,7 @@ static NodePtr parse_compound_stmt(const TokenList &tokens, u64 &pos) {
   node->data_ = std::move(nodes);
   ++pos;
 
+
   return node;
 }
 
@@ -1054,16 +1051,17 @@ static void parse_function(const TokenList &tokens, u64 &pos, Type *ty) {
     // no params do nothing.
   }
 
+
   enter_scope();
   std::shared_ptr<Object> func_obj =
       new_gvar(strndup(ty->name_, strlen(ty->name_)), ty);
   func_obj->is_func_ = true;
   func_obj->is_definition_ = !consume(tokens, pos, ";");
 
-  if (!func_obj->is_definition_) {
-    // function prototype.
-    return;
-  }
+  // if (!func_obj->is_definition_) {
+  //   // function prototype.
+  //   return;
+  // }
 
   func_obj->params_ = ObjectList{};
   for (auto &p : locals_) {
@@ -1073,6 +1071,7 @@ static void parse_function(const TokenList &tokens, u64 &pos, Type *ty) {
   skip_until(tokens, "{", pos);
   func_obj->body = parse_compound_stmt(tokens, pos);
   func_obj->locals_ = std::move(locals_);
+
 
   leave_scope();
 

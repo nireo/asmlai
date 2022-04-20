@@ -22,6 +22,7 @@ enum class Types {
   Long,
   Void,
   Bool,
+  Enum,
 };
 
 constexpr i32 kCharSize = 1;
