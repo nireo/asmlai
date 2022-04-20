@@ -111,6 +111,7 @@ enum class NodeType {
   Comma,
   Member,
   Cast,
+  Mod,
 };
 
 struct Node;

@@ -84,6 +84,7 @@ void add_type(parser::Node &node) {
   case NT::Sub:
   case NT::Mul:
   case NT::Div:
+  case NT::Mod:
   case NT::Neg:
     node.tt_ = node.lhs_->tt_;
     return;

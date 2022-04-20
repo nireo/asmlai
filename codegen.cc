@@ -313,6 +313,7 @@ static void gen_expression(const parser::Node &node) {
     emit("imul %s, %s", di, ax);
     return;
   }
+  case NodeType::Mod:
   case NodeType::Div: {
     if (node.lhs_->tt_->size_ == 8) {
       emit("cqo");
@@ -320,9 +321,12 @@ static void gen_expression(const parser::Node &node) {
       emit("cdq");
     }
     emit("idiv %s", di);
+
+    if (node.type_ == NodeType::Mod) {
+      emit("mov %%rdx, %%rax");
+    }
     return;
   }
-
   case NodeType::EQ:
   case NodeType::LT:
   case NodeType::NE:

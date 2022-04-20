@@ -676,7 +676,6 @@ static NodePtr parse_stmt(const TokenList &tokens, u64 &pos) {
     typesystem::add_type(*exp);
     node->lhs_ = std::move(exp);
 
-
     return node;
   }
 
@@ -888,6 +887,13 @@ static NodePtr parse_mul(const TokenList &tokens, u64 &pos) {
       continue;
     }
 
+    if (tokens[pos] == "%") {
+      ++pos;
+      node = new_binary_node(NodeType::Mod, std::move(node),
+                             parse_unary(tokens, pos));
+      continue;
+    }
+
     return node;
   }
 }
@@ -1037,7 +1043,6 @@ static NodePtr parse_compound_stmt(const TokenList &tokens, u64 &pos) {
   node->data_ = std::move(nodes);
   ++pos;
 
-
   return node;
 }
 
@@ -1050,7 +1055,6 @@ static void parse_function(const TokenList &tokens, u64 &pos, Type *ty) {
   } catch (const std::bad_variant_access &e) {
     // no params do nothing.
   }
-
 
   enter_scope();
   std::shared_ptr<Object> func_obj =
@@ -1071,7 +1075,6 @@ static void parse_function(const TokenList &tokens, u64 &pos, Type *ty) {
   skip_until(tokens, "{", pos);
   func_obj->body = parse_compound_stmt(tokens, pos);
   func_obj->locals_ = std::move(locals_);
-
 
   leave_scope();
 
