@@ -904,6 +904,10 @@ static NodePtr parse_unary(const TokenList &tokens, u64 &pos) {
     return parse_unary(tokens, pos);
   }
 
+  if (tokens[pos] == "!") {
+    return new_single(NodeType::Not, parse_unary(tokens, pos));
+  }
+
   if (tokens[pos] == "-") {
     ++pos;
     return new_single(NodeType::Neg, parse_unary(tokens, pos));

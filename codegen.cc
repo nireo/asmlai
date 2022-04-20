@@ -272,6 +272,14 @@ static void gen_expression(const parser::Node &node) {
     emit("call %s", node.func_name_);
     return;
   }
+  case NodeType::Not: {
+    gen_expression(*node.rhs_);
+    emit("cmp $0, %%rax");
+    emit("sete %%al");
+    emit("movzx %%al, %%rax");
+
+    return;
+  }
   case NodeType::Comma: {
     gen_expression(*node.lhs_);
     gen_expression(*node.rhs_);

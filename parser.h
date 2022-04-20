@@ -112,6 +112,7 @@ enum class NodeType {
   Member,
   Cast,
   Mod,
+  Not,
 };
 
 struct Node;

@@ -105,6 +105,11 @@ void add_type(parser::Node &node) {
     node.tt_ = parser::default_long;
     return;
   }
+  case NT::Not: {
+    node.tt_ = new parser::Type(parser::Types::Int, parser::kNumberSize,
+                                parser::kNumberSize);
+    return;
+  }
   case NT::Variable: {
     node.tt_ = std::get<std::shared_ptr<parser::Object>>(node.data_)->ty_;
     return;
