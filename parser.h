@@ -140,10 +140,17 @@ struct Object {
   std::vector<std::shared_ptr<Object>> locals_{};
 };
 
+struct EnumVarScope {
+  Type *enum_type = nullptr;
+  int enum_val;
+};
+
 struct VarScope {
   char *name_ = nullptr;
   std::shared_ptr<Object> variable_ = nullptr;
   Type *typedef_ = nullptr;
+  std::variant<EnumVarScope, std::monostate> data_ =
+      std::monostate{}; // we want to optionally store enum data.
 };
 
 struct Scope {

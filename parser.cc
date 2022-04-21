@@ -45,6 +45,15 @@ static void enter_scope() {
 
 static void leave_scope() { scopes = scopes->next_; }
 
+static bool is_enum_varscope(const VarScope &var) {
+  try {
+    std::get<EnumVarScope>(var.data_);
+    return true;
+  } catch (const std::bad_variant_access &e) {
+    return false;
+  }
+}
+
 // we cannot return a reference, since it can also be null. So instead return a
 // pointer.
 static VarScope *find_var(const token::Token &tok) {
@@ -273,6 +282,7 @@ static Type *type_suffix(const TokenList &tokens, u64 &pos, Type *ty);
 static Type *declarator(const TokenList &tokens, u64 &pos, Type *ty);
 static Type *decl_type(const TokenList &tokens, u64 &pos,
                        VariableAttributes *attr);
+static Type *enum_declaration(const TokenList &tokens, u64 &pos);
 
 static NodePtr parse_expr_stmt(const TokenList &tokens, u64 &pos) {
   if (tokens[pos] == ";") { // encountered a empty statement
@@ -380,7 +390,8 @@ static Type *decl_type(const TokenList &tokens, u64 &pos,
     }
 
     Type *ty2 = find_typedef(tokens[pos]);
-    if (tokens[pos] == "struct" || tokens[pos] == "union" || ty2) {
+    if (tokens[pos] == "struct" || tokens[pos] == "union" ||
+        tokens[pos] == "enum" || ty2) {
       if (counter)
         break;
 
@@ -390,6 +401,9 @@ static Type *decl_type(const TokenList &tokens, u64 &pos,
       } else if (tokens[pos] == "union") {
         ++pos;
         ty = parse_union_declaration(tokens, pos);
+      } else if (tokens[pos] == "enum") {
+        ++pos;
+        ty = enum_declaration(tokens, pos);
       } else {
         ty = ty2;
         ++pos;
@@ -500,6 +514,59 @@ static Type *struct_union(const TokenList &tokens, u64 &pos) {
   auto members = struct_members(tokens, pos);
   ty->align_ = 1;
   ty->optional_data_ = members;
+
+  if (tag_pos != -1) {
+    push_tag(tokens[tag_pos], ty);
+  }
+
+  return ty;
+}
+
+static Type *enum_declaration(const TokenList &tokens, u64 &pos) {
+  Type *ty = typesystem::enum_type();
+
+  i32 tag_pos = -1;
+  if (tokens[pos].type_ != token::TokenType::Identifier) {
+    tag_pos = pos;
+    ++pos;
+  }
+
+  if (tag_pos != -1 && tokens[pos] != "{") {
+    Type *ty = find_tag(tokens[tag_pos]);
+    if (!ty) {
+      error("unknown enum type.");
+    }
+
+    if (ty->type_ != Types::Enum)
+      error("not enum tag.");
+
+    return ty;
+  }
+  skip_until(tokens, "{", pos);
+
+  i32 idx = 0, value = 0;
+  while (tokens[pos] != "}") {
+    if (idx++ > 0) {
+      skip_until(tokens, ",", pos);
+    }
+
+    char *name = get_identifier(tokens[pos]);
+    ++pos;
+
+    if (tokens[pos] == "=") {
+      ++pos;
+      value = get_number_value(tokens, pos);
+      ++pos;
+    }
+    EnumVarScope enum_var{};
+    enum_var.enum_type = ty;
+    enum_var.enum_val = value++;
+
+    u64 sc = push_scope(name, nullptr);
+    scopes->variables_[sc].data_ = std::move(enum_var);
+  }
+
+  ++pos;
 
   if (tag_pos != -1) {
     push_tag(tokens[tag_pos], ty);
