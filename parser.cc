@@ -700,8 +700,15 @@ static NodePtr parse_stmt(const TokenList &tokens, u64 &pos) {
     auto node = new_node(NodeType::For);
     skip_until(tokens, "(", pos);
 
+    enter_scope();
+
     ForNode for_node{};
-    for_node.initialization_ = parse_expr_stmt(tokens, pos);
+    if (is_typename(tokens[pos])) {
+      Type *base = decl_type(tokens, pos, nullptr);
+      for_node.initialization_ = parse_declaration(tokens, pos, base);
+    } else {
+      for_node.initialization_ = parse_expr_stmt(tokens, pos);
+    }
 
     if (tokens[pos] != ";") {
       for_node.condition_ = parse_expression(tokens, pos);
@@ -715,6 +722,8 @@ static NodePtr parse_stmt(const TokenList &tokens, u64 &pos) {
 
     for_node.body_ = parse_stmt(tokens, pos);
     node->data_ = std::move(for_node);
+
+    leave_scope();
     return node;
   }
 
