@@ -54,7 +54,7 @@ static i64 depth{};
 static FILE *out_file;
 
 static i64 count() {
-  static i64 i = i;
+  static i64 i = 1;
   return i++;
 }
 

@@ -46,12 +46,7 @@ static void enter_scope() {
 static void leave_scope() { scopes = scopes->next_; }
 
 static bool is_enum_varscope(const VarScope &var) {
-  try {
-    std::get<EnumVarScope>(var.data_);
-    return true;
-  } catch (const std::bad_variant_access &e) {
-    return false;
-  }
+  return var.data_.index() == 0;
 }
 
 // we cannot return a reference, since it can also be null. So instead return a
@@ -526,7 +521,7 @@ static Type *enum_declaration(const TokenList &tokens, u64 &pos) {
   Type *ty = typesystem::enum_type();
 
   i32 tag_pos = -1;
-  if (tokens[pos].type_ != token::TokenType::Identifier) {
+  if (tokens[pos].type_ == token::TokenType::Identifier) {
     tag_pos = pos;
     ++pos;
   }
@@ -558,6 +553,7 @@ static Type *enum_declaration(const TokenList &tokens, u64 &pos) {
       value = get_number_value(tokens, pos);
       ++pos;
     }
+
     EnumVarScope enum_var{};
     enum_var.enum_type = ty;
     enum_var.enum_val = value++;
@@ -1067,11 +1063,17 @@ static NodePtr parse_primary(const TokenList &tokens, u64 &pos) {
     const auto &token = tokens[pos];
     ++pos;
     auto obj = find_var(token);
-    if (!obj || !obj->variable_) {
+    if (!obj || !obj->variable_ && !is_enum_varscope(*obj)) {
       error("undefined variable");
     }
 
-    return new_variable_node(obj->variable_);
+    if (obj->variable_) {
+      return new_variable_node(obj->variable_);
+    } else {
+      // has to be a enum
+      const auto &enum_data = std::get<EnumVarScope>(obj->data_);
+      return new_number(enum_data.enum_val);
+    }
   }
 
   if (tokens[pos].type_ == token::TokenType::String) {

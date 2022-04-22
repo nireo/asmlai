@@ -77,14 +77,20 @@ public:
       optional_data_;
 };
 
-struct Scope;
+struct TagScope {
+  TagScope *next = nullptr;
+  char *name = nullptr;
+  Type *ty = nullptr;
+};
 
+struct Scope;
 extern parser::Type *default_int;
 extern parser::Type *default_empty;
 extern parser::Type *default_long;
 extern parser::Type *default_void;
 extern Scope
     *scopes; // use linked list since globals vectors didn't work very well.
+extern TagScope *tag_scopes;
 
 enum class NodeType {
   Add,

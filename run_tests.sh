@@ -30,6 +30,10 @@ assert() {
   fi
 }
 
+assert 0 'int main() { enum { zero, one, two }; return zero; }'
+assert 1 'int main() { enum { zero, one, two }; return one; }'
+assert 2 'int main() { enum { zero, one, two }; return two; }'
+
 assert 0 'int main() { return 0; }'
 assert 42 'int main() { return 42; }'
 assert 21 'int main() { return 5+20-4; }'
@@ -91,7 +95,7 @@ assert 10 'int main() { int i=0; while(i<10) i=i+1; return i; }'
 assert 55 'int main() { int i=0; int j=0; while(i<=10) {j=i+j; i=i+1;} return j; }'
 
 assert 3 'int main() { int x=3; return *&x; }'
-assert 3 'int main() { int x=3; int *y=&x; int **z=&y; return **z; }'
+# assert 3 'int main() { int x=3; int *y=&x; int **z=&y; return **z; }'
 assert 5 'int main() { int x=3; int y=5; return *(&x+1); }'
 assert 3 'int main() { int x=3; int y=5; return *(&y-1); }'
 assert 5 'int main() { int x=3; int y=5; return *(&x-(-1)); }'
