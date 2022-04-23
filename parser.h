@@ -163,12 +163,12 @@ struct Scope {
   Scope() {
     next_ = nullptr;
     variables_ = std::vector<VarScope>();
-    tags_ = std::vector<StructTag>();
+    tags_ = std::vector<TagScope>();
   }
 
   Scope *next_;
   std::vector<VarScope> variables_;
-  std::vector<StructTag> tags_;
+  std::vector<TagScope> tags_;
 };
 
 struct IfNode {

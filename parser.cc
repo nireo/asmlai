@@ -66,8 +66,8 @@ static VarScope *find_var(const token::Token &tok) {
 static Type *find_tag(const token::Token &tok) {
   for (Scope *sc = scopes; sc; sc = sc->next_) {
     for (const auto &t : sc->tags_) {
-      if (tok == t.name_)
-        return t.ty_;
+      if (tok == t.name)
+        return t.ty;
     }
   }
   return nullptr;
@@ -85,9 +85,9 @@ static NodePtr new_cast(NodePtr expr, Type *ty) {
 }
 
 static void push_tag(const token::Token &tok, Type *type) {
-  StructTag tag{};
-  tag.name_ = strndup(tok.loc_, tok.len_);
-  tag.ty_ = type;
+  TagScope tag{};
+  tag.name = strndup(tok.loc_, tok.len_);
+  tag.ty = type;
 
   scopes->tags_.push_back(std::move(tag));
 }
@@ -111,6 +111,8 @@ static u64 push_scope(char *name, std::shared_ptr<Object> variable) {
 
   return scopes->variables_.size() - 1;
 }
+
+static void push_tag_scope(const token::Token &tok, Type *type) {}
 
 static NodePtr new_single(NodeType type_, NodePtr expr) {
   auto node = new_node(type_);
@@ -491,7 +493,7 @@ static void parse_typedef(const TokenList &tokens, u64 &pos, Type *base) {
 
 static Type *struct_union(const TokenList &tokens, u64 &pos) {
   i32 tag_pos = -1;
-  if (tokens[pos].type_ != token::TokenType::Identifier) {
+  if (tokens[pos].type_ == token::TokenType::Identifier) {
     tag_pos = pos;
     ++pos;
   }
