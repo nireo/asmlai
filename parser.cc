@@ -9,6 +9,7 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <type_traits>
 #include <variant>
 
 namespace parser {
@@ -879,12 +880,56 @@ static NodePtr parse_postfix(const TokenList &tokens, u64 &pos) {
   return node;
 }
 
+static NodePtr to_assign(NodePtr binary) {
+  typesystem::add_type(*binary->lhs_);
+  typesystem::add_type(*binary->rhs_);
+
+  // XD
+  std::string name = "";
+  char *name_ = strndup(name.c_str(), name.size());
+  auto var = new_lvar(name_, typesystem::ptr_to(binary->lhs_->tt_));
+  auto expr1 =
+      new_binary_node(NodeType::Assign, new_variable_node(var),
+                      new_single(NodeType::Addr, std::move(binary->lhs_)));
+
+  auto expr2 = new_binary_node(
+      NodeType::Assign, new_single(NodeType::Derefence, new_variable_node(var)),
+      new_binary_node(binary->type_,
+                      new_single(NodeType::Derefence, new_variable_node(var)),
+                      std::move(binary->rhs_)));
+
+  return new_binary_node(NodeType::Comma, std::move(expr1), std::move(expr2));
+}
+
 static NodePtr parse_assign(const TokenList &tokens, u64 &pos) {
   auto node = parse_equal(tokens, pos);
   if (tokens[pos] == "=") {
     ++pos;
     node = new_binary_node(NodeType::Assign, std::move(node),
                            parse_assign(tokens, pos));
+  }
+
+  if (tokens[pos] == "+=") {
+    ++pos;
+    return to_assign(new_addition(std::move(node), parse_assign(tokens, pos)));
+  }
+
+  if (tokens[pos] == "-=") {
+    ++pos;
+    return to_assign(
+        new_subtraction(std::move(node), parse_assign(tokens, pos)));
+  }
+
+  if (tokens[pos] == "*=") {
+    ++pos;
+    return to_assign(new_binary_node(NodeType::Mul, std::move(node),
+                                     parse_assign(tokens, pos)));
+  }
+
+  if (tokens[pos] == "/=") {
+    ++pos;
+    return to_assign(new_binary_node(NodeType::Div, std::move(node),
+                                     parse_assign(tokens, pos)));
   }
 
   return node;

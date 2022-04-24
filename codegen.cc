@@ -111,15 +111,14 @@ static void load(parser::Type *ty) {
     return;
   }
 
-  if (ty->size_ == 1) {
-    emit("movsbq (%%rax), %%rax");
-  } else if (ty->size_ == 2) {
-    emit("movswq (%%rax), %%rax");
-  } else if (ty->size_ == 4) {
+  if (ty->size_ == 1)
+    emit("movsbl (%%rax), %%eax");
+  else if (ty->size_ == 2)
+    emit("movswl (%%rax), %%eax");
+  else if (ty->size_ == 4)
     emit("movsxd (%%rax), %%rax");
-  } else {
+  else
     emit("mov (%%rax), %%rax");
-  }
 }
 
 static void store(parser::Type *ty) {
@@ -133,13 +132,14 @@ static void store(parser::Type *ty) {
     return;
   }
 
-  if (ty->size_ == 1) {
+  if (ty->size_ == 1)
     emit("mov %%al, (%%rdi)");
-  } else if (ty->size_ == 4) {
+  else if (ty->size_ == 2)
+    emit("mov %%ax, (%%rdi)");
+  else if (ty->size_ == 4)
     emit("mov %%eax, (%%rdi)");
-  } else {
+  else
     emit("mov %%rax, (%%rdi)");
-  }
 }
 
 static void store_parameter(i32 arg_reg, i32 offset, i32 size) {
@@ -360,7 +360,6 @@ static void gen_expression(const parser::Node &node) {
 }
 
 static void gen_stmt(const parser::Node &node) {
-
   switch (node.type_) {
   case parser::NodeType::ExprStmt: {
     gen_expression(*node.lhs_);
