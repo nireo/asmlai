@@ -846,6 +846,36 @@ static NodePtr parse_equal(const TokenList &tokens, u64 &pos) {
   }
 }
 
+static NodePtr to_assign(NodePtr binary) {
+  typesystem::add_type(*binary->lhs_);
+  typesystem::add_type(*binary->rhs_);
+
+  // XD
+  std::string name = "";
+  char *name_ = strndup(name.c_str(), name.size());
+  auto var = new_lvar(name_, typesystem::ptr_to(binary->lhs_->tt_));
+  auto expr1 =
+      new_binary_node(NodeType::Assign, new_variable_node(var),
+                      new_single(NodeType::Addr, std::move(binary->lhs_)));
+
+  auto expr2 = new_binary_node(
+      NodeType::Assign, new_single(NodeType::Derefence, new_variable_node(var)),
+      new_binary_node(binary->type_,
+                      new_single(NodeType::Derefence, new_variable_node(var)),
+                      std::move(binary->rhs_)));
+
+  return new_binary_node(NodeType::Comma, std::move(expr1), std::move(expr2));
+}
+
+static NodePtr new_incdec(NodePtr node, int to_add) {
+  typesystem::add_type(*node);
+  Type *tt = node->tt_;
+  return new_cast(
+      new_addition(to_assign(new_addition(std::move(node), new_number(to_add))),
+                   new_number(-to_add)),
+      tt);
+}
+
 static NodePtr parse_postfix(const TokenList &tokens, u64 &pos) {
   auto node = parse_primary(tokens, pos);
 
@@ -874,31 +904,22 @@ static NodePtr parse_postfix(const TokenList &tokens, u64 &pos) {
       continue;
     }
 
+    if (tokens[pos] == "++") {
+      node = new_incdec(std::move(node), 1);
+      ++pos;
+      continue;
+    }
+
+    if (tokens[pos] == "--") {
+      node = new_incdec(std::move(node), -1);
+      ++pos;
+      continue;
+    }
+
     return node;
   }
 
   return node;
-}
-
-static NodePtr to_assign(NodePtr binary) {
-  typesystem::add_type(*binary->lhs_);
-  typesystem::add_type(*binary->rhs_);
-
-  // XD
-  std::string name = "";
-  char *name_ = strndup(name.c_str(), name.size());
-  auto var = new_lvar(name_, typesystem::ptr_to(binary->lhs_->tt_));
-  auto expr1 =
-      new_binary_node(NodeType::Assign, new_variable_node(var),
-                      new_single(NodeType::Addr, std::move(binary->lhs_)));
-
-  auto expr2 = new_binary_node(
-      NodeType::Assign, new_single(NodeType::Derefence, new_variable_node(var)),
-      new_binary_node(binary->type_,
-                      new_single(NodeType::Derefence, new_variable_node(var)),
-                      std::move(binary->rhs_)));
-
-  return new_binary_node(NodeType::Comma, std::move(expr1), std::move(expr2));
 }
 
 static NodePtr parse_assign(const TokenList &tokens, u64 &pos) {
@@ -1040,6 +1061,16 @@ static NodePtr parse_unary(const TokenList &tokens, u64 &pos) {
   if (tokens[pos] == "*") {
     ++pos;
     return new_single(NodeType::Derefence, parse_unary(tokens, pos));
+  }
+
+  if (tokens[pos] == "++") {
+    ++pos;
+    return to_assign(new_addition(parse_unary(tokens, pos), new_number(1)));
+  }
+
+  if (tokens[pos] == "--") {
+    ++pos;
+    return to_assign(new_subtraction(parse_unary(tokens, pos), new_number(1)));
   }
 
   return parse_postfix(tokens, pos);
