@@ -867,6 +867,38 @@ static NodePtr to_assign(NodePtr binary) {
   return new_binary_node(NodeType::Comma, std::move(expr1), std::move(expr2));
 }
 
+static NodePtr bit_and(const TokenList &tokens, u64 &pos) {
+  auto node = parse_equal(tokens, pos);
+  while (tokens[pos] == "&") {
+    ++pos;
+    node = new_binary_node(NodeType::BitAnd, std::move(node),
+                           parse_equal(tokens, pos));
+  }
+
+  return node;
+}
+static NodePtr bit_xor(const TokenList &tokens, u64 &pos) {
+  auto node = bit_and(tokens, pos);
+  while (tokens[pos] == "^") {
+    ++pos;
+    node = new_binary_node(NodeType::BitXor, std::move(node),
+                           parse_equal(tokens, pos));
+  }
+
+  return node;
+}
+
+static NodePtr bit_or(const TokenList &tokens, u64 &pos) {
+  auto node = bit_xor(tokens, pos);
+  while (tokens[pos] == "|") {
+    ++pos;
+    node = new_binary_node(NodeType::BitOr, std::move(node),
+                           parse_equal(tokens, pos));
+  }
+
+  return node;
+}
+
 static NodePtr new_incdec(NodePtr node, int to_add) {
   typesystem::add_type(*node);
   Type *tt = node->tt_;

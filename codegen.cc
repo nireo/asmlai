@@ -335,6 +335,18 @@ static void gen_expression(const parser::Node &node) {
     }
     return;
   }
+  case NodeType::BitAnd: {
+    emit("and %%rdi, %%rax");
+    return;
+  }
+  case NodeType::BitOr: {
+    emit("or %%rdi, %%rax");
+    return;
+  }
+  case NodeType::BitXor: {
+    emit("xor %%rdi, %%rax");
+    return;
+  }
   case NodeType::EQ:
   case NodeType::LT:
   case NodeType::NE:

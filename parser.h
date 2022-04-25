@@ -119,6 +119,11 @@ enum class NodeType {
   Cast,
   Mod,
   Not,
+  LogAnd,
+  LogOr,
+  BitAnd,
+  BitOr,
+  BitXor,
 };
 
 struct Node;
