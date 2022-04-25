@@ -1112,6 +1112,16 @@ static NodePtr parse_func_call(const TokenList &tokens, u64 &pos) {
   u64 start_pos = pos;
   skip_until(tokens, "(", pos);
 
+  auto var_scope = find_var(tokens[start_pos]);
+  if (!var_scope) {
+    error("implicit declaration of a function");
+  }
+
+  if (!var_scope->variable_ ||
+      var_scope->variable_->ty_->type_ != Types::Function) {
+    error("calling a non function");
+  }
+
   NodeList nodes;
 
   while (tokens[pos] != ")") {
@@ -1119,7 +1129,9 @@ static NodePtr parse_func_call(const TokenList &tokens, u64 &pos) {
       skip_until(tokens, ",", pos);
     }
 
-    nodes.push_back(std::move(parse_assign(tokens, pos)));
+    auto node = parse_assign(tokens, pos);
+    typesystem::add_type(*node);
+    nodes.push_back(std::move(node));
   }
 
   skip_until(tokens, ")", pos);
