@@ -905,7 +905,7 @@ static NodePtr parse_assign(const TokenList &tokens, u64 &pos) {
   auto node = parse_equal(tokens, pos);
   if (tokens[pos] == "=") {
     ++pos;
-    node = new_binary_node(NodeType::Assign, std::move(node),
+    return new_binary_node(NodeType::Assign, std::move(node),
                            parse_assign(tokens, pos));
   }
 

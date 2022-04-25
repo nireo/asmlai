@@ -103,12 +103,9 @@ static bool starts_with(char *p, const char *start) {
 }
 
 static int read_punctuator(char *p) {
-  if (starts_with(p, "==") || starts_with(p, "!=") || starts_with(p, "<=") ||
-      starts_with(p, ">="))
-    return 2;
-
-  constexpr const char *kw[] = {"==", "!=", "<=", ">=", "->"};
-  for (int i = 0; i < 5; ++i) {
+  constexpr const char *kw[] = {"==", "!=", "<=", ">=", "->",
+                                "/=", "+=", "-=", "*="};
+  for (int i = 0; i < sizeof kw / sizeof kw[0]; ++i) {
     if (starts_with(p, kw[i])) {
       return strlen(kw[i]);
     }
@@ -182,7 +179,7 @@ static Token read_char_literal(char *start) {
     error_at(p, "unclosed char literal");
   }
 
-  auto tok = new_token(start, end +1, TokenType::Num);
+  auto tok = new_token(start, end + 1, TokenType::Num);
   tok.data_ = c;
 
   return tok;
