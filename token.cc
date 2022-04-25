@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <string.h>
+#include <strings.h>
 #include <variant>
 #include <vector>
 
@@ -103,8 +104,8 @@ static bool starts_with(char *p, const char *start) {
 }
 
 static int read_punctuator(char *p) {
-  constexpr const char *kw[] = {"==", "!=", "<=", ">=", "->",
-                                "/=", "+=", "-=", "*="};
+  constexpr const char *kw[] = {
+      "==", "!=", "<=", ">=", "->", "/=", "+=", "-=", "*=", "++", "--"};
   for (int i = 0; i < sizeof kw / sizeof kw[0]; ++i) {
     if (starts_with(p, kw[i])) {
       return strlen(kw[i]);
@@ -162,6 +163,30 @@ static int read_escaped_char(char **new_pos, char *p) {
   default:
     return *p;
   }
+}
+
+static Token read_int_literal(char *start) {
+  char *p = start;
+
+  i32 nbase = 10;
+  if (!strncasecmp(p, "0x", 2) && std::isalnum(p[2])) {
+    p += 2;
+    nbase = 16;
+  } else if (!strncasecmp(p, "0b", 2) && std::isalnum(p[2])) {
+    p += 2;
+    nbase = 2;
+  } else if (*p == '0') {
+    nbase = 8;
+  }
+
+  i64 val = strtoul(p, &p, nbase);
+  if (std::isalnum(*p))
+    error("invalid digit");
+
+  auto tok = new_token(start, p, TokenType::Num);
+  tok.data_ = val;
+
+  return tok;
 }
 
 static Token read_char_literal(char *start) {
@@ -250,12 +275,9 @@ std::vector<Token> tokenize_input(char *filename, char *p) {
     }
 
     if (std::isdigit(*p)) {
-      char *ss = p;
-      Token tok = new_token(p, p, TokenType::Num);
-      tok.data_ = static_cast<i64>(strtoul(p, &p, 10));
-      tok.len_ = p - ss;
+      auto tok = read_int_literal(p);
+      p += tok.len_;
       res.push_back(std::move(tok));
-
       continue;
     }
 
