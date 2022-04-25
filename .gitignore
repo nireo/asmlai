@@ -6,3 +6,5 @@ build
 .cache
 cmake-build-debug
 tmp*
+*.o
+testa
