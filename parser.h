@@ -124,6 +124,8 @@ enum class NodeType {
   BitAnd,
   BitOr,
   BitXor,
+  Goto,
+  Label,
 };
 
 struct Node;
@@ -133,6 +135,12 @@ struct Function;
 using NodePtr = std::unique_ptr<Node>;
 using NodeList = std::vector<NodePtr>;
 using ObjectList = std::vector<std::shared_ptr<Object>>;
+
+struct LabelGotoData {
+  char *label;
+  char *unique_label;
+  NodePtr goto_;
+};
 
 struct Object {
   Object(char *name, i64 offset) : name_(name), offset_(offset) {}
@@ -197,7 +205,7 @@ struct Node {
   Type *tt_ = nullptr;
 
   std::variant<i64, std::shared_ptr<Object>, NodeList, IfNode, ForNode, char *,
-               NodePtr, Member *, std::monostate>
+               NodePtr, Member *, LabelGotoData, std::monostate>
       data_ = std::monostate{};
 
   // This would be normally wrapped into the std::variant, but when calling

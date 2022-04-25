@@ -44,6 +44,68 @@ static void enter_scope() {
   scopes = n;
 }
 
+static i64 evaluate_constexpr(Node &n) {
+  typesystem::add_type(n);
+  switch (n.type_) {
+  case NodeType::Add: {
+    return evaluate_constexpr(*n.lhs_) + evaluate_constexpr(*n.rhs_);
+  }
+  case NodeType::Sub: {
+    return evaluate_constexpr(*n.lhs_) - evaluate_constexpr(*n.rhs_);
+  }
+  case NodeType::Mul: {
+    return evaluate_constexpr(*n.lhs_) * evaluate_constexpr(*n.rhs_);
+  }
+  case NodeType::Div: {
+    return evaluate_constexpr(*n.lhs_) / evaluate_constexpr(*n.rhs_);
+  }
+  case NodeType::Neg: {
+    return -evaluate_constexpr(*n.lhs_);
+  }
+  case NodeType::Mod: {
+    return evaluate_constexpr(*n.lhs_) % evaluate_constexpr(*n.rhs_);
+  }
+  case NodeType::BitAnd: {
+    return evaluate_constexpr(*n.lhs_) & evaluate_constexpr(*n.rhs_);
+  }
+  case NodeType::BitOr: {
+    return evaluate_constexpr(*n.lhs_) | evaluate_constexpr(*n.rhs_);
+  }
+  case NodeType::BitXor: {
+    return evaluate_constexpr(*n.lhs_) ^ evaluate_constexpr(*n.rhs_);
+  }
+  case NodeType::EQ: {
+    return evaluate_constexpr(*n.lhs_) == evaluate_constexpr(*n.rhs_);
+  }
+  case NodeType::NE: {
+    return evaluate_constexpr(*n.lhs_) != evaluate_constexpr(*n.rhs_);
+  }
+  case NodeType::LT: {
+    return evaluate_constexpr(*n.lhs_) < evaluate_constexpr(*n.rhs_);
+  }
+  case NodeType::LE: {
+    return evaluate_constexpr(*n.lhs_) <= evaluate_constexpr(*n.rhs_);
+  }
+  case NodeType::Comma: {
+    return evaluate_constexpr(*n.rhs_);
+  }
+  case NodeType::Not: {
+    return !evaluate_constexpr(*n.lhs_);
+  }
+  case NodeType::LogAnd: {
+    return evaluate_constexpr(*n.lhs_) && evaluate_constexpr(*n.rhs_);
+  }
+  case NodeType::LogOr: {
+    return evaluate_constexpr(*n.lhs_) || evaluate_constexpr(*n.rhs_);
+  }
+  case NodeType::Num: {
+    return std::get<i64>(n.data_);
+  }
+  default:
+    error("not compile-time constant");
+  }
+}
+
 static void leave_scope() { scopes = scopes->next_; }
 
 static bool is_enum_varscope(const VarScope &var) {

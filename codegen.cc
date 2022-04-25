@@ -432,6 +432,16 @@ static void gen_stmt(const parser::Node &node) {
     std::fprintf(out_file, ".L.end.%ld:\n", L);
     return;
   }
+  case parser::NodeType::Goto: {
+    emit("jmp %s", std::get<parser::LabelGotoData>(node.data_).unique_label);
+    return;
+  }
+  case parser::NodeType::Label: {
+    std::fprintf(out_file, "%s:",
+                 std::get<parser::LabelGotoData>(node.data_).unique_label);
+    gen_stmt(*node.lhs_);
+    return;
+  }
   default: {
     std::fprintf(stderr, "invalid statement\n");
     std::exit(1);
