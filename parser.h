@@ -126,6 +126,7 @@ enum class NodeType {
   BitXor,
   Goto,
   Label,
+  Cond,
 };
 
 struct Node;

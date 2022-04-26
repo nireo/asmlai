@@ -335,6 +335,11 @@ static NodePtr parse_primary(const TokenList &, u64 &);
 static NodePtr parse_relational(const TokenList &, u64 &);
 static NodePtr parse_assign(const TokenList &, u64 &);
 static NodePtr parse_postfix(const TokenList &, u64 &);
+static NodePtr bit_and(const TokenList &, u64 &);
+static NodePtr bit_or(const TokenList &, u64 &);
+static NodePtr bit_xor(const TokenList &, u64 &);
+static NodePtr log_and(const TokenList &, u64 &);
+static NodePtr log_or(const TokenList &, u64 &);
 static Type *parse_struct_declaration(const TokenList &, u64 &);
 static Type *parse_union_declaration(const TokenList &, u64 &);
 static Type *struct_union(const TokenList &tokens, u64 &pos);
@@ -961,6 +966,28 @@ static NodePtr bit_or(const TokenList &tokens, u64 &pos) {
   return node;
 }
 
+static NodePtr log_or(const TokenList &tokens, u64 &pos) {
+  auto node = log_and(tokens, pos);
+  while (tokens[pos] == "&&") {
+    ++pos;
+    node = new_binary_node(NodeType::LogAnd, std::move(node),
+                           log_and(tokens, pos));
+  }
+
+  return node;
+}
+
+static NodePtr log_and(const TokenList &tokens, u64 &pos) {
+  auto node = bit_or(tokens, pos);
+  while (tokens[pos] == "&&") {
+    ++pos;
+    node =
+        new_binary_node(NodeType::LogAnd, std::move(node), bit_or(tokens, pos));
+  }
+
+  return node;
+}
+
 static NodePtr new_incdec(NodePtr node, int to_add) {
   typesystem::add_type(*node);
   Type *tt = node->tt_;
@@ -1016,8 +1043,10 @@ static NodePtr parse_postfix(const TokenList &tokens, u64 &pos) {
   return node;
 }
 
+static NodePtr parse_conditional(const TokenList &tokens, u64 &pos) {}
+
 static NodePtr parse_assign(const TokenList &tokens, u64 &pos) {
-  auto node = parse_equal(tokens, pos);
+  auto node = log_or(tokens, pos);
   if (tokens[pos] == "=") {
     ++pos;
     return new_binary_node(NodeType::Assign, std::move(node),

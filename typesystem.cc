@@ -111,6 +111,8 @@ void add_type(parser::Node &node) {
     node.tt_ = parser::default_long;
     return;
   }
+  case NT::LogAnd:
+  case NT::LogOr:
   case NT::Not: {
     node.tt_ = new parser::Type(parser::Types::Int, parser::kNumberSize,
                                 parser::kNumberSize);

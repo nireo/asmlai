@@ -66,6 +66,11 @@ template <typename... Args> static void emit(const char *fmt, Args... args) {
   std::fprintf(out_file, "\n");
 }
 
+template <typename... Args> static void print(const char *fmt, Args... args) {
+  std::fprintf(out_file, fmt, args...);
+  std::fprintf(out_file, "\n");
+}
+
 static void cmp_zero(parser::Type *ty) {
   if (typesystem::is_number(ty) && ty->size_ <= 4) {
     emit("cmp $0, %%eax");
@@ -254,6 +259,37 @@ static void gen_expression(const parser::Node &node) {
     }
     return;
   }
+  case NodeType::LogAnd: {
+    int c = count();
+
+    gen_expression(*node.lhs_);
+    emit("cmp $0, %%rax");
+    emit("je .L.false.%d", c);
+    gen_expression(*node.rhs_);
+    emit("cmp $0, %%rax");
+    emit("je .L.false.%d", c);
+    emit("mov $1, %%rax");
+    emit("jmp .L.end.%d", c);
+    print(".L.false.%d:", c);
+    emit("mov $0, %%rax");
+    print(".L.end.%d:", c);
+    return;
+  }
+  case NodeType::LogOr: {
+    int c = count();
+    gen_expression(*node.lhs_);
+    emit("cmp $0, %%rax");
+    emit("jne .L.true.%d", c);
+    gen_expression(*node.rhs_);
+    emit("cmp $0, %%rax");
+    emit("jne .L.true.%d", c);
+    emit("mov $0, %%rax");
+    emit("jmp .L.end.%d", c);
+    print(".L.true.%d:", c);
+    emit("mov $1, %%rax");
+    print(".L.end.%d:", c);
+    return;
+  }
   case NodeType::FunctionCall: {
     // arguments are stored the same way as body expressions.
     const auto &nodes = std::get<std::vector<parser::NodePtr>>(node.data_);
@@ -270,6 +306,21 @@ static void gen_expression(const parser::Node &node) {
 
     emit("mov $0, %%rax");
     emit("call %s", node.func_name_);
+    return;
+  }
+  case NodeType::Cond: {
+    auto L = count();
+
+    const auto &if_node = std::get<parser::IfNode>(node.data_);
+    gen_expression(*if_node.condition_);
+    emit("cmp $0, %%rax");
+    emit("je .L.else.%d", L);
+    gen_expression(*if_node.then_);
+    emit("jmp .L.end.%d", L);
+    print(".L.else.%d", L);
+    gen_expression(*if_node.else_);
+    print(".L.end.%d:", L);
+
     return;
   }
   case NodeType::Not: {
