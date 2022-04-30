@@ -76,6 +76,7 @@ int main(int argc, char **argv) {
 
   delete parser::default_int;
   delete parser::default_empty;
+  delete parser::default_void;
 
   return EXIT_SUCCESS;
 }

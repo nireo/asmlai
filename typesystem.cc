@@ -27,7 +27,6 @@ parser::Type *ptr_to(parser::Type *base) {
   parser::Type *tt = new parser::Type(parser::Types::Ptr, parser::kNumberSize,
                                       parser::kNumberSize);
   tt->base_type_ = base;
-
   return tt;
 }
 

@@ -1076,6 +1076,30 @@ static NodePtr parse_assign(const TokenList &tokens, u64 &pos) {
                                      parse_assign(tokens, pos)));
   }
 
+  if (tokens[pos] == "&=") {
+    ++pos;
+    return to_assign(new_binary_node(NodeType::BitAnd, std::move(node),
+                                     parse_assign(tokens, pos)));
+  }
+
+  if (tokens[pos] == "|=") {
+    ++pos;
+    return to_assign(new_binary_node(NodeType::BitOr, std::move(node),
+                                     parse_assign(tokens, pos)));
+  }
+
+  if (tokens[pos] == "^=") {
+    ++pos;
+    return to_assign(new_binary_node(NodeType::BitXor, std::move(node),
+                                     parse_assign(tokens, pos)));
+  }
+
+  if (tokens[pos] == "%=") {
+    ++pos;
+    return to_assign(new_binary_node(NodeType::Mod, std::move(node),
+                                     parse_assign(tokens, pos)));
+  }
+
   return node;
 }
 
