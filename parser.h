@@ -127,6 +127,8 @@ enum class NodeType {
   Goto,
   Label,
   Cond,
+  Shl,
+  Shr
 };
 
 struct Node;

@@ -398,6 +398,16 @@ static void gen_expression(const parser::Node &node) {
     emit("xor %%rdi, %%rax");
     return;
   }
+  case NodeType::Shl: {
+    emit("mov %%rdi, %%rcx");
+    emit("shl %%cl, %s", ax);
+    return;
+  }
+  case NodeType::Shr: {
+    emit("mov %%rdi, %%rcx");
+    emit("sar %%cl, %s", ax);
+    return;
+  }
   case NodeType::EQ:
   case NodeType::LT:
   case NodeType::NE:

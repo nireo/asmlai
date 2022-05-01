@@ -331,6 +331,7 @@ static NodePtr parse_expression(const TokenList &, u64 &);
 static NodePtr parse_equal(const TokenList &, u64 &);
 static NodePtr parse_mul(const TokenList &, u64 &);
 static NodePtr parse_add(const TokenList &, u64 &);
+static NodePtr parse_shift(const TokenList &, u64 &);
 static NodePtr parse_unary(const TokenList &, u64 &);
 static NodePtr parse_primary(const TokenList &, u64 &);
 static NodePtr parse_relational(const TokenList &, u64 &);
@@ -1142,28 +1143,50 @@ static NodePtr parse_relational(const TokenList &tokens, u64 &pos) {
     if (tokens[pos] == "<") {
       ++pos;
       node = new_binary_node(NodeType::LT, std::move(node),
-                             parse_add(tokens, pos));
+                             parse_shift(tokens, pos));
       continue;
     }
 
     if (tokens[pos] == "<=") {
       ++pos;
       node = new_binary_node(NodeType::LE, std::move(node),
-                             parse_add(tokens, pos));
+                             parse_shift(tokens, pos));
       continue;
     }
 
     if (tokens[pos] == ">") {
       ++pos;
-      node = new_binary_node(NodeType::LT, parse_add(tokens, pos),
+      node = new_binary_node(NodeType::LT, parse_shift(tokens, pos),
                              std::move(node));
       continue;
     }
 
     if (tokens[pos] == ">=") {
       ++pos;
-      node = new_binary_node(NodeType::LE, parse_add(tokens, pos),
+      node = new_binary_node(NodeType::LE, parse_shift(tokens, pos),
                              std::move(node));
+      continue;
+    }
+
+    return node;
+  }
+}
+
+static NodePtr parse_shift(const TokenList &tokens, u64 &pos) {
+  auto node = parse_add(tokens, pos);
+
+  for (;;) {
+    if (tokens[pos] == "<<") {
+      ++pos;
+      node = new_binary_node(NodeType::Shl, std::move(node),
+                             parse_add(tokens, pos));
+      continue;
+    }
+
+    if (tokens[pos] == ">>") {
+      ++pos;
+      node = new_binary_node(NodeType::Shr, std::move(node),
+                             parse_add(tokens, pos));
       continue;
     }
 
