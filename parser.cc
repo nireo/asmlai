@@ -104,6 +104,7 @@ static i64 evaluate_constexpr(Node &n) {
   default:
     error("not compile-time constant");
   }
+  return 0;
 }
 
 static void leave_scope() { scopes = scopes->next_; }
@@ -348,6 +349,8 @@ static Type *declarator(const TokenList &tokens, u64 &pos, Type *ty);
 static Type *decl_type(const TokenList &tokens, u64 &pos,
                        VariableAttributes *attr);
 static Type *enum_declaration(const TokenList &tokens, u64 &pos);
+
+static i64 const_expr(const TokenList &tokens, u64 &pos);
 
 static NodePtr parse_expr_stmt(const TokenList &tokens, u64 &pos) {
   if (tokens[pos] == ";") { // encountered a empty statement
@@ -620,8 +623,7 @@ static Type *enum_declaration(const TokenList &tokens, u64 &pos) {
 
     if (tokens[pos] == "=") {
       ++pos;
-      value = get_number_value(tokens, pos);
-      ++pos;
+      value = const_expr(tokens, pos);
     }
 
     EnumVarScope enum_var{};
@@ -727,6 +729,8 @@ static Type *function_parameters(const TokenList &tokens, u64 &pos,
   return func_wrapper;
 }
 
+static Type *array_dimensions(const TokenList &tokens, u64 &pos, Type *ty);
+
 static Type *type_suffix(const TokenList &tokens, u64 &pos, Type *ty) {
   if (tokens[pos] == "(") {
     ++pos;
@@ -735,14 +739,23 @@ static Type *type_suffix(const TokenList &tokens, u64 &pos, Type *ty) {
 
   if (tokens[pos] == "[") {
     ++pos;
-    auto sz = get_number_value(tokens, pos);
-    skip_until(tokens, "]", pos);
-    ty = type_suffix(tokens, pos, ty);
-
-    return typesystem::array_of_type(ty, sz);
+    return array_dimensions(tokens, pos, ty);
   }
 
   return ty;
+}
+
+static Type *array_dimensions(const TokenList &tokens, u64 &pos, Type *ty) {
+  if (tokens[pos] == "]") {
+    ++pos;
+    ty = type_suffix(tokens, pos, ty);
+    return typesystem::array_of_type(ty, -1);
+  }
+
+  auto sz = const_expr(tokens, pos);
+  skip_until(tokens, "]", pos);
+  ty = type_suffix(tokens, pos, ty);
+  return typesystem::array_of_type(ty, sz);
 }
 
 static Type *declarator(const TokenList &tokens, u64 &pos, Type *ty) {
@@ -1043,7 +1056,27 @@ static NodePtr parse_postfix(const TokenList &tokens, u64 &pos) {
   return node;
 }
 
-static NodePtr parse_conditional(const TokenList &tokens, u64 &pos) {}
+static NodePtr parse_conditional(const TokenList &tokens, u64 &pos) {
+  auto cond = log_or(tokens, pos);
+  if (tokens[pos] != "?") {
+    return cond;
+  }
+
+  IfNode ifnode{};
+  auto node = new_node(NodeType::Cond);
+  ifnode.condition_ = std::move(cond);
+  ++pos;
+  ifnode.then_ = parse_expression(tokens, pos);
+
+  skip_until(tokens, ":", pos);
+  ifnode.else_ = std::move(parse_conditional(tokens, pos));
+  return node;
+}
+
+static i64 const_expr(const TokenList &tokens, u64 &pos) {
+  auto node = parse_conditional(tokens, pos);
+  return evaluate_constexpr(*node);
+}
 
 static NodePtr parse_assign(const TokenList &tokens, u64 &pos) {
   auto node = log_or(tokens, pos);
