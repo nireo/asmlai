@@ -201,6 +201,7 @@ assign_lvar_offsets(std::vector<std::shared_ptr<parser::Object>> &functions) {
     if (func->is_func_) {
       i64 offset = 0;
       // assign first for parameters
+      std::reverse(func->params_.begin(), func->params_.end());
       for (auto &par : func->params_) {
         offset += par->ty_->size_;
         par->offset_ = -offset;

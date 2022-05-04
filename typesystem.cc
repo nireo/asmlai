@@ -24,8 +24,8 @@ parser::Type *enum_type() {
 }
 
 parser::Type *ptr_to(parser::Type *base) {
-  parser::Type *tt = new parser::Type(parser::Types::Ptr, parser::kNumberSize,
-                                      parser::kNumberSize);
+  parser::Type *tt =
+      new parser::Type(parser::Types::Ptr, parser::kPtrSize, parser::kPtrSize);
   tt->base_type_ = base;
   return tt;
 }
@@ -130,7 +130,7 @@ void add_type(parser::Node &node) {
     return;
   }
   case NT::Derefence: {
-    if (!node.lhs_->tt_) {
+    if (!node.lhs_->tt_->base_type_) {
       std::fprintf(stderr, "invalid pointer dereference.");
       std::exit(1);
     }
@@ -141,7 +141,6 @@ void add_type(parser::Node &node) {
     }
 
     node.tt_ = node.lhs_->tt_->base_type_;
-
     return;
   }
   case NT::StmtExpr: {

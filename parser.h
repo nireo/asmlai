@@ -29,6 +29,7 @@ constexpr i32 kCharSize = 1;
 constexpr i32 kShortSize = 2;
 constexpr i32 kNumberSize = 4;
 constexpr i32 kLongSize = 8;
+constexpr i32 kPtrSize = 8;
 
 struct Type;
 using TypePtr = std::unique_ptr<Type>;
