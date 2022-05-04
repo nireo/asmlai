@@ -30,10 +30,6 @@ assert() {
   fi
 }
 
-assert 0 'int main() { enum { zero, one, two }; return zero; }'
-assert 1 'int main() { enum { zero, one, two }; return one; }'
-assert 2 'int main() { enum { zero, one, two }; return two; }'
-
 assert 0 'int main() { return 0; }'
 assert 42 'int main() { return 42; }'
 assert 21 'int main() { return 5+20-4; }'

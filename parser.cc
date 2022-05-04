@@ -783,6 +783,9 @@ static NodePtr parse_declaration(const TokenList &tokens, u64 &pos,
     if (i++ > 0)
       skip_until(tokens, ",", pos);
     Type *ty = declarator(tokens, pos, base);
+    if (ty->size_ < 0) {
+      error("variable has incomplete type");
+    }
     if (ty->type_ == Types::Void)
       error("variable declared void");
 
@@ -1071,6 +1074,7 @@ static NodePtr parse_conditional(const TokenList &tokens, u64 &pos) {
 
   skip_until(tokens, ":", pos);
   ifnode.else_ = std::move(parse_conditional(tokens, pos));
+  node->data_ = std::move(ifnode);
   return node;
 }
 
@@ -1131,6 +1135,18 @@ static NodePtr parse_assign(const TokenList &tokens, u64 &pos) {
   if (tokens[pos] == "%=") {
     ++pos;
     return to_assign(new_binary_node(NodeType::Mod, std::move(node),
+                                     parse_assign(tokens, pos)));
+  }
+
+  if (tokens[pos] == "<<=") {
+    ++pos;
+    return to_assign(new_binary_node(NodeType::Shl, std::move(node),
+                                     parse_assign(tokens, pos)));
+  }
+
+  if (tokens[pos] == ">>=") {
+    ++pos;
+    return to_assign(new_binary_node(NodeType::Shr, std::move(node),
                                      parse_assign(tokens, pos)));
   }
 

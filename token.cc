@@ -104,9 +104,9 @@ static bool starts_with(char *p, const char *start) {
 }
 
 static int read_punctuator(char *p) {
-  constexpr const char *kw[] = {"==", "!=", "<=", ">=", "->", "/=",
-                                "+=", "-=", "*=", "++", "--", "&&",
-                                "||", "&=", "^=", "|=", "%="};
+  constexpr const char *kw[] = {
+      "==", "!=", "<=", ">=", "->", "/=", "+=", "-=", "*=",  "++", "--",
+      "&&", "||", "&=", "^=", "|=", "%=", "<<", ">>", "<<=", ">>="};
   for (int i = 0; i < sizeof kw / sizeof kw[0]; ++i) {
     if (starts_with(p, kw[i])) {
       return strlen(kw[i]);
